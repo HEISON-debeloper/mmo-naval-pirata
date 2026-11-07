@@ -1,0 +1,680 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototipo MMO Naval</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: lienzo 3D a pantalla completa; HUD en paneles de bitácora anclados a las esquinas */
+:root{
+  --bg:#0d2a33;
+  --panel:rgba(8,26,33,.80);
+  --ink:#eef6f4;
+  --muted:#9db8ba;
+  --brass:#d9a441;
+  --danger:#e0563f;
+  --ok:#6cc59a;
+  --line:rgba(238,246,244,.16);
+  --f-label:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-label);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;backdrop-filter:blur(4px)}
+.label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.num{font-family:var(--f-num);font-size:18px;font-variant-numeric:tabular-nums}
+.num small{font-family:var(--f-label);font-size:12px;color:var(--muted);letter-spacing:.06em}
+#hud-tl{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));width:210px;display:grid;gap:8px}
+#hud-tr{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));width:190px;display:grid;gap:8px;justify-items:end}
+#hud-tr .panel{width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sails{display:flex;gap:4px;margin-top:3px}
+.sails i{flex:1;height:10px;border-radius:2px;background:var(--line)}
+.sails i.on{background:var(--brass)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:3px}
+.bar b{display:block;height:100%;width:100%;background:var(--ok);transition:width .2s}
+.bar b.low{background:var(--danger)}
+.cd{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cd .bar b{background:var(--brass)}
+.k{font-family:var(--f-num);font-size:11px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:4px}
+.mode{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mode strong{font-size:17px;letter-spacing:.03em}
+.chip{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:1px 6px;border-radius:3px;border:1px solid var(--line);color:var(--muted)}
+.chip.on{color:var(--bg);background:var(--brass);border-color:var(--brass)}
+.enemy-head{display:flex;justify-content:space-between;align-items:center}
+#arrow{width:22px;height:22px;display:inline-block;transition:transform .15s}
+.stat{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+button{font:inherit;cursor:pointer;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+#btn-cfg{padding:6px 12px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+#cfg{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 24px));max-height:calc(100% - 90px);overflow:auto;display:grid;gap:10px;z-index:5}
+#cfg h2{margin:0;font-size:18px;letter-spacing:.04em}
+#cfg p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
+.sl{display:grid;gap:2px}
+.sl .top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.sl code{font-family:var(--f-num);font-size:11px;color:var(--brass)}
+.sl output{font-family:var(--f-num);font-size:13px}
+.sl input{width:100%;accent-color:var(--brass)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+#copy{padding:8px;font-size:14px;font-weight:600;letter-spacing:.05em}
+#help{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100vw - 24px));z-index:4;max-height:calc(100% - 180px);overflow:auto}
+#help h1{margin:0 0 6px;font-size:20px;letter-spacing:.03em;text-wrap:balance}
+#help h3{margin:8px 0 2px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+#help ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:15px;line-height:1.3}
+#help kbd{font-family:var(--f-num);font-size:12px;border:1px solid var(--line);border-radius:3px;padding:0 4px}
+#help .close{margin-top:8px;padding:6px 14px;font-size:14px}
+#prompt{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));padding:6px 14px;font-size:17px;font-weight:600;letter-spacing:.03em;z-index:3;white-space:nowrap}
+#toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:8px 16px;font-size:18px;font-weight:700;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .3s;z-index:6;white-space:nowrap}
+#toast.show{opacity:1}
+#touch{display:none;position:fixed;left:0;right:0;bottom:0;justify-content:space-between;align-items:flex-end;
+  padding:0 calc(12px + env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));pointer-events:none}
+#touch .pad{display:flex;gap:10px;pointer-events:auto;align-items:flex-end}
+#touch .col{display:grid;gap:10px}
+#touch button{min-width:64px;min-height:52px;font-size:16px;font-weight:600;letter-spacing:.03em;user-select:none;-webkit-user-select:none;touch-action:none}
+#touch button.big{min-width:72px;min-height:72px;font-size:24px}
+#touch button.fire{color:var(--brass)}
+#joy{width:128px;height:128px;border-radius:50%;background:var(--panel);border:1px solid var(--line);position:relative;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:var(--brass);opacity:.85}
+.only-touch{display:none}
+body.helm .foot-only{display:none!important}
+body.foot .helm-only{display:none!important}
+@media (hover:none),(pointer:coarse){
+  #touch{display:flex}
+  .only-touch{display:list-item}
+  .only-keys{display:none}
+  #help{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
+  #prompt{bottom:calc(196px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:520px){
+  #hud-tl{width:162px}
+  #hud-tr{width:150px}
+  .num{font-size:15px}
+  .panel{padding:8px 10px}
+  #prompt{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="stage"></div>
+
+<div id="hud-tl">
+  <div class="panel">
+    <div class="mode"><strong id="mode">Al timón</strong><span class="chip" id="anchor">Ancla</span></div>
+    <div class="label" style="margin-top:8px">Velas · Balandro 18 m</div>
+    <div class="sails" id="sails"><i></i><i></i><i></i></div>
+    <div class="row" style="margin-top:8px">
+      <div><div class="label">Velocidad</div><div class="num" id="spd">0.0 <small>nudos</small></div></div>
+      <div><div class="label">Rumbo</div><div class="num" id="hdg">000°</div></div>
+    </div>
+    <div class="label" style="margin-top:8px">Casco</div>
+    <div class="bar"><b id="hp"></b></div>
+    <div class="cd" style="margin-top:8px">
+      <div><div class="label">Babor<span class="k only-keys">Q</span></div><div class="bar"><b id="cd-p"></b></div></div>
+      <div><div class="label">Estribor<span class="k only-keys">E</span></div><div class="bar"><b id="cd-s"></b></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="hud-tr">
+  <button id="btn-cfg" aria-expanded="false" aria-controls="cfg">Ajustes</button>
+  <div class="panel">
+    <div class="enemy-head"><div class="label">Bergantín 27 m</div>
+      <svg id="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L19 20 L12 15 L5 20 Z" fill="var(--brass)"/></svg></div>
+    <div class="bar"><b id="ehp"></b></div>
+    <div class="stat"><span class="label">Distancia</span><span class="num" id="edist" style="font-size:14px">—</span></div>
+    <div class="stat"><span class="label">Posición</span><span id="erel" style="font-size:14px">—</span></div>
+    <div class="stat"><span class="label">Hundidos</span><span class="num" id="kills" style="font-size:14px">0</span></div>
+  </div>
+</div>
+
+<div id="cfg" class="panel" hidden>
+  <h2>Ajustes del barco</h2>
+  <p>Mueve los valores mientras navegas. Los nombres en dorado son los mismos campos de los scripts de Unity.</p>
+  <div id="sliders" style="display:grid;gap:10px"></div>
+  <label class="chk"><input type="checkbox" id="opt-col"> Mostrar colisiones</label>
+  <label class="chk"><input type="checkbox" id="opt-ai" checked> El bergantín ataca</label>
+  <button id="copy">Copiar valores para Unity</button>
+</div>
+
+<div id="help" class="panel">
+  <h1>Prueba de mecánicas: navegar, disparar y caminar</h1>
+  <h3>Al timón</h3>
+  <ul>
+    <li class="only-keys"><kbd>W</kbd> / <kbd>S</kbd> velas, <kbd>A</kbd> / <kbd>D</kbd> timón, <kbd>Q</kbd> / <kbd>E</kbd> andanada por babor o estribor</li>
+    <li class="only-keys"><kbd>R</kbd> echa o leva el ancla. <kbd>F</kbd> suelta el timón</li>
+    <li class="only-touch">Velas + / −, ◀ ▶ para el timón, Babor y Estribor disparan. Usar suelta el timón</li>
+  </ul>
+  <h3>A pie</h3>
+  <ul>
+    <li class="only-keys"><kbd>W A S D</kbd> caminar, <kbd>Shift</kbd> correr, <kbd>Espacio</kbd> saltar</li>
+    <li class="only-keys"><kbd>F</kbd> toma el timón o sube al barco desde el agua</li>
+    <li class="only-touch">Joystick para caminar, Saltar y Usar para el timón o subir al barco</li>
+    <li>Para bajar a tierra: echa el ancla cerca de la isla, salta por la borda y nada hasta la playa</li>
+  </ul>
+  <button class="close" id="help-close">Entendido</button>
+</div>
+
+<div id="prompt" class="panel" hidden></div>
+<div id="toast" class="panel"></div>
+
+<div id="touch">
+  <div class="pad">
+    <div class="helm-only" style="display:flex;gap:10px"><button class="big" id="t-l" aria-label="Timón a babor">◀</button><button class="big" id="t-r" aria-label="Timón a estribor">▶</button></div>
+    <div class="foot-only" id="joy" aria-label="Joystick para caminar"><div id="knob"></div></div>
+  </div>
+  <div class="pad">
+    <div class="col helm-only"><button id="t-up">Velas +</button><button id="t-dn">Velas −</button></div>
+    <div class="col helm-only"><button class="fire" id="t-fp">Babor</button><button class="fire" id="t-fs">Estribor</button></div>
+    <div class="col foot-only"><button id="t-jump">Saltar</button></div>
+    <div class="col"><button id="t-use">Usar</button><button id="t-anchor">Ancla</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function seeded(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rand=seeded(2026);
+
+/* Parámetros: mismos nombres que ControlBarco.cs / Flotacion.cs */
+const P={fuerzaPorNivel:0.7,nivelesVela:3,fuerzaGiro:0.35,velocidadParaGiroCompleto:3,agarreLateral:2,arrastreAgua:0.33,arrastreAngular:1.6};
+const OPT={colisiones:false,enemigoAtaca:true};
+const G=9.8;
+
+/* Escena */
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+$('stage').appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const SKY=0x9fd3e0;
+scene.background=new THREE.Color(SKY);
+scene.fog=new THREE.Fog(SKY,180,480);
+const camera=new THREE.PerspectiveCamera(60,1,0.3,1500);
+scene.add(new THREE.HemisphereLight(0xdff3ff,0x2d5a6a,0.85));
+const sun=new THREE.DirectionalLight(0xfff1d6,0.9);sun.position.set(60,100,40);scene.add(sun);
+const MATS={};
+function mat(c){if(!MATS[c])MATS[c]=new THREE.MeshPhongMaterial({color:c,flatShading:true,shininess:4});return MATS[c];}
+function resize(){const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);resize();
+
+/* Olas (metros) */
+function waveH(x,z,t){return 0.6*Math.sin(0.08*x+t*0.8)+0.4*Math.sin(0.11*z+t*1.1)+0.25*Math.sin(0.06*(x+z)+t*0.6);}
+const WS=1000,WN=100,CELL=WS/WN;
+let wgeo=new THREE.PlaneGeometry(WS,WS,WN,WN);wgeo.rotateX(-Math.PI/2);wgeo=wgeo.toNonIndexed();
+const wpos=wgeo.attributes.position,wbase=Float32Array.from(wpos.array);
+const water=new THREE.Mesh(wgeo,new THREE.MeshPhongMaterial({color:0x2e8a99,flatShading:true,shininess:30,specular:0x335566,transparent:true,opacity:.92}));
+water.frustumCulled=false;scene.add(water);
+function updateWater(cx,cz,t){
+  const ox=Math.round(cx/CELL)*CELL,oz=Math.round(cz/CELL)*CELL;water.position.set(ox,0,oz);
+  const a=wpos.array;for(let i=0;i<a.length;i+=3)a[i+1]=waveH(wbase[i]+ox,wbase[i+2]+oz,t);
+  wpos.needsUpdate=true;wgeo.computeVertexNormals();
+}
+
+/* Islas low poly caminables (radios de 30 a 70 m) */
+const debug=new THREE.Group();debug.visible=false;scene.add(debug);
+const dbgMat=new THREE.MeshBasicMaterial({color:0xff4d3a,transparent:true,opacity:.75,side:THREE.DoubleSide});
+function buildIsland(r){
+  const g=new THREE.Group(),ground=[];
+  const beach=new THREE.Mesh(new THREE.CylinderGeometry(r*0.85,r*1.2,4,9),mat(0xe3cf95));beach.position.y=-1.5;beach.rotation.y=rand()*6;g.add(beach);ground.push(beach);
+  const hh=r*0.22+rand()*r*0.25;
+  const hill=new THREE.Mesh(new THREE.ConeGeometry(r*0.6,hh,7),mat(0x4f9a4a));
+  hill.position.set((rand()-.5)*r*.25,0.5+hh/2,(rand()-.5)*r*.25);hill.rotation.y=rand()*6;g.add(hill);ground.push(hill);
+  const nr=3+Math.floor(rand()*4);
+  for(let i=0;i<nr;i++){const a=rand()*6.28,d=r*(0.6+rand()*0.35),rk=new THREE.Mesh(new THREE.DodecahedronGeometry(1.2+rand()*2.5,0),mat(0x8a8f8c));rk.position.set(Math.cos(a)*d,0.2,Math.sin(a)*d);rk.rotation.set(rand()*3,rand()*3,0);g.add(rk);ground.push(rk);}
+  const np=6+Math.floor(rand()*8);
+  for(let i=0;i<np;i++){
+    const a=rand()*6.28,d=r*(0.45+rand()*0.35),palm=new THREE.Group(),hgt=6+rand()*4;
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.35,hgt,5),mat(0x8b6a43));trunk.position.y=hgt/2;palm.add(trunk);
+    const leaves=new THREE.Mesh(new THREE.ConeGeometry(3.2,1.2,5),mat(0x3f8a3a));leaves.position.y=hgt+0.2;palm.add(leaves);
+    palm.position.set(Math.cos(a)*d,0.3,Math.sin(a)*d);palm.rotation.set((rand()-.5)*.3,rand()*6,(rand()-.5)*.3);g.add(palm);
+  }
+  return{g,ground};
+}
+const islands=[];
+function addIsland(x,z,r){
+  const b=buildIsland(r);b.g.position.set(x,0,z);scene.add(b.g);
+  islands.push({x,z,r,rMax:r*1.25,meshes:b.ground});
+  const ring=new THREE.Mesh(new THREE.RingGeometry(r-0.5,r,40),dbgMat);ring.rotation.x=-Math.PI/2;ring.position.set(x,0.6,z);debug.add(ring);
+}
+addIsland(0,140,42);
+for(let i=0;i<14;i++){
+  let x,z,r,ok=false,tries=0;
+  while(!ok&&tries<80){r=30+rand()*40;const a=rand()*6.283,d=220+rand()*800;x=Math.cos(a)*d;z=Math.sin(a)*d;ok=islands.every(o=>Math.hypot(o.x-x,o.z-z)>o.r+r+120);tries++;}
+  if(ok)addIsland(x,z,r);
+}
+scene.updateMatrixWorld(true);
+const ray=new THREE.Raycaster(),DOWN=new THREE.Vector3(0,-1,0),ORIG=new THREE.Vector3();
+function groundAt(x,z){
+  let best=null;
+  for(const i of islands){if(Math.hypot(x-i.x,z-i.z)>i.rMax)continue;
+    ORIG.set(x,300,z);ray.set(ORIG,DOWN);const hit=ray.intersectObjects(i.meshes,false)[0];
+    if(hit&&(best===null||hit.point.y>best))best=hit.point.y;}
+  return best;
+}
+
+/* Barco low poly a escala: el modelo base mide 8.4 unidades y se escala a la eslora real */
+const DECK=[[-1.3,-4],[1.3,-4],[1.4,1.6],[0,4.4],[-1.4,1.6]];
+const DECK_Y=0.92,HELM_Z=-1.95,CABIN={x:1.2,z0:-3.95,z1:-2.1};
+function insideDeck(x,z){let ins=false;for(let i=0,j=DECK.length-1;i<DECK.length;j=i++){const[xi,zi]=DECK[i],[xj,zj]=DECK[j];if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi))ins=!ins;}return ins;}
+function buildShip(hullC,sailC,flagC){
+  const g=new THREE.Group();
+  const sh=new THREE.Shape();sh.moveTo(DECK[0][0],DECK[0][1]);for(const p of DECK.slice(1))sh.lineTo(p[0],p[1]);sh.lineTo(DECK[0][0],DECK[0][1]);
+  const hg=new THREE.ExtrudeGeometry(sh,{depth:1.6,bevelEnabled:false});hg.rotateX(Math.PI/2);
+  const hull=new THREE.Mesh(hg,mat(hullC));hull.position.y=0.9;g.add(hull);
+  const dg=new THREE.ShapeGeometry(sh);dg.rotateX(Math.PI/2);
+  const deck=new THREE.Mesh(dg,new THREE.MeshPhongMaterial({color:0xb08a5a,flatShading:true,side:THREE.DoubleSide}));deck.position.y=DECK_Y;g.add(deck);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.4,1,1.85),mat(hullC));cabin.position.set(0,1.42,-3.02);g.add(cabin);
+  const wheel=new THREE.Group();
+  wheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.28,0.03,4,8),mat(0x5a3d22)));
+  for(let k=0;k<4;k++){const sp=new THREE.Mesh(new THREE.BoxGeometry(0.66,0.03,0.03),mat(0x5a3d22));sp.rotation.z=k*Math.PI/4;wheel.add(sp);}
+  wheel.position.set(0,1.45,-1.55);g.add(wheel);
+  const post=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.5,0.08),mat(0x5a3d22));post.position.set(0,1.17,-1.55);g.add(post);
+  const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.16,7,6),mat(0x6e4f2e));mast.position.set(0,4.4,0.3);g.add(mast);
+  const yard=new THREE.Mesh(new THREE.BoxGeometry(4.6,0.12,0.12),mat(0x6e4f2e));yard.position.set(0,6.95,0.42);g.add(yard);
+  const sg=new THREE.BoxGeometry(4.2,1,0.08);sg.translate(0,-0.5,0);
+  const sail=new THREE.Mesh(sg,mat(sailC));sail.position.set(0,6.9,0.5);sail.scale.y=0.12;g.add(sail);
+  const bow=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,3,5),mat(0x6e4f2e));bow.rotation.x=Math.PI/2-0.35;bow.position.set(0,1.5,5.2);g.add(bow);
+  const fg=new THREE.BoxGeometry(0.04,0.5,0.9);fg.translate(0,0,-0.45);
+  const flag=new THREE.Mesh(fg,mat(flagC));flag.position.set(0,7.75,0.3);g.add(flag);
+  for(const s of[1,-1])for(const z of[-1.0,0.8,2.2]){const cn=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.13,0.7,6),mat(0x2b2b2b));cn.rotation.z=Math.PI/2;cn.position.set(s*1.45,1.15,z);g.add(cn);}
+  const anchor=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.4,0.1),mat(0x333333));anchor.position.set(0.9,0.6,3.4);g.add(anchor);
+  const box=new THREE.Mesh(new THREE.BoxGeometry(2.8,2.6,8.4),new THREE.MeshBasicMaterial({color:0xff4d3a,wireframe:true}));box.position.set(0,0.5,0.2);box.visible=false;g.add(box);
+  g.rotation.order='YXZ';
+  g.userData={sail,flag,box,anchor};
+  return g;
+}
+
+/* Partículas */
+const pGeo=new THREE.IcosahedronGeometry(0.4,0);
+const PM={splash:new THREE.MeshBasicMaterial({color:0xeaf7fb}),smoke:new THREE.MeshBasicMaterial({color:0xb0b0b0,transparent:true,opacity:.8}),wood:mat(0x7a4b2a),fire:new THREE.MeshBasicMaterial({color:0xffb347})};
+const parts=[];
+function emit(type,x,y,z,n,spd,up,size){
+  for(let i=0;i<n;i++){
+    let p=null;for(const q of parts)if(!q.on){p=q;break;}
+    if(!p){if(parts.length>400)return;p={m:new THREE.Mesh(pGeo,PM.splash),on:false};scene.add(p.m);parts.push(p);}
+    p.on=true;p.m.visible=true;p.m.material=PM[type];p.type=type;p.bs=size||1;p.m.position.set(x,y,z);
+    const a=Math.random()*6.283,s=spd*(0.4+Math.random()*0.6);
+    p.vx=Math.cos(a)*s;p.vz=Math.sin(a)*s;p.vy=up*(0.5+Math.random()*0.7);
+    p.life=p.max=0.6+Math.random()*0.8;p.g=type==='smoke'?-1.2:G;
+  }
+}
+function updateParts(dt){
+  for(const p of parts){if(!p.on)continue;p.life-=dt;if(p.life<=0){p.on=false;p.m.visible=false;continue;}
+    p.vy-=p.g*dt;p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;
+    p.m.scale.setScalar(p.bs*(0.3+0.7*p.life/p.max));}
+}
+
+/* Balas */
+const ballGeo=new THREE.SphereGeometry(0.2,6,4),ballMat=mat(0x222222);
+const balls=[];
+function spawnBall(o){const m=new THREE.Mesh(ballGeo,ballMat);m.position.set(o.x,o.y,o.z);scene.add(m);o.m=m;balls.push(o);}
+
+/* Barco */
+let gameT=0;
+class Ship{
+  constructor(o){Object.assign(this,o);this.sc=this.len/8.4;this.beam=2.8*this.sc;this.g=buildShip(o.hullC,o.sailC,o.flagC);this.g.scale.setScalar(this.sc);scene.add(this.g);this.reset(0,0,0);}
+  reset(x,z,yaw){Object.assign(this,{x,z,yaw,y:0,vx:0,vz:0,w:0,sail:0,rudder:0,hp:100,cd:[0,0],sink:0,respawnAt:0,anchored:false});this.g.visible=true;}
+  get speed(){return Math.hypot(this.vx,this.vz);}
+  points(){const s=Math.sin(this.yaw),c=Math.cos(this.yaw),r=this.beam*0.55;return[-0.33,0,0.33].map(k=>({x:this.x+s*k*this.len,z:this.z+c*k*this.len,r}));}
+  step(dt){
+    this.cd[0]=Math.max(0,this.cd[0]-dt);this.cd[1]=Math.max(0,this.cd[1]-dt);
+    if(this.sink>0){this.sink+=dt;this.vx*=0.98;this.vz*=0.98;this.x+=this.vx*dt;this.z+=this.vz*dt;return;}
+    const s=Math.sin(this.yaw),c=Math.cos(this.yaw);
+    const thrust=this.anchored?0:this.sail*P.fuerzaPorNivel;
+    this.vx+=s*thrust*dt;this.vz+=c*thrust*dt;
+    const drag=P.arrastreAgua+(this.anchored?2.5:0),damp=1/(1+drag*dt);this.vx*=damp;this.vz*=damp;
+    const vf=this.vx*s+this.vz*c,factor=Math.min(1,Math.abs(vf)/P.velocidadParaGiroCompleto);
+    this.w+=this.rudder*P.fuerzaGiro*factor*dt;this.w*=1/(1+(P.arrastreAngular+(this.anchored?3:0))*dt);
+    const lx=c,lz=-s,vl=this.vx*lx+this.vz*lz,k=Math.min(1,P.agarreLateral*dt);
+    this.vx-=lx*vl*k;this.vz-=lz*vl*k;
+    this.x+=this.vx*dt;this.z+=this.vz*dt;this.yaw+=this.w*dt;
+    for(const p of this.points())for(const i of islands){
+      const dx=p.x-i.x,dz=p.z-i.z,d=Math.hypot(dx,dz)||0.001,min=i.r+p.r;
+      if(d<min){const nx=dx/d,nz=dz/d;this.x+=nx*(min-d);this.z+=nz*(min-d);
+        const vn=this.vx*nx+this.vz*nz;
+        if(vn<0){this.vx-=nx*vn*1.4;this.vz-=nz*vn*1.4;this.vx*=0.5;this.vz*=0.5;this.w*=0.5;if(-vn>1.5)this.damage((-vn-1.5)*7,p.x-nx*p.r,p.z-nz*p.r);}}
+    }
+  }
+  damage(n,x,z){
+    if(this.sink>0)return;this.hp-=n;emit('wood',x,this.y+2,z,8,5,6,1.2);
+    if(this.hp<=0){this.hp=0;this.sink=0.001;this.sail=0;this.respawnAt=gameT+(this===player?5:7);onSunk(this);}
+  }
+  fire(side){
+    const idx=side>0?0:1;if(this.sink>0||this.cd[idx]>0)return false;this.cd[idx]=this.reload;
+    const s=Math.sin(this.yaw),c=Math.cos(this.yaw);
+    for(const zb of[-1.0,0.8,2.2]){
+      const lx=side*(this.beam/2+0.4),lz=zb*this.sc,wx=this.x+c*lx+s*lz,wz=this.z-s*lx+c*lz,wy=this.y+0.85*this.sc;
+      const sp=44+Math.random()*4,spr=(Math.random()-.5)*0.08;
+      const dx=side*c+spr*s,dz=-side*s+spr*c;
+      spawnBall({x:wx,y:wy,z:wz,vx:this.vx+dx*sp,vy:5+Math.random()*1.5,vz:this.vz+dz*sp,owner:this});
+      emit('smoke',wx+dx*1.5,wy,wz+dz*1.5,4,1.5,1.2,2.5);emit('fire',wx+dx*1.5,wy,wz+dz*1.5,3,4,1,1);
+    }
+    return true;
+  }
+  render(t){
+    const s=Math.sin(this.yaw),c=Math.cos(this.yaw),hl=this.len/2,hb=this.beam/2;
+    const hc=waveH(this.x,this.z,t),hf=waveH(this.x+s*hl,this.z+c*hl,t),ha=waveH(this.x-s*hl,this.z-c*hl,t);
+    const hp=waveH(this.x+c*hb,this.z-s*hb,t),hs=waveH(this.x-c*hb,this.z+s*hb,t);
+    let y=(hc*2+hf+ha)/4,pitch=-Math.atan((hf-ha)/this.len),roll=Math.atan((hs-hp)/this.beam)*-1+clamp(this.w*this.speed*0.08,-0.2,0.2);
+    if(this.sink>0){y-=this.sink*1.2;pitch-=this.sink*0.08;roll+=this.sink*0.04;if(this.sink>5)this.g.visible=false;}
+    this.y=y;this.g.position.set(this.x,y-0.3*this.sc,this.z);this.g.rotation.set(pitch,this.yaw,roll);
+    const sail=this.g.userData.sail,target=this.sail===0||this.anchored?0.12:this.sail/P.nivelesVela*4.4;
+    sail.scale.y+=(target-sail.scale.y)*0.06;
+    this.g.userData.flag.rotation.y=Math.sin(t*5+this.x)*0.25;
+    this.g.userData.box.visible=OPT.colisiones;
+    this.g.userData.anchor.visible=!this.anchored;
+    this.g.updateMatrixWorld(true);
+  }
+  deckPoint(lxb,lzb,out){return out.set(lxb,DECK_Y,lzb).applyMatrix4(this.g.matrixWorld);}
+  toLocal(x,z){const dx=x-this.x,dz=z-this.z,c=Math.cos(this.yaw),s=Math.sin(this.yaw);return{lx:(dx*c-dz*s)/this.sc,lz:(dx*s+dz*c)/this.sc};}
+}
+const player=new Ship({name:'Balandro',len:18,hullC:0x6b4226,sailC:0xf3ead2,flagC:0xc0392b,reload:2.5});
+const enemy=new Ship({name:'Bergantín',len:27,hullC:0xd9d4c5,sailC:0xffffff,flagC:0x1d1d1d,reload:3.6});
+const ships=[player,enemy];
+let kills=0;
+function freePoint(cx,cz,dmin,dmax,margin){
+  margin=margin||40;
+  for(let k=0;k<100;k++){const a=Math.random()*6.283,d=dmin+Math.random()*(dmax-dmin),x=cx+Math.cos(a)*d,z=cz+Math.sin(a)*d;
+    if(islands.every(i=>Math.hypot(i.x-x,i.z-z)>i.r+margin))return{x,z};}
+  return{x:cx+dmin,z:cz};
+}
+player.reset(0,0,0);
+{const p=freePoint(0,0,260,320);enemy.reset(p.x,p.z,Math.random()*6.28);enemy.sail=1;}
+enemy.wp=freePoint(0,0,150,400);
+
+/* Personaje cápsula de 1.8 m */
+function buildCharacter(){
+  const g=new THREE.Group(),shirt=mat(0x2f6fb0),skin=mat(0xe0b48a);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.9,8),shirt);body.position.y=0.85;g.add(body);
+  const b1=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,5),shirt);b1.position.y=0.4;g.add(b1);
+  const b2=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,5),shirt);b2.position.y=1.3;g.add(b2);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,6),skin);head.position.y=1.62;g.add(head);
+  const nose=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.08,0.14),skin);nose.position.set(0,1.6,0.2);g.add(nose);
+  const hat=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.06,6),mat(0x1d1d1d));hat.position.y=1.78;g.add(hat);
+  scene.add(g);return g;
+}
+const ch={g:buildCharacter(),state:'helm',ship:player,lx:0,lz:HELM_Z,x:0,y:0,z:0,vy:0,bvx:0,bvz:0,yaw:0,grounded:false,swimming:false};
+const V3=new THREE.Vector3();
+
+/* Mensajes */
+let toastTimer=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600);}
+function onSunk(sh){
+  if(sh===enemy){kills++;toast('Bergantín hundido');}else toast('Te hundieron. Reapareces en unos segundos');
+  if((ch.state==='deck'||ch.state==='helm')&&ch.ship===sh)leaveShip(0);
+}
+
+/* IA del bergantín */
+function ai(e){
+  if(e.sink>0)return;
+  const s=Math.sin(e.yaw),c=Math.cos(e.yaw),p=player;
+  const dx=p.x-e.x,dz=p.z-e.z,d=Math.hypot(dx,dz);
+  let desired;
+  if(OPT.enemigoAtaca&&p.sink===0&&d<170){
+    const toP=Math.atan2(dx,dz),a1=toP+Math.PI/2,a2=toP-Math.PI/2;
+    desired=Math.abs(wrap(a1-e.yaw))<Math.abs(wrap(a2-e.yaw))?a1:a2;
+    if(d>90)desired=toP+wrap(desired-toP)*0.45;
+    if(d<35)desired=toP+Math.PI;
+    e.sail=2;
+    if(d<100)for(const side of[1,-1]){const fx=side*c,fz=-side*s;if((dx*fx+dz*fz)/d>0.96)e.fire(side);}
+  }else{
+    if(Math.hypot(e.wp.x-e.x,e.wp.z-e.z)<40)e.wp=freePoint(p.x,p.z,150,400);
+    desired=Math.atan2(e.wp.x-e.x,e.wp.z-e.z);e.sail=1;
+  }
+  const ax=e.x+s*70,az=e.z+c*70;
+  for(const i of islands){if(Math.hypot(ax-i.x,az-i.z)<i.r+25){const cross=s*(i.z-e.z)-c*(i.x-e.x);desired=e.yaw+(cross>0?-1.3:1.3);break;}}
+  e.rudder=clamp(wrap(desired-e.yaw)*2,-1,1);
+}
+
+/* Colisión entre barcos */
+function shipsCollide(a,b){
+  if(a.sink>0||b.sink>0)return;
+  for(const pa of a.points())for(const pb of b.points()){
+    const dx=pa.x-pb.x,dz=pa.z-pb.z,d=Math.hypot(dx,dz)||0.001,min=pa.r+pb.r;
+    if(d<min){const nx=dx/d,nz=dz/d,push=(min-d)/2;a.x+=nx*push;a.z+=nz*push;b.x-=nx*push;b.z-=nz*push;
+      const rv=(a.vx-b.vx)*nx+(a.vz-b.vz)*nz;
+      if(rv<0){a.vx-=nx*rv*0.6;a.vz-=nz*rv*0.6;b.vx+=nx*rv*0.6;b.vz+=nz*rv*0.6;if(-rv>2){const dmg=(-rv-2)*6;a.damage(dmg,pa.x,pa.z);b.damage(dmg,pb.x,pb.z);}}}
+  }
+}
+
+/* Balas */
+function updateBalls(dt,t){
+  for(let i=balls.length-1;i>=0;i--){
+    const b=balls[i];b.vy-=G*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.z+=b.vz*dt;b.m.position.set(b.x,b.y,b.z);
+    let dead=false;
+    for(const sh of ships){
+      if(sh===b.owner||sh.sink>0)continue;
+      const l=sh.toLocal(b.x,b.z),ly=(b.y-sh.y)/sh.sc+0.3;
+      if(Math.abs(l.lx)<1.5&&l.lz>-4.1&&l.lz<4.5&&ly>-1.2&&ly<2.2){sh.damage(12,b.x,b.z);dead=true;break;}
+    }
+    if(!dead){const gy=groundAt(b.x,b.z);if(gy!==null&&b.y<gy+0.2){emit('splash',b.x,b.y,b.z,5,3,3,1);dead=true;}}
+    if(!dead&&b.y<waveH(b.x,b.z,t)){emit('splash',b.x,b.y,b.z,10,3,8,1.5);dead=true;}
+    if(dead||b.y<-20){scene.remove(b.m);balls.splice(i,1);}
+  }
+}
+
+/* Entrada */
+const keys={},touch={l:false,r:false},joy={x:0,y:0,id:null};
+let jumpReq=false;
+function atHelm(){return ch.state==='helm';}
+function sailUp(){if(atHelm()&&player.sink===0)player.sail=Math.min(P.nivelesVela,player.sail+1);}
+function sailDown(){if(atHelm())player.sail=Math.max(0,player.sail-1);}
+function fire(side){if(atHelm())ch.ship.fire(side);}
+function toggleAnchor(){const sh=(ch.state==='helm'||ch.state==='deck')?ch.ship:null;if(!sh){toast('Tienes que estar en el barco para usar el ancla');return;}
+  sh.anchored=!sh.anchored;toast(sh.anchored?'Ancla echada':'Ancla levada');}
+window.addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='INPUT')return;
+  const k=e.key.toLowerCase();keys[k]=true;
+  if(k===' '||k.startsWith('arrow'))e.preventDefault();
+  if(e.repeat)return;
+  if(k==='w'||k==='arrowup')sailUp();
+  else if(k==='s'||k==='arrowdown')sailDown();
+  else if(k==='q')fire(1);
+  else if(k==='e')fire(-1);
+  else if(k==='f')use();
+  else if(k==='r')toggleAnchor();
+  else if(k===' ')jumpReq=true;
+  else if(k==='h')$('help').hidden=!$('help').hidden;
+});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;touch.l=touch.r=false;});
+function hold(id,prop){const el=$(id);const on=e=>{e.preventDefault();touch[prop]=true;},off=()=>{touch[prop]=false;};
+  el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);}
+hold('t-l','l');hold('t-r','r');
+function tap(id,fn){$(id).addEventListener('pointerdown',e=>{e.preventDefault();fn();});}
+tap('t-up',sailUp);tap('t-dn',sailDown);tap('t-fp',()=>fire(1));tap('t-fs',()=>fire(-1));
+tap('t-use',()=>use());tap('t-anchor',toggleAnchor);tap('t-jump',()=>{jumpReq=true;});
+const joyEl=$('joy'),knob=$('knob');
+function joyMove(e){const r=joyEl.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const R=r.width/2,l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l;}knob.style.transform='translate('+dx+'px,'+dy+'px)';joy.x=dx/R;joy.y=-dy/R;}
+joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joy.id=e.pointerId;joyEl.setPointerCapture(e.pointerId);joyMove(e);});
+joyEl.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyMove(e);});
+const joyEnd=e=>{if(e.pointerId!==joy.id)return;joy.id=null;joy.x=joy.y=0;knob.style.transform='';};
+joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
+
+/* Acciones del personaje */
+function nearHelm(){return ch.state==='deck'&&Math.hypot(ch.lx,ch.lz-HELM_Z)<1.3;}
+function boardable(){
+  if(ch.state!=='free')return null;
+  for(const sh of ships){if(sh.sink>0)continue;const l=sh.toLocal(ch.x,ch.z),deckY=sh.deckPoint(0,0,V3).y;
+    if(Math.abs(l.lx)<1.4+2.4/sh.sc&&l.lz>-4.4&&l.lz<4.8&&ch.y<deckY+0.6)return{sh,l};}
+  return null;
+}
+function use(){
+  if(ch.state==='helm'){ch.state='deck';ch.lx=0.8;ch.lz=HELM_Z;return;}
+  if(nearHelm()){if(ch.ship.sink>0)return;ch.state='helm';ch.lx=0;ch.lz=HELM_Z;return;}
+  const b=boardable();
+  if(b){ch.state='deck';ch.ship=b.sh;ch.lx=clamp(b.l.lx,-1.05,1.05);ch.lz=clamp(b.l.lz,-1.7,1.4);ch.vy=0;toast(b.sh===player?'A bordo':'Abordaste el bergantín');}
+}
+function leaveShip(vy){
+  const sh=ch.ship;sh.deckPoint(ch.lx,ch.lz,V3);
+  ch.state='free';ch.x=V3.x;ch.y=V3.y;ch.z=V3.z;ch.vy=vy;ch.bvx=sh.vx;ch.bvz=sh.vz;
+}
+function inputVec(){
+  let ix=((keys['d']||keys['arrowright'])?1:0)-((keys['a']||keys['arrowleft'])?1:0)+joy.x;
+  let iy=((keys['w']||keys['arrowup'])?1:0)-((keys['s']||keys['arrowdown'])?1:0)+joy.y;
+  const l=Math.hypot(ix,iy);if(l>1){ix/=l;iy/=l;}
+  const run=keys['shift']||Math.hypot(joy.x,joy.y)>0.92;
+  const fx=-Math.sin(camYaw),fz=-Math.cos(camYaw),rx=Math.cos(camYaw),rz=-Math.sin(camYaw);
+  return{mx:fx*iy+rx*ix,mz:fz*iy+rz*ix,mag:Math.min(1,l),run};
+}
+
+function updateCharacter(dt,t){
+  const inp=atHelm()?{mx:0,mz:0,mag:0,run:false}:inputVec();
+  const speed=ch.swimming?2.2:(inp.run?6.5:3.2);
+  if(inp.mag>0.05)ch.yaw=Math.atan2(inp.mx,inp.mz);
+
+  if(ch.state==='helm'){
+    const sh=ch.ship;ch.lx=0;ch.lz=HELM_Z;sh.deckPoint(0,HELM_Z,V3);ch.x=V3.x;ch.y=V3.y;ch.z=V3.z;ch.yaw=sh.yaw;
+    jumpReq=false;
+  }else if(ch.state==='deck'){
+    const sh=ch.ship,c=Math.cos(sh.yaw),s=Math.sin(sh.yaw),k=speed*dt/sh.sc;
+    const dxw=inp.mx*k,dzw=inp.mz*k;
+    ch.lx+=dxw*c-dzw*s;ch.lz+=dxw*s+dzw*c;
+    if(Math.abs(ch.lx)<CABIN.x+0.15&&ch.lz>CABIN.z0&&ch.lz<CABIN.z1){
+      const opts=[[CABIN.z1+0.01-ch.lz,'z1'],[ch.lz-(CABIN.z0-0.01),'z0'],[CABIN.x+0.16-Math.abs(ch.lx),'x']].sort((a,b)=>a[0]-b[0]);
+      if(opts[0][1]==='z1')ch.lz=CABIN.z1+0.01;else if(opts[0][1]==='z0')ch.lz=CABIN.z0-0.01;else ch.lx=Math.sign(ch.lx||1)*(CABIN.x+0.16);
+    }
+    if(!insideDeck(ch.lx,ch.lz)){leaveShip(1.5);}
+    else if(jumpReq){leaveShip(5.5);}
+    else{sh.deckPoint(ch.lx,ch.lz,V3);ch.x=V3.x;ch.y=V3.y;ch.z=V3.z;}
+    jumpReq=false;
+  }else{
+    const damp=Math.min(1,dt*(ch.grounded||ch.swimming?6:0.3));ch.bvx-=ch.bvx*damp;ch.bvz-=ch.bvz*damp;
+    ch.x+=(inp.mx*speed+ch.bvx)*dt;ch.z+=(inp.mz*speed+ch.bvz)*dt;
+    ch.vy-=G*dt;ch.y+=ch.vy*dt;
+    const gy=groundAt(ch.x,ch.z),wy=waveH(ch.x,ch.z,t);
+    ch.grounded=false;ch.swimming=false;
+    if(gy!==null&&ch.y<=gy){ch.y=gy;ch.vy=0;ch.grounded=true;}
+    const floatY=wy-1.3;
+    if(!ch.grounded&&ch.y<floatY&&(gy===null||gy<floatY)){ch.y=floatY;ch.vy=Math.max(0,ch.vy);ch.swimming=true;}
+    if(jumpReq&&ch.grounded){ch.vy=5.5;ch.grounded=false;}
+    jumpReq=false;
+    for(const sh of ships){
+      if(sh.sink>0)continue;const l=sh.toLocal(ch.x,ch.z),deckY=sh.deckPoint(l.lx,l.lz,V3).y;
+      if(insideDeck(l.lx,l.lz)){
+        if(ch.vy<=0&&ch.y<=deckY+0.05&&ch.y>deckY-0.8){ch.state='deck';ch.ship=sh;ch.lx=l.lx;ch.lz=l.lz;ch.vy=0;break;}
+        if(ch.y<deckY-0.8){const side=l.lx>=0?1:-1,nl=side*1.5,c=Math.cos(sh.yaw),s=Math.sin(sh.yaw),lzm=l.lz*sh.sc,lxm=nl*sh.sc;
+          ch.x=sh.x+c*lxm+s*lzm;ch.z=sh.z-s*lxm+c*lzm;}
+      }
+    }
+    if(ch.y<-30){ch.y=waveH(ch.x,ch.z,t)-1.3;}
+  }
+  ch.g.position.set(ch.x,ch.y,ch.z);ch.g.rotation.y=ch.yaw;
+}
+
+/* Cámara */
+let camYaw=Math.PI,camPitch=0.28,dragging=false,lastDrag=-10,px=0,py=0;
+const dist={ship:48,foot:7};
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{dragging=true;px=e.clientX;py=e.clientY;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{if(!dragging)return;camYaw-=(e.clientX-px)*0.006;camPitch=clamp(camPitch+(e.clientY-py)*0.004,0.02,1.3);px=e.clientX;py=e.clientY;lastDrag=gameT;});
+const endDrag=()=>{dragging=false;};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+cv.addEventListener('wheel',e=>{e.preventDefault();const m=atHelm()?'ship':'foot';dist[m]=clamp(dist[m]+e.deltaY*(m==='ship'?0.05:0.01),m==='ship'?20:3,m==='ship'?140:20);},{passive:false});
+camera.position.set(0,20,-50);
+function updateCamera(dt,t){
+  const helm=atHelm(),d=helm?dist.ship:dist.foot;
+  const tx=helm?ch.ship.x:ch.x,ty=helm?ch.ship.y+6:ch.y+1.6,tz=helm?ch.ship.z:ch.z;
+  if(helm&&!dragging&&gameT-lastDrag>1.5)camYaw+=wrap(ch.ship.yaw+Math.PI-camYaw)*Math.min(1,dt*1.2);
+  let cx=tx+Math.sin(camYaw)*Math.cos(camPitch)*d,cy=ty+Math.sin(camPitch)*d,cz=tz+Math.cos(camYaw)*Math.cos(camPitch)*d;
+  const gy=groundAt(cx,cz);cy=Math.max(cy,waveH(cx,cz,t)+0.8,gy===null?-99:gy+0.8);
+  const k=Math.min(1,dt*8);
+  camera.position.x+=(cx-camera.position.x)*k;camera.position.y+=(cy-camera.position.y)*k;camera.position.z+=(cz-camera.position.z)*k;
+  camera.lookAt(tx,ty,tz);
+}
+
+/* Ajustes */
+const SL=[
+  ['fuerzaPorNivel','Fuerza por nivel de vela',0.1,2,0.05],
+  ['fuerzaGiro','Fuerza de giro',0.05,1.5,0.05],
+  ['velocidadParaGiroCompleto','Velocidad para girar completo',0.5,8,0.1],
+  ['agarreLateral','Agarre lateral',0,6,0.1],
+  ['arrastreAgua','Arrastre del agua',0.05,1.5,0.01],
+  ['arrastreAngular','Arrastre del giro',0.2,4,0.05]
+];
+const sbox=$('sliders');
+for(const[key,label,min,max,step]of SL){
+  const id='sl-'+key,w=document.createElement('div');w.className='sl';
+  w.innerHTML='<div class="top"><label for="'+id+'">'+label+'</label><output>'+P[key]+'</output></div><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+P[key]+'"><code>'+key+'</code>';
+  sbox.appendChild(w);
+  const inp=w.querySelector('input'),out=w.querySelector('output');
+  inp.addEventListener('input',()=>{P[key]=parseFloat(inp.value);out.textContent=P[key];});
+}
+$('btn-cfg').addEventListener('click',()=>{const c=$('cfg');c.hidden=!c.hidden;$('btn-cfg').setAttribute('aria-expanded',String(!c.hidden));});
+$('opt-col').addEventListener('change',e=>{OPT.colisiones=e.target.checked;debug.visible=OPT.colisiones;});
+$('opt-ai').addEventListener('change',e=>{OPT.enemigoAtaca=e.target.checked;});
+$('copy').addEventListener('click',()=>{
+  const txt='// ControlBarco\nfuerzaPorNivel = '+P.fuerzaPorNivel+'\nfuerzaGiro = '+P.fuerzaGiro+'\nvelocidadParaGiroCompleto = '+P.velocidadParaGiroCompleto+'\nagarreLateral = '+P.agarreLateral+'\n// Flotacion\narrastreAgua = '+P.arrastreAgua+'\narrastreAngularAgua = '+P.arrastreAngular;
+  const btn=$('copy'),done=m=>{btn.textContent=m;setTimeout(()=>btn.textContent='Copiar valores para Unity',1800);};
+  try{navigator.clipboard.writeText(txt).then(()=>done('Copiado'),()=>{toast(txt.replace(/\n/g,' · '));done('Valores en pantalla');});}
+  catch(err){toast(txt.replace(/\n/g,' · '));done('Valores en pantalla');}
+});
+try{if(localStorage.getItem('naval-help-v2')==='1')$('help').hidden=true;}catch(e){}
+$('help-close').addEventListener('click',()=>{$('help').hidden=true;try{localStorage.setItem('naval-help-v2','1');}catch(e){}});
+
+/* HUD */
+const sailEls=[...$('sails').children];
+let hudT=0;
+function updateHUD(){
+  document.body.classList.toggle('helm',atHelm());document.body.classList.toggle('foot',!atHelm());
+  let mode='Al timón';
+  if(ch.state==='deck')mode=ch.ship===player?'En cubierta':'En el bergantín';
+  else if(ch.state==='free')mode=ch.swimming?'Nadando':ch.grounded?'En tierra':'En el aire';
+  $('mode').textContent=mode;
+  $('anchor').textContent=player.anchored?'Ancla echada':'Ancla levada';$('anchor').classList.toggle('on',player.anchored);
+  sailEls.forEach((el,i)=>el.classList.toggle('on',i<player.sail));
+  $('spd').innerHTML=(player.speed*1.944).toFixed(1)+' <small>nudos</small>';
+  const deg=((player.yaw*180/Math.PI)%360+360)%360;$('hdg').textContent=String(Math.round(deg)%360).padStart(3,'0')+'°';
+  const hp=$('hp');hp.style.width=player.hp+'%';hp.classList.toggle('low',player.hp<35);
+  $('cd-p').style.width=(100-player.cd[0]/player.reload*100)+'%';
+  $('cd-s').style.width=(100-player.cd[1]/player.reload*100)+'%';
+  const eh=$('ehp');eh.style.width=enemy.hp+'%';eh.classList.toggle('low',enemy.hp<35);
+  const ref=atHelm()?player:ch,ryaw=atHelm()?player.yaw:camYaw+Math.PI;
+  const dx=enemy.x-ref.x,dz=enemy.z-ref.z,d=Math.hypot(dx,dz);
+  $('edist').textContent=enemy.sink>0?'—':Math.round(d)+' m';
+  const rel=wrap(Math.atan2(dx,dz)-ryaw);
+  $('erel').textContent=enemy.sink>0?'Hundido':Math.abs(rel)<0.4?'Al frente':Math.abs(rel)>2.75?'Detrás':rel>0?(atHelm()?'Babor':'Izquierda'):(atHelm()?'Estribor':'Derecha');
+  $('arrow').style.transform='rotate('+(-rel)+'rad)';
+  $('kills').textContent=kills;
+  const tk=matchMedia('(hover:none),(pointer:coarse)').matches;
+  let pr='';
+  if(ch.state==='helm')pr=(tk?'Usar':'F')+': soltar el timón';
+  else if(nearHelm())pr=(tk?'Usar':'F')+': tomar el timón';
+  else if(boardable())pr=(tk?'Usar':'F')+': subir al barco';
+  const pe=$('prompt');pe.hidden=!pr;pe.textContent=pr;
+}
+
+/* Bucle principal */
+const STEP=1/60;let acc=0,last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;acc+=dt;
+  while(acc>=STEP){
+    gameT+=STEP;
+    player.rudder=atHelm()&&ch.ship===player?((keys['a']||keys['arrowleft']||touch.l)?1:0)-((keys['d']||keys['arrowright']||touch.r)?1:0):0;
+    ai(enemy);player.step(STEP);enemy.step(STEP);shipsCollide(player,enemy);
+    for(const sh of ships)if(sh.sink>0&&gameT>=sh.respawnAt){
+      if(sh===player){const ref=ch.state==='free'?ch:player,p=freePoint(ref.x,ref.z,30,60);player.reset(p.x,p.z,Math.random()*6.28);ch.state='helm';ch.ship=player;}
+      else{const p=freePoint(player.x,player.z,260,340);enemy.reset(p.x,p.z,Math.random()*6.28);enemy.wp=freePoint(player.x,player.z,150,400);}
+    }
+    acc-=STEP;
+  }
+  updateBalls(dt,gameT);updateParts(dt);
+  player.render(gameT);enemy.render(gameT);
+  updateCharacter(dt,gameT);
+  const fx=atHelm()?player.x:ch.x,fz=atHelm()?player.z:ch.z;
+  updateWater(fx,fz,gameT);updateCamera(dt,gameT);
+  hudT+=dt;if(hudT>0.1){hudT=0;updateHUD();}
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+updateHUD();
+requestAnimationFrame(frame);
+})();
+</script>
