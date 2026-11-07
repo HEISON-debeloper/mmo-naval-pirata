@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.4.0 — Islas y supervivencia  (2026-11-07)
+- Islas con palmas, rocas, fibra, ramas, piedras, arbustos de frutas y cocos.
+- Inventario, hambre y sed; nadar; empezar en una isla sin barco y armar una balsa.
+
 ## 0.3.0 — Personaje y abordaje  (2026-11-07)
 - El pirata camina por la cubierta del barco aunque el barco se mueva, toma y suelta el timón con F.
 - Tripulantes enemigos con espada; abordaje y captura del barco cuando cae su tripulación.
