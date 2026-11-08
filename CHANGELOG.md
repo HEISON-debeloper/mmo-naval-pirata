@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.10.0 — Brújula y mapa  (2026-11-08)
+- Brújula arriba de la pantalla con islas, tu barco y enemigos cercanos.
+- Mapa con M (zoom, arrastrar, volver a ti); las islas se descubren al acercarse.
+
 ## 0.9.0 — Arreglos de puntería y calidad de vida  (2026-11-07)
 - El fantasma ya no se dispara con muchos cañones; la cámara se engancha solo al mirar hacia la zona de caída.
 - Velas proporcionales a cualquier tamaño de barco.
