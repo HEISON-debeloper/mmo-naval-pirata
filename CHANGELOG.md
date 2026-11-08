@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.16.0 — Botín  (2026-11-08)
+- Al hundir un pirata suelta cajas que flotan y se recogen solas al pasar cerca.
+- Al capturarlo, todo su botín va a la mochila. Tecla L (prueba): ir a la caja más cercana.
+
 ## 0.15.0 — Guardado de partida  (2026-11-08)
 - Se guarda solo cada 30 s y al salir; F5 guarda y F8 borra.
 - Guarda posición, vida, hambre, sed, mochila, tu barco completo, hornos e islas descubiertas.
