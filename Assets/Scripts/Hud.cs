@@ -376,10 +376,11 @@ public class Hud : MonoBehaviour
         new[] { "Navegar", "Brújula arriba: islas descubiertas (verde), tu barco (dorado), enemigos (rojo). M abre la carta de navegación" },
         new[] { "Cámara", "Mover el mouse mirar · Rueda acercar o alejar (al timón: desde el timón hasta ver el barco pequeñito) · Esc soltar el cursor · Clic volver a capturarlo" },
         new[] { "Creativo", "F2 activar o quitar: todo gratis, todas las herramientas, sin daño ni hambre. En Tab aparece la página Creativo: llenar de cañones, reparar, saltar de molde, traer o reiniciar el enemigo, mar en calma, +100 de todo" },
+        new[] { "Piratas", "Algunos te cañonean de costado y otros van directo a abordarte: cuando te alcanzan, sus piratas saltan a tu cubierta. Suelta el timón (F) y pelea con la espada (clic). Sin tripulación, su barco queda para capturar" },
         new[] { "Mercado", "Algunas islas tienen un mercader en la playa (la inicial siempre). Junto a él, Tab abre Vender y Comprar. Cada isla paga distinto: lleva lo barato de una a donde es caro. Si vendes mucho de lo mismo, el precio baja un rato" },
         new[] { "Botín", "Hunde un pirata y suelta cajas que flotan: pasa cerca (a pie, nadando o con tu barco) y se recogen solas. Si lo capturas (sin tripulación), todo su botín va a tu mochila" },
         new[] { "Partida", "Se guarda sola cada 30 s y al salir · F5 guardar ya · F8 borrar la partida (al volver a entrar empiezas de cero)" },
-        new[] { "Prueba", "1 dañar al pirata más cercano · 2/3 traerlo · 4 materiales · 5–0 y H ir a un recurso · B a tu barco · T puntería fija · J ir a una isla nueva · K tu barco 800 m más lejos · L ir a la caja de botín más cercana · N ir al mercader más cercano" },
+        new[] { "Prueba", "1 dañar al pirata más cercano · 2/3 traerlo · 4 materiales · 5–0 y H ir a un recurso · B a tu barco · T puntería fija · J ir a una isla nueva · K tu barco 800 m más lejos · L ir a la caja de botín más cercana · N ir al mercader más cercano · V un pirata viene a abordarte" },
     };
 
     void Ayuda()

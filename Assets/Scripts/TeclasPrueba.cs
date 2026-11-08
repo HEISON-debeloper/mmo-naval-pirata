@@ -21,6 +21,11 @@ public class TeclasPrueba : MonoBehaviour
         if (ia != null && k.digit1Key.wasPressedThisFrame) ia.GetComponent<VidaBarco>().Dano(25f);
         if (ia != null && k.digit2Key.wasPressedThisFrame) Traer(ia, p, 30f);
         if (ia != null && k.digit3Key.wasPressedThisFrame) Traer(ia, p, 9f);
+        if (k.vKey.wasPressedThisFrame)
+        {
+            if (ia == null) p.Avisar("Prueba: no hay piratas cerca (aléjate del inicio con K)");
+            else { ia.ForzarAbordaje(); Traer(ia, p, 40f); p.Avisar("Prueba: " + ia.name + " viene a abordarte"); }
+        }
         if (k.digit4Key.wasPressedThisFrame)
         {
             Inventario inv = p.GetComponent<Inventario>();

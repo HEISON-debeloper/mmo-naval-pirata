@@ -51,10 +51,10 @@ public static class Cubierta
         return v;
     }
 
-    public static Vector3 PuntoAleatorio(float w, float h, float L)
+    public static Vector3 PuntoAleatorio(float w, float h, float L, bool plana = false)
     {
         Vector3 p = new Vector3(Random.Range(-0.38f, 0.38f) * w, Altura(h), Random.Range(-0.25f, 0.25f) * L);
-        return EvitarCamarote(p, w, L);
+        return EvitarCamarote(p, w, L, plana);
     }
 
     public static void Medidas(BoxCollider col, out float w, out float h, out float L)

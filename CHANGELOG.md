@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.20.0 — Abordajes piratas  (2026-11-08)
+- Algunos piratas (4 de cada 10) van directo a abordarte: se pegan a tu barco y sus piratas saltan a tu cubierta, hasta 3 a la vez.
+- Peleas con la espada; si cae toda su tripulación, su barco queda capturado y su botín va a tu mochila.
+- Arreglo: los piratas sobre una balsa ya no se traban con un camarote que no existe y llegan hasta ti.
+- Tecla de prueba V: el pirata más cercano viene a abordarte.
+
 ## 0.19.0 — Mercados en el mapa  (2026-11-08)
 - Las islas con mercader salen con una moneda dorada en la brújula y en el mapa (M), y el aviso al descubrirlas lo dice.
 - La partida guardada recuerda qué islas tienen mercader.

@@ -18,6 +18,7 @@ public class Tripulante : MonoBehaviour
 
     ControlBarco barco;
     float w, h, L;
+    bool plana;   // balsa: sin castillo de popa (si no, chocan con un camarote que no existe)
     Vector3 destino;
     float yawLocal, tAtaque, tPausa, tMuerto, tGolpe, tAnim;
     Renderer[] cuerpos;
@@ -30,6 +31,7 @@ public class Tripulante : MonoBehaviour
     {
         barco = GetComponentInParent<ControlBarco>();
         Cubierta.Medidas(barco.GetComponent<BoxCollider>(), out w, out h, out L);
+        plana = Cubierta.EsPlana(barco);
         destino = transform.localPosition;
         yawLocal = Random.Range(0f, 360f);
         cuerpos = GetComponentsInChildren<Renderer>();
@@ -37,9 +39,38 @@ public class Tripulante : MonoBehaviour
         tAtaque = recarga;
     }
 
+    // Salto al abordar: de su barco a la cubierta de otro (el tuyo), en arco
+    Vector3 saltoDesde, saltoHasta;
+    float tSalto = -1f;
+    public bool Saltando => tSalto >= 0f;
+    public ControlBarco Barco => barco;
+
+    public void Saltar(ControlBarco nuevo)
+    {
+        if (Muerto || nuevo == null || nuevo == barco) return;
+        barco = nuevo;
+        transform.SetParent(nuevo.transform, true);
+        Cubierta.Medidas(nuevo.GetComponent<BoxCollider>(), out w, out h, out L);
+        plana = Cubierta.EsPlana(nuevo);
+        saltoDesde = transform.localPosition;
+        saltoHasta = Cubierta.PuntoAleatorio(w, h, L, plana);
+        destino = saltoHasta;
+        tSalto = 0f;
+    }
+
     void Update()
     {
         float dt = Time.deltaTime;
+        if (tSalto >= 0f && !Muerto)
+        {
+            tSalto += dt / 0.8f;
+            float k = Mathf.Clamp01(tSalto);
+            transform.localPosition = Vector3.Lerp(saltoDesde, saltoHasta, k) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 4f;
+            Vector3 dir = saltoHasta - saltoDesde; dir.y = 0f;
+            if (dir.sqrMagnitude > 0.01f) yawLocal = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+            if (k >= 1f) tSalto = -1f;
+            return;
+        }
         if (Muerto)
         {
             tMuerto += dt;
@@ -58,7 +89,7 @@ public class Tripulante : MonoBehaviour
             if (dd.magnitude < 0.5f)
             {
                 tPausa -= dt;
-                if (tPausa <= 0f) { destino = Cubierta.PuntoAleatorio(w, h, L); tPausa = Random.Range(1f, 4f); }
+                if (tPausa <= 0f) { destino = Cubierta.PuntoAleatorio(w, h, L, plana); tPausa = Random.Range(1f, 4f); }
             }
             objetivo = destino;
         }
@@ -69,8 +100,8 @@ public class Tripulante : MonoBehaviour
         if (dist > (persigue ? alcance * 0.8f : 0.3f))
         {
             Vector3 n = lp + d.normalized * Mathf.Min(sp * dt, dist);
-            n = Cubierta.EvitarCamarote(n, w, L);
-            if (Cubierta.Dentro(n, w, L)) lp = n;
+            n = Cubierta.EvitarCamarote(n, w, L, plana);
+            if (Cubierta.Dentro(n, w, L, plana)) lp = n;
         }
         if (dist > 0.05f) yawLocal = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
         lp.y = Cubierta.Altura(h);

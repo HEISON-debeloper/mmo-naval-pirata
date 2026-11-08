@@ -22,6 +22,12 @@ public class IABarco : MonoBehaviour
     public float distanciaDisparo = 100f;
     [Tooltip("Por debajo de esta fracción del casco, arría velas (queda a la deriva).")]
     public float umbralDanado = 0.5f;
+    [Tooltip("Probabilidad de que, al atacar, intente abordarte en vez de solo cañonear.")]
+    public float probAbordaje = 0.4f;
+    [Tooltip("Cuántos piratas pueden estar a la vez en tu barco.")]
+    public int maxAbordando = 3;
+    bool decidido, quiereAbordar, avisoAbordaje;
+    float tAbordaje;
 
     // Todos los enemigos activos (más rápido que buscarlos con FindObjectsByType cada frame)
     public static readonly System.Collections.Generic.List<IABarco> Todos = new System.Collections.Generic.List<IABarco>();
@@ -133,16 +139,29 @@ public class IABarco : MonoBehaviour
         {
             EstadoTexto = "Atacando";
             float aJugador = Mathf.Atan2(hacia.x, hacia.z) * Mathf.Rad2Deg;
+            // Al empezar el ataque decide si cañonear de costado o ir directo a abordarte
+            if (!decidido) { decidido = true; quiereAbordar = Random.value < probAbordaje && TripulantesVivos() >= 2; }
             float a1 = aJugador + 90f, a2 = aJugador - 90f;
             deseado = Mathf.Abs(Mathf.DeltaAngle(rumbo, a1)) < Mathf.Abs(Mathf.DeltaAngle(rumbo, a2)) ? a1 : a2;
             if (dist > 90f) deseado = aJugador + Mathf.DeltaAngle(aJugador, deseado) * 0.45f;
             if (dist < 35f) deseado = aJugador + 180f;
             cb.FijarVelas(2);
+            if (quiereAbordar && TripulantesEnCasa() > 0)
+            {
+                // Abordaje: proa directo a ti y, al quedar pegados, sus piratas saltan a tu cubierta
+                EstadoTexto = "Abordando";
+                deseado = aJugador;
+                BoxCollider suyo = objetivo.GetComponent<BoxCollider>();
+                float umbral = 8f + 0.5f * (L + (suyo != null ? suyo.size.z : 10f));
+                cb.FijarVelas(dist < umbral * 1.8f ? 1 : 2);
+                if (dist < umbral) Abordar(objetivo);
+            }
             IntentarDisparar(hacia, dist);
         }
         else
         {
             EstadoTexto = "Patrullando";
+            decidido = false;
             Vector3 r = puntoRuta - pos; r.y = 0f;
             if (r.magnitude < 40f) { puntoRuta = NuevoPunto(); r = puntoRuta - pos; }
             deseado = Mathf.Atan2(r.x, r.z) * Mathf.Rad2Deg;
@@ -158,6 +177,37 @@ public class IABarco : MonoBehaviour
         }
 
         cb.timonExterno = Mathf.Clamp(Mathf.DeltaAngle(rumbo, deseado) / 30f, -1f, 1f);
+    }
+
+    // Para probar: este pirata va a abordarte sí o sí
+    public void ForzarAbordaje() { decidido = true; quiereAbordar = true; }
+
+    int TripulantesEnCasa()
+    {
+        int n = 0;
+        foreach (Tripulante t in tripulantes) if (t != null && !t.Muerto && t.Barco == cb) n++;
+        return n;
+    }
+
+    // Manda un pirata a tu barco cada pocos segundos (hasta maxAbordando a la vez), solo si estás a bordo
+    void Abordar(Rigidbody objetivo)
+    {
+        Personaje p = Personaje.Instancia;
+        ControlBarco suyo = objetivo.GetComponent<ControlBarco>();
+        if (p == null || suyo == null || !p.SobreBarco(suyo)) return;
+        tAbordaje -= Time.deltaTime;
+        if (tAbordaje > 0f) return;
+        tAbordaje = 3f;
+        int alla = 0;
+        foreach (Tripulante t in tripulantes) if (t != null && !t.Muerto && t.Barco == suyo) alla++;
+        if (alla >= maxAbordando) return;
+        foreach (Tripulante t in tripulantes)
+        {
+            if (t == null || t.Muerto || t.Barco != cb) continue;
+            t.Saltar(suyo);
+            if (!avisoAbordaje) { avisoAbordaje = true; p.Avisar("¡Te abordan! Suelta el timón (F) y pelea con la espada (clic)"); }
+            return;
+        }
     }
 
     void IntentarDisparar(Vector3 hacia, float dist)
@@ -199,12 +249,14 @@ public class IABarco : MonoBehaviour
     void CrearTripulacion()
     {
         foreach (Tripulante t in GetComponentsInChildren<Tripulante>()) Destroy(t.gameObject);
+        foreach (Tripulante t in tripulantes) if (t != null) Destroy(t.gameObject);   // también los que saltaron a otro barco
+        decidido = false; avisoAbordaje = false;
         tripulantes = new Tripulante[tripulacion];
         for (int i = 0; i < tripulacion; i++)
         {
             GameObject g = new GameObject("Tripulante " + (i + 1));
             g.transform.SetParent(transform, false);
-            g.transform.localPosition = Cubierta.PuntoAleatorio(w, h, L);
+            g.transform.localPosition = Cubierta.PuntoAleatorio(w, h, L, Cubierta.EsPlana(this));
             Visual(PrimitiveType.Capsule, g.transform, new Vector3(0, 0.9f, 0), Vector3.zero, new Vector3(0.6f, 0.9f, 0.6f), materialTripulante);
             Visual(PrimitiveType.Cube, g.transform, new Vector3(0, 1.55f, 0.3f), Vector3.zero, new Vector3(0.12f, 0.08f, 0.14f), materialTripulante);
             GameObject piv = new GameObject("Espada");
