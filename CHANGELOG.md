@@ -6,6 +6,11 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.9.0 — Arreglos de puntería y calidad de vida  (2026-11-07)
+- El fantasma ya no se dispara con muchos cañones; la cámara se engancha solo al mirar hacia la zona de caída.
+- Velas proporcionales a cualquier tamaño de barco.
+- Página Creativo con atajos de prueba y mejoras en los menús (Shift ×5, faltantes en rojo, "alcanza para N").
+
 ## 0.8.0 — Moldes históricos y tamaños  (2026-11-07)
 - 15 moldes de barco reales: balsa, bote, chalupa, pinaza, cúter, balandro, goleta, bergantín, corbeta, fragata, galeón, navíos de cuarta, de línea, de primera y de cuatro puentes.
 - Tamaño aparte del molde: alargar, ensanchar y subir pisos (hasta 10 cada uno); el molde siguiente cuesta más si el barco es grande.
