@@ -6,6 +6,11 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.17.0 — Sistema de versiones  (2026-11-08)
+- El proyecto completo de Unity queda guardado en GitHub; cada versión nueva lleva su etiqueta y su código.
+- Número de versión en el juego (Version.cs), visible en la ayuda F1.
+- Este historial (CHANGELOG.md) con todas las versiones desde la primera.
+
 ## 0.16.0 — Botín  (2026-11-08)
 - Al hundir un pirata suelta cajas que flotan y se recogen solas al pasar cerca.
 - Al capturarlo, todo su botín va a la mochila. Tecla L (prueba): ir a la caja más cercana.

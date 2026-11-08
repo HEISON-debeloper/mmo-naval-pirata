@@ -1,0 +1,75 @@
+using UnityEngine;
+
+// Vida del casco. Al llegar a 0 el barco se hunde y reaparece donde empezó.
+[RequireComponent(typeof(Rigidbody))]
+public class VidaBarco : MonoBehaviour
+{
+    public float vidaMaxima = 100f;
+    public float vida = 100f;
+    [Tooltip("Segundos hundiéndose antes de reaparecer.")]
+    public float tiempoReaparecer = 7f;
+    [Tooltip("Daño por choque contra islas u otros barcos, por cada m/s de impacto.")]
+    public float danoPorChoque = 6f;
+
+    public bool Hundido { get; private set; }
+    public event System.Action alReaparecer;
+
+    Rigidbody rb;
+    Flotacion flot;
+    Vector3 posInicio;
+    Quaternion rotInicio;
+    float tiempoHundido;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        flot = GetComponent<Flotacion>();
+        posInicio = transform.position;
+        rotInicio = transform.rotation;
+        vida = vidaMaxima;
+    }
+
+    public void Dano(float cantidad)
+    {
+        if (Hundido) return;
+        // En modo creativo tu barco no recibe daño
+        if (ModoCreativo.Activo && Personaje.Instancia != null && Personaje.Instancia.barco != null && Personaje.Instancia.barco.gameObject == gameObject) return;
+        vida -= cantidad;
+        if (vida <= 0f)
+        {
+            vida = 0f;
+            Hundido = true;
+            tiempoHundido = 0f;
+            if (flot != null) flot.activa = false;
+            Debug.Log(name + " se hundió");
+        }
+    }
+
+    void Update()
+    {
+        if (!Hundido) return;
+        tiempoHundido += Time.deltaTime;
+        rb.AddForce(Vector3.down * 2f, ForceMode.Acceleration);
+        if (tiempoHundido >= tiempoReaparecer) Reaparecer();
+    }
+
+    public void Reaparecer()
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.position = posInicio;
+        rb.rotation = rotInicio;
+        transform.SetPositionAndRotation(posInicio, rotInicio);
+        vida = vidaMaxima;
+        Hundido = false;
+        if (flot != null) flot.activa = true;
+        alReaparecer?.Invoke();
+    }
+
+    void OnCollisionEnter(Collision c)
+    {
+        if (c.collider.GetComponentInParent<BalaCanon>() != null) return;
+        float impacto = c.relativeVelocity.magnitude;
+        if (impacto > 1.5f) Dano((impacto - 1.5f) * danoPorChoque);
+    }
+}
