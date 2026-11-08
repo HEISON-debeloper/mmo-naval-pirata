@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.6.0 — Interfaz ordenada  (2026-11-07)
+- HUD único sin nada encimado: vida/hambre/sed, mochila, tarjeta del barco, enemigo cercano, avisos, ayuda F1.
+- La playa quedó 2 m sobre el mar y las olas se calman junto a las islas (el agua ya no inunda el pasto).
+
 ## 0.5.0 — Fabricación y mejoras  (2026-11-07)
 - Menú de fabricación (Tab): cuerda, hacha, pico, horno de piedra, fundir hierro, cañones, balsa.
 - Mejoras del barco por piezas (casco y velas) y bodega para llevar comida.
