@@ -6,6 +6,9 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.11.0 — Mundo infinito  (2026-11-08)
+- Islas generadas sin fin alrededor de ti, siempre iguales (misma semilla), con nombres piratas.
+
 ## 0.10.0 — Brújula y mapa  (2026-11-08)
 - Brújula arriba de la pantalla con islas, tu barco y enemigos cercanos.
 - Mapa con M (zoom, arrastrar, volver a ti); las islas se descubren al acercarse.
