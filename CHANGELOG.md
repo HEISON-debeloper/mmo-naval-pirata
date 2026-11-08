@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.14.0 — Cámara de apuntado estilo Black Flag  (2026-11-08)
+- Al apuntar la cámara queda junto a ti en el timón mirando al costado y solo se inclina con el alcance.
+- Se quitó el bergantín que aparecía junto a la isla inicial.
+
 ## 0.13.0 — Optimización  (2026-11-08)
 - Lo pequeño deja de dibujarse de lejos, sombras solo cerca y los piratas lejanos duermen (sin física ni IA).
 
