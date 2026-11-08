@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.20.0";
-    public const string Nombre = "Abordajes piratas";
+    public const string Numero = "0.21.0";
+    public const string Nombre = "Pintura del barco";
     public static string Texto => "v" + Numero;
 }

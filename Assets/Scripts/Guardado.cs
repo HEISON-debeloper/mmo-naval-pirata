@@ -37,6 +37,7 @@ public class Guardado : MonoBehaviour
         public Vector3 posBarco;
         public float rumboBarco;
         public List<Cosa> bodega = new List<Cosa>();
+        public int pinturaCasco = -1, pinturaVelas = -1, pinturaBandera = -1;   // -1 = color original
 
         public List<HornoGuardado> hornos = new List<HornoGuardado>();
         public List<IslaConocida> islas = new List<IslaConocida>();
@@ -103,6 +104,8 @@ public class Guardado : MonoBehaviour
             if (vb != null && vb.vidaMaxima > 0f) d.vidaBarco = vb.vida / vb.vidaMaxima;
             d.posBarco = b.transform.position;
             d.rumboBarco = b.transform.eulerAngles.y;
+            Pintura pt = b.GetComponent<Pintura>();
+            if (pt != null) { d.pinturaCasco = pt.casco; d.pinturaVelas = pt.velas; d.pinturaBandera = pt.bandera; }
             Bodega bd = b.GetComponent<Bodega>();
             if (bd != null) foreach (var c in bd.Todo) if (c.Value > 0) d.bodega.Add(new Cosa { tipo = c.Key, n = c.Value });
         }
@@ -174,6 +177,12 @@ public class Guardado : MonoBehaviour
                 Bodega bd = b.GetComponent<Bodega>();
                 if (bd == null) bd = b.gameObject.AddComponent<Bodega>();
                 foreach (Cosa c in d.bodega) bd.Fijar(c.tipo, c.n);
+            }
+            if (d.pinturaCasco >= 0 || d.pinturaVelas >= 0 || d.pinturaBandera >= 0)
+            {
+                Pintura pt = b.gameObject.AddComponent<Pintura>();
+                pt.casco = d.pinturaCasco; pt.velas = d.pinturaVelas; pt.bandera = d.pinturaBandera;
+                pt.Aplicar();
             }
             yield return null;   // que el barco nuevo arranque (física, cubierta)
         }

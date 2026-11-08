@@ -33,8 +33,8 @@ public class Fabricacion : MonoBehaviour
     Personaje p;
     List<Receta>[] paginas;
     int pagina;
-    static readonly string[] Titulos = { "Fabricar", "Tu barco", "Cañones y bodega", "Vender", "Comprar", "Creativo" };
-    const int IndiceVender = 3;
+    static readonly string[] Titulos = { "Fabricar", "Tu barco", "Cañones y bodega", "Pintura", "Vender", "Comprar", "Creativo" };
+    const int IndiceVender = 4;
     // La página "Creativo" solo aparece con el modo creativo (F2)
     int Paginas => ModoCreativo.Activo ? paginas.Length : paginas.Length - 1;
     static readonly Dictionary<string, int> Gratis = new Dictionary<string, int>();
@@ -124,10 +124,58 @@ public class Fabricacion : MonoBehaviour
                         p.Avisar("Sacaste " + n + " de comida de la bodega");
                         return null; } },
             },
+            PaginaPintura(),
             PaginaVender(),
             PaginaComprar(),
             PaginaCreativo(),
         };
+    }
+
+    // ---------- Pintura de tu barco: casco, velas y bandera (5 de oro cada cambio) ----------
+    const int CostoPintura = 5;
+    Pintura PinturaActual(bool crear)
+    {
+        ControlBarco b = BarcoAbordo();
+        if (b == null) return null;
+        Pintura pt = b.GetComponent<Pintura>();
+        if (pt == null && crear) pt = b.gameObject.AddComponent<Pintura>();
+        return pt;
+    }
+
+    List<Receta> PaginaPintura()
+    {
+        var lista = new List<Receta>();
+        foreach (Pintura.Parte parte in new[] { Pintura.Parte.Casco, Pintura.Parte.Velas, Pintura.Parte.Bandera })
+        foreach (int paso in new[] { 1, -1 })
+        {
+            Pintura.Parte pa = parte; int ps = paso;
+            string nombreParte = pa == Pintura.Parte.Casco ? "Casco" : pa == Pintura.Parte.Velas ? "Velas" : "Bandera";
+            lista.Add(new Receta
+            {
+                nombre = nombreParte + (ps > 0 ? ": color siguiente ▶" : ": color anterior ◀"),
+                descripcion = "Pinta tu barco",
+                costo = () => C(Inventario.Oro, CostoPintura),
+                requisito = () => {
+                    string r = RequisitoPropio(); if (r != null) return r;
+                    return PinturaActual(true).Tiene(pa) ? null : "Tu barco no tiene " + nombreParte.ToLower();
+                },
+                detalle = () => {
+                    Pintura pt = PinturaActual(false);
+                    int i = pt != null ? pt.Indice(pa) : -1;
+                    int n = Pintura.Paleta.Length + 1, sig = (i + 1 + ps + n) % n - 1;
+                    return Pintura.NombreColor(i) + " → " + Hud.Col(Pintura.NombreColor(sig), Hud.Oro);
+                },
+                hacer = () => { Pintura pt = PinturaActual(true); pt.Cambiar(pa, ps); p.Avisar(nombreParte + ": " + Pintura.NombreColor(pt.Indice(pa))); return null; },
+                mensaje = ""
+            });
+        }
+        lista.Add(new Receta
+        {
+            nombre = "Colores originales", descripcion = "Quita toda la pintura (gratis)",
+            costo = () => Gratis, requisito = RequisitoPropio, mensaje = "Tu barco volvió a sus colores originales",
+            hacer = () => { Pintura pt = PinturaActual(true); pt.Poner(Pintura.Parte.Casco, -1); pt.Poner(Pintura.Parte.Velas, -1); pt.Poner(Pintura.Parte.Bandera, -1); return null; }
+        });
+        return lista;
     }
 
     // ---------- Mercado: vender y comprar con un mercader cerca (precios distintos en cada isla) ----------
@@ -411,6 +459,8 @@ public class Fabricacion : MonoBehaviour
         if (pzViejo != null && pzViejo.NivelTotal > 0) nuevo.AddComponent<PiezasBarco>().Copiar(pzViejo.nivelCasco, pzViejo.nivelVelas);
         vida.vida = vida.vidaMaxima * (1f - danoFraccion * 0.5f);   // al rehacerlo se repara la mitad del daño
         if (bdVieja != null) nuevo.AddComponent<Bodega>().CopiarDe(bdVieja);
+        Pintura ptVieja = viejo.GetComponent<Pintura>();
+        if (ptVieja != null) nuevo.AddComponent<Pintura>().Copiar(ptVieja);   // la pintura se conserva
         nuevo.GetComponent<Canones>().Fijar(cBabor, cEstribor, cProa, cPopa);   // lo que no quepa se queda en las ranuras que hay
 
         p.AsignarBarcoPropio(nuevo.GetComponent<ControlBarco>());
@@ -510,7 +560,7 @@ public class Fabricacion : MonoBehaviour
         const float fila = 62f, porColumna = 5f;
         float W = Hud.Ancho, H = Hud.Alto;
         float ancho = Mathf.Min(780f, W - 256f);
-        bool info = pagina == 1 || pagina == 2;
+        bool info = pagina == 1 || pagina == 2 || pagina == 3;
         float alto = 50f + (info ? 26f : 0f) + porColumna * fila + 8f;
         float x0 = Mathf.Max(W / 2f - ancho / 2f, 244f);
         float y0 = Mathf.Max(12f, H / 2f - alto / 2f);

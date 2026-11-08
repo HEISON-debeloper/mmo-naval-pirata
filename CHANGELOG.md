@@ -6,6 +6,11 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.21.0 — Pintura del barco  (2026-11-08)
+- Nueva página Pintura en el menú Tab (a bordo de tu barco): color del casco, de las velas y de la bandera, 12 colores.
+- Cada cambio cuesta 5 de oro (gratis en creativo); "Colores originales" quita la pintura sin costo.
+- La pintura se conserva al cambiar de molde o tamaño y al guardar la partida.
+
 ## 0.20.0 — Abordajes piratas  (2026-11-08)
 - Algunos piratas (4 de cada 10) van directo a abordarte: se pegan a tu barco y sus piratas saltan a tu cubierta, hasta 3 a la vez.
 - Peleas con la espada; si cae toda su tripulación, su barco queda capturado y su botín va a tu mochila.

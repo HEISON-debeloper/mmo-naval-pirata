@@ -15,6 +15,16 @@ public class VelasSinEstorbo : MonoBehaviour
     readonly Dictionary<Renderer, Material> originales = new Dictionary<Renderer, Material>();
     readonly List<Renderer> velas = new List<Renderer>();
     ControlBarco barcoVelas;
+    static VelasSinEstorbo instancia;
+    void Awake() => instancia = this;
+
+    // Al pintar las velas: devuelve todo a como estaba y vuelve a leer los materiales en el siguiente frame
+    public static void Olvidar()
+    {
+        if (instancia == null) return;
+        instancia.Restaurar();
+        instancia.barcoVelas = null;
+    }
 
     void LateUpdate()
     {
