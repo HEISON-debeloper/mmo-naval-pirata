@@ -18,7 +18,7 @@ public class Navegacion : MonoBehaviour
     const float GradosVisibles = 180f;       // la brújula muestra media vuelta
 
     // Lo que se sabe de cada isla descubierta (sigue en el mapa aunque la isla se descargue al alejarte)
-    public struct Conocida { public string nombre; public Vector3 centro; public float orilla; }
+    public struct Conocida { public string nombre; public Vector3 centro; public float orilla; public bool mercado; }
     readonly Dictionary<string, Conocida> descubiertas = new Dictionary<string, Conocida>();
     const float DistanciaBrujula = 2500f;   // la brújula muestra islas conocidas hasta esta distancia
     static Texture2D circulo, flecha;
@@ -57,8 +57,9 @@ public class Navegacion : MonoBehaviour
             float d = Plano(isla.transform.position - pos).magnitude - isla.orilla;
             if (d < DistanciaDescubrir)
             {
-                descubiertas[isla.Id] = new Conocida { nombre = isla.name, centro = isla.transform.position, orilla = isla.orilla };
-                if (Time.timeSinceLevelLoad > 2f) p.Avisar("Descubriste: " + isla.name);   // la isla donde apareces no se anuncia
+                bool mercado = isla.GetComponentInChildren<Mercader>() != null;
+                descubiertas[isla.Id] = new Conocida { nombre = isla.name, centro = isla.transform.position, orilla = isla.orilla, mercado = mercado };
+                if (Time.timeSinceLevelLoad > 2f) p.Avisar("Descubriste: " + isla.name + (mercado ? " (tiene mercader)" : ""));   // la isla donde apareces no se anuncia
             }
         }
     }
@@ -154,7 +155,8 @@ public class Navegacion : MonoBehaviour
         {
             Vector3 v = Plano(isla.centro - p.transform.position);
             if (v.magnitude > DistanciaBrujula) continue;
-            Marcador(cx, porGrado, r, rumbo, Rumbo(v), "●", Hud.Bien, Mathf.RoundToInt(Mathf.Max(0f, v.magnitude - isla.orilla)) + " m");
+            // Las islas con mercader salen con una moneda dorada
+            Marcador(cx, porGrado, r, rumbo, Rumbo(v), isla.mercado ? "◆" : "●", isla.mercado ? Hud.Oro : Hud.Bien, Mathf.RoundToInt(Mathf.Max(0f, v.magnitude - isla.orilla)) + " m" + (isla.mercado ? " · mercado" : ""));
         }
         if (p.barco != null && p.BarcoActual != p.barco)
         {
@@ -181,7 +183,7 @@ public class Navegacion : MonoBehaviour
         float x = cx + dx * porGrado;
         GUI.Label(new Rect(x - 10f, r.y + 15f, 20f, 18f), Hud.Col(signo, fuera ? new Color(color.r, color.g, color.b, 0.45f) : color), Hud.Centrado);
         if (!fuera && Mathf.Abs(dx) < 12f)
-            GUI.Label(new Rect(x - 40f, r.yMax + 15f, 80f, 14f), Hud.Col(distancia, color), new GUIStyle(Hud.Pequeno) { alignment = TextAnchor.MiddleCenter, fontSize = 10 });
+            GUI.Label(new Rect(x - 60f, r.yMax + 15f, 120f, 14f), Hud.Col(distancia, color), new GUIStyle(Hud.Pequeno) { alignment = TextAnchor.MiddleCenter, fontSize = 10 });
     }
 
     // ---------------- Mapa ----------------
@@ -235,6 +237,12 @@ public class Navegacion : MonoBehaviour
             c -= o;
             Pintar(new Rect(c.x - rr, c.y - rr, rr * 2f, rr * 2f), circulo, new Color(0.86f, 0.78f, 0.55f));
             Pintar(new Rect(c.x - rr * 0.6f, c.y - rr * 0.6f, rr * 1.2f, rr * 1.2f), circulo, new Color(0.35f, 0.6f, 0.3f));
+            if (i.mercado)   // moneda dorada: aquí hay mercader
+            {
+                float m = 10f;
+                Pintar(new Rect(c.x + rr * 0.7f - m / 2f, c.y - rr * 0.7f - m / 2f, m, m), circulo, new Color(0.15f, 0.1f, 0.02f));
+                Pintar(new Rect(c.x + rr * 0.7f - m / 2f + 1.5f, c.y - rr * 0.7f - m / 2f + 1.5f, m - 3f, m - 3f), circulo, Hud.Oro);
+            }
         }
 
         // Nombres: primero los más cercanos al centro; si un nombre pisaría a otro, no se escribe (acerca el zoom para verlo)
@@ -278,7 +286,7 @@ public class Navegacion : MonoBehaviour
         // Leyenda
         GUI.Label(new Rect(marco.x + 14f, marco.yMax - 22f, marco.width - 28f, 16f),
             Hud.Col("▲", Color.white) + " tú   " + Hud.Col("▲", Hud.Oro) + " tu barco   " +
-            Hud.Col("●", Hud.Bien) + " islas descubiertas: " + descubiertas.Count, Hud.Pequeno);
+            Hud.Col("●", Hud.Bien) + " islas descubiertas: " + descubiertas.Count + "   " + Hud.Col("●", Hud.Oro) + " mercader", Hud.Pequeno);
     }
 
     static void Pintar(Rect r, Texture2D t, Color c)

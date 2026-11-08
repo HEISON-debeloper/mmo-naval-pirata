@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.18.0";
-    public const string Nombre = "Oro y mercaderes";
+    public const string Numero = "0.19.0";
+    public const string Nombre = "Mercados en el mapa";
     public static string Texto => "v" + Numero;
 }

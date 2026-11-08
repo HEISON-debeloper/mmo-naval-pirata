@@ -18,7 +18,7 @@ public class Guardado : MonoBehaviour
     public static string Ruta => Path.Combine(Application.persistentDataPath, "partida.json");
 
     [System.Serializable] class Cosa { public string tipo; public int n; }
-    [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; }
+    [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; public bool mercado; }
     [System.Serializable] class HornoGuardado { public Vector3 pos; public float rumbo; }
 
     [System.Serializable]
@@ -113,7 +113,7 @@ public class Guardado : MonoBehaviour
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (var kv in nav.Descubiertas)
-                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla });
+                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado });
 
         try
         {
@@ -142,7 +142,7 @@ public class Guardado : MonoBehaviour
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (IslaConocida i in d.islas)
-                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla });
+                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla, mercado = i.mercado });
         Inventario inv = p.GetComponent<Inventario>();
         if (inv != null) foreach (Cosa c in d.inventario) inv.Fijar(c.tipo, c.n);
         p.FijarVida(d.vida);

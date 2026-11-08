@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.19.0 — Mercados en el mapa  (2026-11-08)
+- Las islas con mercader salen con una moneda dorada en la brújula y en el mapa (M), y el aviso al descubrirlas lo dice.
+- La partida guardada recuerda qué islas tienen mercader.
+
 ## 0.18.0 — Oro y mercaderes  (2026-11-08)
 - Moneda nueva: oro. Los piratas traen oro en su botín.
 - Mercaderes en la playa: siempre en la isla inicial y en una de cada tres islas. Junto a ellos, Tab abre Vender y Comprar.
