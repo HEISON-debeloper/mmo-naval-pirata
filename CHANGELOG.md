@@ -1,10 +1,16 @@
 # Historial de versiones
 
-Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ejemplo `v0.17.0`).
+Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/vX.Y.Z` (por ejemplo `versiones/v0.18.0`).
 
 > Las versiones 0.2.0 a 0.16.0 se reconstruyeron de memoria al crear este repositorio (las horas son aproximadas, hora de Colombia).
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
+
+## 0.18.0 — Oro y mercaderes  (2026-11-08)
+- Moneda nueva: oro. Los piratas traen oro en su botín.
+- Mercaderes en la playa: siempre en la isla inicial y en una de cada tres islas. Junto a ellos, Tab abre Vender y Comprar.
+- Cada isla tiene sus precios (como en Albion): lo que es barato en una se vende caro en otra. Vender mucho de lo mismo baja el precio un rato.
+- Tecla de prueba N: ir al mercader más cercano.
 
 ## 0.17.0 — Sistema de versiones  (2026-11-08)
 - El proyecto completo de Unity queda guardado en GitHub; cada versión nueva lleva su etiqueta y su código.

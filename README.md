@@ -12,8 +12,8 @@ Por ahora es un prototipo con formas simples; se va mejorando por versiones.
 - Formato `0.X.Y`: la **X** sube con cada cosa nueva (una mecánica, un sistema); la **Y** con arreglos pequeños.
 - Al tener la primera versión completa para publicar, pasará a `1.0.0`.
 - El número está en `Assets/Scripts/Version.cs` y en la ayuda del juego (F1).
-- Cada versión tiene su etiqueta en GitHub (`v0.17.0`, `v0.18.0`, …) y su explicación en [CHANGELOG.md](CHANGELOG.md).
-- Para volver a una versión vieja: en GitHub, **Tags** → elegir la versión → **Download ZIP**.
+- Cada versión con código tiene su rama en GitHub (`versiones/v0.17.0`, `versiones/v0.18.0`, …) y su explicación en [CHANGELOG.md](CHANGELOG.md). La rama `main` siempre es la última.
+- Para volver a una versión vieja: en GitHub, botón de ramas (arriba a la izquierda, dice `main`) → elegir `versiones/…` → **Code → Download ZIP**.
 
 ## Carpetas
 - `Assets/Scripts` — todo el código del juego (en español).

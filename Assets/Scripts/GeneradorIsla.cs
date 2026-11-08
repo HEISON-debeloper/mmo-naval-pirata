@@ -133,6 +133,15 @@ public static class GeneradorIsla
             Recurso rc = g.gameObject.AddComponent<Recurso>();
             rc.tipo = Recurso.Tipo.Coco; rc.usosMaximos = 1; rc.tiempoRegenerar = 240f;
         }
+        // Mercader: siempre en la isla inicial y en más o menos una de cada tres islas (al final, para no cambiar lo demás)
+        if (inicial || Random.value < 0.35f)
+        {
+            float am = Random.value * Mathf.PI * 2f, dm = r * 0.78f;
+            float mx = Mathf.Cos(am) * dm, mz = Mathf.Sin(am) * dm;
+            float haciaMar = Mathf.Atan2(mx, mz) * Mathf.Rad2Deg;   // el mercader mira al mar: llegas en barco y lo tienes de frente
+            Mercader.Crear(t, new Vector3(mx, AlturaArena(dm, r), mz), haciaMar, nombre, semilla, m.tronco, m.fruta, m.arbusto);
+        }
+
         // Capas para dejar de dibujar lo pequeño de lejos (ver Rendimiento)
         foreach (Recurso rec in t.GetComponentsInChildren<Recurso>())
         {

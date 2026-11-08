@@ -17,6 +17,8 @@ public class Inventario : MonoBehaviour
     // Comida
     public const string Coco = "Coco";
     public const string Fruta = "Fruta";
+    // Moneda (se gana vendiendo al mercader y con el botín)
+    public const string Oro = "Oro";
     // Herramientas
     public const string Hacha = "Hacha";
     public const string Pico = "Pico";

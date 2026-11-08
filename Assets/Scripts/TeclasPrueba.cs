@@ -48,6 +48,7 @@ public class TeclasPrueba : MonoBehaviour
         if (k.jKey.wasPressedThisFrame) IrAIslaNueva(p);
         if (k.kKey.wasPressedThisFrame) MasLejos(p);
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
+        if (k.nKey.wasPressedThisFrame) IrAMercader(p);
         if (k.tKey.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }
         if (k.bKey.wasPressedThisFrame && !p.IrAlTimonPropio()) p.Avisar("Prueba: aún no tienes barco propio");
     }
@@ -72,6 +73,21 @@ public class TeclasPrueba : MonoBehaviour
             }
             afuera = Quaternion.Euler(0f, 18f, 0f) * afuera;   // si hay isla, prueba otro rumbo
         }
+    }
+
+    // Lleva al personaje (a pie) frente al mercader más cercano
+    static void IrAMercader(Personaje p)
+    {
+        Mercader mejor = null;
+        float dMejor = float.MaxValue;
+        foreach (Mercader m in Mercader.Todos)
+        {
+            if (m == null) continue;
+            float d = Vector3.Distance(m.transform.position, p.transform.position);
+            if (d < dMejor) { dMejor = d; mejor = m; }
+        }
+        if (mejor == null) { p.Avisar("Prueba: no hay mercaderes cargados cerca"); return; }
+        p.Teletransportar(mejor.transform.position + mejor.transform.forward * 3f + Vector3.up * 1.5f);
     }
 
     // Lleva tu barco (o a ti, si vas a pie) junto a la caja de botín más cercana

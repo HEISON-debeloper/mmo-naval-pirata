@@ -33,6 +33,7 @@ public class Botin : MonoBehaviour
         int molde = 0, a = 0, b = 0, c = 0;
         if (cb != null) FormaBarco.Leer(cb, out molde, out a, out b, out c);
         float v = (molde + 1) * (1f + 0.15f * (a + b + c));   // más grande el barco, más botín
+        Poner(Inventario.Oro, Mathf.RoundToInt(Random.Range(5f, 15f) * v));   // su cofre
         Poner(Inventario.Madera, Mathf.RoundToInt(Random.Range(6f, 12f) * v));
         Poner(Inventario.Cuerda, Mathf.RoundToInt(Random.Range(2f, 5f) * v));
         if (molde >= 2) Poner(Inventario.Lingote, Mathf.RoundToInt(Random.Range(1f, 3f) * v * 0.5f));

@@ -33,7 +33,8 @@ public class Fabricacion : MonoBehaviour
     Personaje p;
     List<Receta>[] paginas;
     int pagina;
-    static readonly string[] Titulos = { "Fabricar", "Tu barco", "Cañones y bodega", "Creativo" };
+    static readonly string[] Titulos = { "Fabricar", "Tu barco", "Cañones y bodega", "Vender", "Comprar", "Creativo" };
+    const int IndiceVender = 3;
     // La página "Creativo" solo aparece con el modo creativo (F2)
     int Paginas => ModoCreativo.Activo ? paginas.Length : paginas.Length - 1;
     static readonly Dictionary<string, int> Gratis = new Dictionary<string, int>();
@@ -123,8 +124,78 @@ public class Fabricacion : MonoBehaviour
                         p.Avisar("Sacaste " + n + " de comida de la bodega");
                         return null; } },
             },
+            PaginaVender(),
+            PaginaComprar(),
             PaginaCreativo(),
         };
+    }
+
+    // ---------- Mercado: vender y comprar con un mercader cerca (precios distintos en cada isla) ----------
+    static string RequisitoMercader(Vector3 p) => Mercader.Cercano(p) != null ? null : "Acércate a un mercader (puestos en la playa de algunas islas)";
+
+    List<Receta> PaginaVender()
+    {
+        var lista = new List<Receta>();
+        var lotes = new (string tipo, int n)[] {
+            (Inventario.Madera, 10), (Inventario.Palo, 10), (Inventario.Fibra, 10), (Inventario.Piedra, 10), (Inventario.Cuerda, 5),
+            (Inventario.Mineral, 5), (Inventario.Lingote, 1), (Inventario.Canon, 1), (Inventario.Coco, 5), (Inventario.Fruta, 5) };
+        foreach (var l in lotes)
+        {
+            string tipo = l.tipo; int n = l.n;
+            lista.Add(new Receta
+            {
+                nombre = "Vender " + n + " " + Corto(tipo),
+                descripcion = "El precio cambia en cada isla",
+                costo = () => C(tipo, n),
+                requisito = () => RequisitoMercader(transform.position),
+                detalle = () => {
+                    Mercader m = Mercader.Cercano(transform.position);
+                    if (m == null) return null;
+                    string e = m.Etiqueta(tipo);
+                    return "Te paga " + Hud.Col(m.PrecioVenta(tipo, n) + " oro", Hud.Oro) + (e != "" ? "  · " + e : ""); },
+                hacer = () => {
+                    Mercader m = Mercader.Cercano(transform.position);
+                    if (m == null) return "No hay mercader cerca";
+                    int oro = m.PrecioVenta(tipo, n);
+                    inv.Agregar(Inventario.Oro, oro);
+                    m.Vendiste(tipo);
+                    p.Avisar("Vendiste " + n + " " + Corto(tipo) + ": +" + oro + " oro");
+                    return null; },
+                mensaje = ""
+            });
+        }
+        return lista;
+    }
+
+    List<Receta> PaginaComprar()
+    {
+        var lista = new List<Receta>();
+        var lotes = new (string tipo, int n)[] {
+            (Inventario.Canon, 1), (Inventario.Lingote, 1), (Inventario.Cuerda, 5), (Inventario.Madera, 10), (Inventario.Coco, 5), (Inventario.Fruta, 5) };
+        foreach (var l in lotes)
+        {
+            string tipo = l.tipo; int n = l.n;
+            lista.Add(new Receta
+            {
+                nombre = "Comprar " + n + " " + Corto(tipo),
+                descripcion = "El precio cambia en cada isla",
+                costo = () => { Mercader m = Mercader.Cercano(transform.position); return C(Inventario.Oro, m != null ? m.PrecioCompra(tipo, n) : 0); },
+                requisito = () => RequisitoMercader(transform.position),
+                detalle = () => {
+                    Mercader m = Mercader.Cercano(transform.position);
+                    if (m == null) return null;
+                    string e = m.Etiqueta(tipo);
+                    return "Llevas " + inv.Cantidad(tipo) + (e != "" ? "  · " + e : ""); },
+                hacer = () => {
+                    Mercader m = Mercader.Cercano(transform.position);
+                    if (m == null) return "No hay mercader cerca";
+                    inv.Agregar(tipo, n);
+                    m.Compraste(tipo);
+                    return null; },
+                mensaje = "Compraste " + n + " " + Corto(tipo)
+            });
+        }
+        return lista;
     }
 
     // ---------- Página del modo creativo: atajos para probar rápido ----------
@@ -356,7 +427,11 @@ public class Fabricacion : MonoBehaviour
         Preparar();
         Keyboard k = Keyboard.current;
         if (k == null) return;
-        if (k.tabKey.wasPressedThisFrame) Abierto = !Abierto;
+        if (k.tabKey.wasPressedThisFrame)
+        {
+            Abierto = !Abierto;
+            if (Abierto && Mercader.Cercano(transform.position) != null) pagina = IndiceVender;   // junto a un mercader, directo al mercado
+        }
         if (!Abierto) return;
         if (k.escapeKey.wasPressedThisFrame) { Abierto = false; return; }   // Esc también cierra
         if (pagina >= Paginas) pagina = 0;
@@ -369,7 +444,7 @@ public class Fabricacion : MonoBehaviour
         {
             if (!teclas[i].wasPressedThisFrame) continue;
             // Shift + número: hace hasta 5 seguidas (solo cosas sencillas, no cambios de barco)
-            if (varios && pagina == 0 && lista[i].nombre != "Horno de piedra" && lista[i].nombre != "Balsa")
+            if (varios && (pagina == 0 || pagina == IndiceVender || pagina == IndiceVender + 1) && lista[i].nombre != "Horno de piedra" && lista[i].nombre != "Balsa")
             {
                 int hechas = 0;
                 while (hechas < 5 && Intentar(lista[i], hechas > 0)) hechas++;
@@ -455,7 +530,10 @@ public class Fabricacion : MonoBehaviour
             tx += w + 22f;
         }
         GUI.Label(new Rect(tx - 8f, marco.y + 12f, 30f, 20f), Hud.Col("▶ E", Hud.Tenue), Hud.Normal);
-        GUI.Label(new Rect(marco.x, marco.y + 12f, ancho - 14f, 20f), Hud.Col("número", Hud.Oro) + " hacer   " + Hud.Col("Shift+núm.", Hud.Oro) + " ×5   " + Hud.Col("Tab/Esc", Hud.Oro) + " cerrar", new GUIStyle(Hud.Derecha) { fontSize = 12 });
+        GUIStyle estiloPista = new GUIStyle(Hud.Derecha) { fontSize = 12 };
+        string pista = Hud.Col("número", Hud.Oro) + " hacer   " + Hud.Col("Shift+núm.", Hud.Oro) + " ×5   " + Hud.Col("Tab/Esc", Hud.Oro) + " cerrar";
+        if (tx + 24f + estiloPista.CalcSize(new GUIContent("número hacer   Shift+núm. ×5   Tab/Esc cerrar")).x < marco.xMax - 14f)   // solo si cabe junto a las pestañas
+            GUI.Label(new Rect(marco.x, marco.y + 12f, ancho - 14f, 20f), pista, estiloPista);
         Hud.Relleno(new Rect(marco.x + 10f, marco.y + 40f, ancho - 20f, 1f), Hud.FondoClaro);
 
         float yLista = marco.y + 50f;
