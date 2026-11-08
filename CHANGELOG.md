@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.8.0 — Moldes históricos y tamaños  (2026-11-07)
+- 15 moldes de barco reales: balsa, bote, chalupa, pinaza, cúter, balandro, goleta, bergantín, corbeta, fragata, galeón, navíos de cuarta, de línea, de primera y de cuatro puentes.
+- Tamaño aparte del molde: alargar, ensanchar y subir pisos (hasta 10 cada uno); el molde siguiente cuesta más si el barco es grande.
+- Cañones siempre del mismo tamaño, timón a popa en todos los barcos, zoom desde el timón hasta ver el barco pequeño.
+- Las velas se vuelven transparentes si tapan la vista.
+
 ## 0.7.0 — La balsa crece, puntería y modo creativo  (2026-11-07)
 - La balsa es tu barco desde el principio y se mejora; cañones en la balsa (uno o ambos lados).
 - F recoge a mano, clic izquierdo golpea con hacha o pico.
