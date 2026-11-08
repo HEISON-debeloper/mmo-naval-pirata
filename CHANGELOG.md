@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.15.0 — Guardado de partida  (2026-11-08)
+- Se guarda solo cada 30 s y al salir; F5 guarda y F8 borra.
+- Guarda posición, vida, hambre, sed, mochila, tu barco completo, hornos e islas descubiertas.
+
 ## 0.14.0 — Cámara de apuntado estilo Black Flag  (2026-11-08)
 - Al apuntar la cámara queda junto a ti en el timón mirando al costado y solo se inclina con el alcance.
 - Se quitó el bergantín que aparecía junto a la isla inicial.
