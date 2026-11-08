@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub con su etiqueta (por ej
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.12.0 — Piratas con moldes  (2026-11-08)
+- Los piratas usan la misma lógica de moldes y tamaños que tu barco: desde balsas con cañones cerca del inicio hasta navíos lejos.
+- Zonas de peligro que suben con la distancia; zona segura de 450 m alrededor del inicio.
+
 ## 0.11.0 — Mundo infinito  (2026-11-08)
 - Islas generadas sin fin alrededor de ti, siempre iguales (misma semilla), con nombres piratas.
 
