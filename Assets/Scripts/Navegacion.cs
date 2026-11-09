@@ -11,7 +11,12 @@ public class Navegacion : MonoBehaviour
     static void Crear() => new GameObject("Navegación").AddComponent<Navegacion>();
 
     public static Navegacion Instancia { get; private set; }
-    public static bool MapaAbierto { get; private set; }
+    // La carta de navegación ahora es una ventana (VentanaMapa, tecla M)
+    public static bool MapaAbierto => Ventanas.EstaAbierta<VentanaMapa>();
+
+    // Marcas que el jugador pone en la carta (se guardan con la partida)
+    [System.Serializable] public class Marca { public string nombre; public Vector3 pos; public int icono; }
+    public readonly List<Marca> Marcas = new List<Marca>();
 
     const float DistanciaDescubrir = 160f;   // metros desde la orilla
     const float AnchoBrujula = 440f;
@@ -36,18 +41,6 @@ public class Navegacion : MonoBehaviour
 
     void Update()
     {
-        Keyboard k = Keyboard.current;
-        if (k != null)
-        {
-            if (Teclas.Pulsada(Accion.Mapa, MapaAbierto) && !Fabricacion.MenuAbierto && !Taller.Abierto)
-            {
-                MapaAbierto = !MapaAbierto;
-                if (MapaAbierto) { radioVista = RadioInicial; desplazamiento = Vector3.zero; arrastrando = false; }
-            }
-            if (MapaAbierto && (k.escapeKey.wasPressedThisFrame || Fabricacion.Abierto)) MapaAbierto = false;
-        }
-        if (MapaAbierto) ControlMapa(k);
-
         Personaje p = Personaje.Instancia;
         if (p == null) return;
         Vector3 pos = p.transform.position;

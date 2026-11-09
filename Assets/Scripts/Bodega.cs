@@ -3,6 +3,7 @@ using UnityEngine;
 
 // Bodega del barco: provisiones para el viaje. Cabe más en un barco más grande.
 // La comida guardada aquí se puede comer en el mar con C cuando no llevas nada encima.
+// Guarda cualquier cosa de la mochila (materiales, cañones, oro); se maneja desde la mochila (I) y la ventana del barco (B).
 public class Bodega : MonoBehaviour
 {
     [Tooltip("Unidades que caben. Si es 0, se calcula según el largo del barco (2 por metro).")]
@@ -55,6 +56,26 @@ public class Bodega : MonoBehaviour
         if (n <= 0) return 0;
         cosas[tipo] = 0;
         inv.Agregar(tipo, n);
+        return n;
+    }
+
+    // Con cantidad: guarda hasta n (lo que quepa). Devuelve cuántas guardó.
+    public int Guardar(Inventario inv, string tipo, int n)
+    {
+        n = Mathf.Min(n, Mathf.Min(inv.Cantidad(tipo), Libre));
+        if (n <= 0) return 0;
+        inv.Quitar(tipo, n);
+        cosas[tipo] = Cantidad(tipo) + n;
+        return n;
+    }
+
+    // Con cantidad: saca hasta n. Devuelve cuántas sacó.
+    public int Sacar(Inventario inv, string tipo, int n)
+    {
+        n = Mathf.Min(n, Cantidad(tipo));
+        if (n <= 0) return 0;
+        cosas[tipo] = Cantidad(tipo) - n;
+        inv.Fijar(tipo, inv.Cantidad(tipo) + n);   // sin el aviso de "+n" (es un traslado, no algo nuevo)
         return n;
     }
 

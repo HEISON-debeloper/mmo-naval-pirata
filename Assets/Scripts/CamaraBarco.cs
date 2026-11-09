@@ -208,7 +208,7 @@ public class CamaraBarco : MonoBehaviour
             if (antes > 1f) distancia = Mathf.Clamp(distancia * antes / ahora, distanciaMin, distanciaMax);
         }
 
-        if (Orbitar) anguloH += 14f * Time.deltaTime;
+        if (Orbitar) anguloH += (MenuPrincipal.Visible ? 6f : 14f) * Time.unscaledDeltaTime;   // en el menú principal gira más despacio (toma cinematográfica)
 
         // Pose normal: girando alrededor del timón
         Quaternion rot = Quaternion.Euler(anguloV, anguloH, 0f);

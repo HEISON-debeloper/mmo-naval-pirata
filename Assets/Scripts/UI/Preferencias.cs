@@ -116,6 +116,12 @@ public static class Preferencias
         PlayerPrefs.SetString(Clave, JsonUtility.ToJson(D));
     }
 
+    public static void OlvidarPosiciones()
+    {
+        D.clavesVentanas.Clear(); D.posVentanas.Clear();
+        Guardar();
+    }
+
     // Aplica al juego lo que no depende de la interfaz (volumen, gráficos)
     public static void AplicarAlJuego()
     {

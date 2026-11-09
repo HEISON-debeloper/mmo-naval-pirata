@@ -1,19 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-// Menú de fabricación (Tab). Dos páginas, se cambian con Q / E. Se fabrica con los números.
-// Página 1 · Fabricar: cuerda, hacha, pico, horno, fundir hierro, cañón, balsa.
-// Página 2 · Tu barco (estando a bordo): agrandarlo (balsa → balandro → bergantín), casco, velas,
-//            cañones a babor o a estribor (uno por uno), bodega.
+// Recetas de fabricación (las muestra VentanaFabricacion, tecla Tab, por categorías) y lo que hace cada una:
+// herramientas, materiales, horno, cañones, la balsa, mejorar y agrandar tu barco, cañones por lado, barriles, bodega,
+// pintura y los atajos del modo creativo. Junto a un mercader, Tab abre el mercado (VentanaComercio).
 // El barco es uno solo desde el principio: la balsa crece y conserva sus mejoras, cañones y bodega.
 [RequireComponent(typeof(Inventario), typeof(Personaje))]
 public class Fabricacion : MonoBehaviour
 {
-    // El menú Tab (MenuAbierto) o el Taller: mientras cualquiera esté abierto, el cursor queda libre
-    static bool menuAbierto;
-    public static bool MenuAbierto => menuAbierto;
-    public static bool Abierto => menuAbierto || Taller.Abierto || Ventanas.AlgunaAbierta;
+    // Cualquier ventana o el Taller abiertos: el cursor queda libre y el juego no reacciona a las teclas
+    public static bool Abierto => Taller.Abierto || Ventanas.AlgunaAbierta;
 
     [Header("Materiales para lo que se construye en el mundo")]
     public Material piedra;
@@ -22,8 +18,11 @@ public class Fabricacion : MonoBehaviour
 
     // Forma del barco donde estás (cuántas veces se alargó y se ensanchó)
 
-    class Receta
+    public class Receta
     {
+        public string id, icono, resultado;                   // resultado: lo que entra a la mochila (para su icono)
+        public Categoria categoria;
+        public bool unaVez;                                   // no se puede repetir varias veces seguidas (cambios de barco)
         public string nombre, descripcion;
         public System.Func<Dictionary<string, int>> costo;   // puede cambiar según el nivel
         public System.Func<string> requisito;                 // null si se puede, o el motivo si no
@@ -35,11 +34,6 @@ public class Fabricacion : MonoBehaviour
     Inventario inv;
     Personaje p;
     List<Receta>[] paginas;
-    int pagina;
-    static readonly string[] Titulos = { "Fabricar", "Tu barco", "Cañones y bodega", "Pintura", "Vender", "Comprar", "Creativo" };
-    const int IndiceVender = 4;
-    // La página "Creativo" solo aparece con el modo creativo (F2)
-    int Paginas => ModoCreativo.Activo ? paginas.Length : paginas.Length - 1;
     static readonly Dictionary<string, int> Gratis = new Dictionary<string, int>();
 
     void Awake() => Preparar();
@@ -54,7 +48,7 @@ public class Fabricacion : MonoBehaviour
     // Si Unity recompila con el juego corriendo, estas referencias se pierden: se vuelven a crear aquí
     void Preparar()
     {
-        if (paginas != null && inv != null && p != null) return;
+        if (paginas != null && todas != null && inv != null && p != null) return;
         inv = GetComponent<Inventario>();
         p = GetComponent<Personaje>();
         paginas = new[]
@@ -153,6 +147,7 @@ public class Fabricacion : MonoBehaviour
             PaginaComprar(),
             PaginaCreativo(),
         };
+        Clasificar();
     }
 
     // ---------- Pintura de tu barco: se hace en el Taller (tecla P) ----------
@@ -171,7 +166,7 @@ public class Fabricacion : MonoBehaviour
         {
             new Receta { nombre = "Abrir el taller (P)", descripcion = "Pinta cada parte con el color que quieras, dibujos en velas y bandera, mascarón",
                 costo = () => Gratis, requisito = RequisitoPropio, mensaje = "",
-                hacer = () => { menuAbierto = false; Taller.Abrir(); return null; } },
+                hacer = () => { Ventanas.CerrarTodas(); Taller.Abrir(); return null; } },
             new Receta
             {
                 nombre = "Colores originales", descripcion = "Quita toda la pintura (gratis)",
@@ -475,42 +470,64 @@ public class Fabricacion : MonoBehaviour
         return null;
     }
 
-    // ---------- Menú ----------
-    void Update()
+    // ---------- Recetas para la ventana de fabricación (Tab) ----------
+    public enum Categoria { Herramientas, Materiales, Supervivencia, Construccion, Barco, Armamento, Creativo }
+    public static readonly string[] NombresCategoria = { "Herramientas", "Materiales", "Supervivencia", "Construcción", "Barco", "Armamento", "Creativo" };
+    public static readonly string[] IconosCategoria = { "hacha", "madera", "fruta", "martillo", "barco", "canon", "rayo" };
+
+    public static Fabricacion I { get; private set; }
+    // El menú de fabricación ahora es una ventana (VentanaFabricacion); se mantiene el nombre para el resto del juego
+    public static bool MenuAbierto => Ventanas.EstaAbierta<VentanaFabricacion>() || Ventanas.EstaAbierta<VentanaComercio>();
+
+    List<Receta> todas;
+    public IReadOnlyList<Receta> Todas { get { Preparar(); return todas; } }
+
+    void OnEnable() => I = this;
+
+    void Clasificar()
     {
-        Preparar();
-        Keyboard k = Keyboard.current;
-        if (k == null) return;
-        if (Teclas.Pulsada(Accion.Fabricar, menuAbierto) && !Taller.Abierto)
+        todas = new List<Receta>();
+        void Poner(Receta r, Categoria c, string icono) { r.categoria = c; r.icono = icono; todas.Add(r); }
+        foreach (Receta r in paginas[0])
         {
-            menuAbierto = !menuAbierto;
-            if (menuAbierto && Mercader.Cercano(transform.position) != null) pagina = IndiceVender;   // junto a un mercader, directo al mercado
-        }
-        if (!menuAbierto) return;
-        if (k.escapeKey.wasPressedThisFrame) { menuAbierto = false; return; }   // Esc también cierra
-        if (pagina >= Paginas) pagina = 0;
-        if (k.qKey.wasPressedThisFrame) pagina = (pagina + Paginas - 1) % Paginas;
-        if (k.eKey.wasPressedThisFrame) pagina = (pagina + 1) % Paginas;
-        var teclas = new[] { k.digit1Key, k.digit2Key, k.digit3Key, k.digit4Key, k.digit5Key, k.digit6Key, k.digit7Key, k.digit8Key, k.digit9Key, k.digit0Key };
-        List<Receta> lista = paginas[pagina];
-        bool varios = k.leftShiftKey.isPressed || k.rightShiftKey.isPressed;
-        for (int i = 0; i < lista.Count && i < teclas.Length; i++)
-        {
-            if (!teclas[i].wasPressedThisFrame) continue;
-            // Shift + número: hace hasta 5 seguidas (solo cosas sencillas, no cambios de barco)
-            if (varios && (pagina == 0 || pagina == IndiceVender || pagina == IndiceVender + 1) && lista[i].nombre != "Horno de piedra" && lista[i].nombre != "Balsa")
+            switch (r.nombre)
             {
-                int hechas = 0;
-                while (hechas < 5 && Intentar(lista[i], hechas > 0)) hechas++;
-                if (hechas > 1) p.Avisar("Fabricaste " + hechas + " × " + lista[i].nombre);
+                case "Cuerda": Poner(r, Categoria.Materiales, "cuerda"); r.resultado = Inventario.Cuerda; break;
+                case "Hacha": Poner(r, Categoria.Herramientas, "hacha"); r.resultado = Inventario.Hacha; break;
+                case "Pico": Poner(r, Categoria.Herramientas, "pico"); r.resultado = Inventario.Pico; break;
+                case "Horno de piedra": Poner(r, Categoria.Construccion, "fuego"); break;
+                case "Fundir hierro": Poner(r, Categoria.Materiales, "lingote"); r.resultado = Inventario.Lingote; break;
+                case "Cañón": Poner(r, Categoria.Armamento, "canon"); r.resultado = Inventario.Canon; break;
+                default: Poner(r, Categoria.Barco, "barco"); r.unaVez = true; break;   // balsa
             }
-            else Intentar(lista[i], false);
         }
+        string[] iconosBarco = { "barco", "regla", "regla", "pisos", "escudo", "vela" };
+        for (int k = 0; k < paginas[1].Count; k++) { Poner(paginas[1][k], Categoria.Barco, k < iconosBarco.Length ? iconosBarco[k] : "barco"); paginas[1][k].unaVez = k < 4; }
+        foreach (Receta r in paginas[2])
+        {
+            if (r.nombre.Contains("comida")) Poner(r, Categoria.Supervivencia, "caja");
+            else Poner(r, Categoria.Armamento, r.nombre.Contains("arril") ? "fuego" : "canon");
+        }
+        foreach (Receta r in paginas[3]) { Poner(r, Categoria.Barco, "brocha"); r.unaVez = true; }
+        foreach (Receta r in paginas[6]) { Poner(r, Categoria.Creativo, "rayo"); r.unaVez = true; }
+        for (int k = 0; k < todas.Count; k++) todas[k].id = todas[k].categoria + "/" + todas[k].nombre;
     }
 
-    // silencioso: en las repeticiones con Shift no se avisa cada vez que falta algo
-    bool Intentar(Receta r, bool silencioso)
+    // Por qué no se puede hacer ahora (null si se puede): requisito, o materiales que faltan
+    public string Impedimento(Receta r)
     {
+        string req = r.requisito != null ? r.requisito() : null;
+        if (req != null) return req;
+        if (!PuedePagar(r)) return "Faltan materiales" + Faltante(r);
+        return null;
+    }
+
+    public string Requisito(Receta r) => r.requisito != null ? r.requisito() : null;
+
+    // Fabrica una vez (silencioso: sin avisar si falta algo, para las repeticiones)
+    public bool Intentar(Receta r, bool silencioso)
+    {
+        Preparar();
         string req = r.requisito != null ? r.requisito() : null;
         if (req != null) { if (!silencioso) p.Avisar(req); return false; }
         if (!PuedePagar(r)) { if (!silencioso) p.Avisar("Te faltan materiales para: " + r.nombre + Faltante(r)); return false; }
@@ -518,13 +535,27 @@ public class Fabricacion : MonoBehaviour
         string error = r.hacer();
         if (error != null) { if (!silencioso) p.Avisar(error); return false; }
         if (!ModoCreativo.Activo) foreach (var c in costo) inv.Quitar(c.Key, c.Value);
-        if (r.mensaje == null) p.Avisar("Fabricaste: " + r.nombre);
-        else if (r.mensaje != "") p.Avisar(r.mensaje);
+        if (!silencioso)
+        {
+            if (r.mensaje == null) Notificaciones.Mostrar("Fabricaste: " + r.nombre, Notificaciones.Tipo.Exito, 3f, r.icono);
+            else if (r.mensaje != "") Notificaciones.Mostrar(r.mensaje, Notificaciones.Tipo.Exito, 4f, r.icono);
+        }
         return true;
     }
 
+    // Fabrica hasta n veces seguidas; devuelve cuántas salieron
+    public int Fabricar(Receta r, int n)
+    {
+        if (n <= 1 || r.unaVez) return Intentar(r, false) ? 1 : 0;
+        int hechas = 0;
+        while (hechas < n && Intentar(r, true)) hechas++;
+        if (hechas == 0) Intentar(r, false);   // para que avise el motivo
+        else Notificaciones.Mostrar("Fabricaste " + hechas + " × " + r.nombre, Notificaciones.Tipo.Exito, 3f, r.icono);
+        return hechas;
+    }
+
     // " (faltan 3 fibra, 1 cuerda)"
-    string Faltante(Receta r)
+    public string Faltante(Receta r)
     {
         string f = "";
         foreach (var c in r.costo())
@@ -536,108 +567,49 @@ public class Fabricacion : MonoBehaviour
     }
 
     // Cuántas veces alcanza lo que llevas para hacerla
-    int VecesQueAlcanza(Receta r)
+    public int VecesQueAlcanza(Receta r)
     {
+        if (ModoCreativo.Activo) return 99;
         int veces = int.MaxValue;
         foreach (var c in r.costo()) if (c.Value > 0) veces = Mathf.Min(veces, inv.Cantidad(c.Key) / c.Value);
-        return veces == int.MaxValue ? 0 : veces;
+        return veces == int.MaxValue ? 99 : veces;
     }
 
-    void OnDisable() => menuAbierto = false;
-
-    bool PuedePagar(Receta r)
+    public bool PuedePagar(Receta r)
     {
         if (ModoCreativo.Activo) return true;
         foreach (var c in r.costo()) if (inv.Cantidad(c.Key) < c.Value) return false;
         return true;
     }
 
-    // Nombre corto para que los costos quepan en una línea
-    static string Corto(string tipo) =>
-        tipo == Inventario.Mineral ? "mineral" : tipo == Inventario.Lingote ? "lingote" : tipo.ToLower();
+    public Inventario Inv => inv;
 
-    // Lo dibuja Hud cuando el menú está abierto (coordenadas ya escaladas)
-    public void DibujarMenu()
+    // Resumen del barco donde estás (para la cabecera de la categoría Barco)
+    public string ResumenBarco()
     {
         Preparar();
-        List<Receta> lista = paginas[pagina];
-        const float fila = 62f, porColumna = 5f;
-        float W = Hud.Ancho, H = Hud.Alto;
-        float ancho = Mathf.Min(780f, W - 256f);
-        bool info = pagina == 1 || pagina == 2 || pagina == 3;
-        float alto = 50f + (info ? 26f : 0f) + porColumna * fila + 8f;
-        float x0 = Mathf.Max(W / 2f - ancho / 2f, 244f);
-        float y0 = Mathf.Max(12f, H / 2f - alto / 2f);
-        Rect marco = new Rect(x0, y0, ancho, alto);
-        Hud.Caja(marco);
+        ControlBarco b = BarcoAbordo();
+        if (b == null) return null;
+        PiezasBarco pz = Piezas();
+        Bodega bd = BodegaActual();
+        Canones cn = b.GetComponent<Canones>();
+        return b.name + "  ·  casco +" + (pz != null ? pz.nivelCasco : 0) + "  ·  velas +" + (pz != null ? pz.nivelVelas : 0)
+             + "  ·  cañones " + (cn != null ? cn.Instalados + "/" + cn.Ranuras() : "—") + "  ·  bodega " + (bd != null ? bd.Total + "/" + bd.capacidad : "—");
+    }
 
-        // Pestañas
-        float tx = marco.x + 14f;
-        GUI.Label(new Rect(tx, marco.y + 12f, 30f, 20f), Hud.Col("Q ◀", Hud.Tenue), Hud.Normal);
-        tx += 36f;
-        for (int i = 0; i < Paginas; i++)
+    // Nombre corto para que los costos quepan en una línea
+    static string Corto(string tipo) => Objetos.Corto(tipo);
+
+    // ---------- Tab: abre la fabricación, o el mercado si hay un mercader cerca ----------
+    void Update()
+    {
+        Preparar();
+        if (Taller.Abierto) return;
+        if (Teclas.Pulsada(Accion.Fabricar, true))
         {
-            bool activa = i == pagina;
-            float w = Hud.Titulo.CalcSize(new GUIContent(Titulos[i])).x;
-            GUI.Label(new Rect(tx, marco.y + 12f, w, 20f), activa ? Titulos[i] : Hud.Col(Titulos[i], Hud.Tenue), Hud.Titulo);
-            if (activa) Hud.Relleno(new Rect(tx, marco.y + 34f, w, 2f), Hud.Oro);
-            tx += w + 22f;
-        }
-        GUI.Label(new Rect(tx - 8f, marco.y + 12f, 30f, 20f), Hud.Col("▶ E", Hud.Tenue), Hud.Normal);
-        GUIStyle estiloPista = new GUIStyle(Hud.Derecha) { fontSize = 12 };
-        string pista = Hud.Col("número", Hud.Oro) + " hacer   " + Hud.Col("Shift+núm.", Hud.Oro) + " ×5   " + Hud.Col("Tab/Esc", Hud.Oro) + " cerrar";
-        if (tx + 24f + estiloPista.CalcSize(new GUIContent("número hacer   Shift+núm. ×5   Tab/Esc cerrar")).x < marco.xMax - 14f)   // solo si cabe junto a las pestañas
-            GUI.Label(new Rect(marco.x, marco.y + 12f, ancho - 14f, 20f), pista, estiloPista);
-        Hud.Relleno(new Rect(marco.x + 10f, marco.y + 40f, ancho - 20f, 1f), Hud.FondoClaro);
-
-        float yLista = marco.y + 50f;
-        if (info)
-        {
-            ControlBarco b = BarcoAbordo();
-            PiezasBarco pz = Piezas();
-            Bodega bd = BodegaActual();
-            Canones cn = b != null ? b.GetComponent<Canones>() : null;
-            string texto = b == null ? Hud.Col("Sube a tu barco para mejorarlo", Hud.Ambar)
-                : Hud.Col(b.name, Hud.Oro) + "    casco +" + (pz != null ? pz.nivelCasco : 0) + "   velas +" + (pz != null ? pz.nivelVelas : 0)
-                  + "   cañones " + (cn != null ? cn.Instalados + " de " + cn.Ranuras() : "ninguno")
-                  + "   bodega " + (bd != null ? bd.Total + "/" + bd.capacidad : "—");
-            GUI.Label(new Rect(marco.x + 14f, yLista, ancho - 28f, 18f), texto, Hud.Normal);
-            yLista += 26f;
-        }
-
-        float colAncho = (ancho - 28f - 14f) / 2f;
-        for (int i = 0; i < lista.Count; i++)
-        {
-            Receta r = lista[i];
-            int col = (int)(i / porColumna), filaN = (int)(i % porColumna);
-            Rect celda = new Rect(marco.x + 14f + col * (colAncho + 14f), yLista + filaN * fila, colAncho, fila - 6f);
-            string req = r.requisito != null ? r.requisito() : null;
-            bool puede = req == null && PuedePagar(r);
-            Hud.Relleno(celda, puede ? new Color(1f, 1f, 1f, 0.08f) : new Color(1f, 1f, 1f, 0.03f));
-
-            Hud.BadgeTecla(new Rect(celda.x + 6f, celda.y + 7f, 18f, 18f), ((i + 1) % 10).ToString());
-            float tx2 = celda.x + 32f, tw = celda.width - 38f;
-            GUI.Label(new Rect(tx2, celda.y + 6f, tw, 18f), puede ? "<b>" + r.nombre + "</b>" : Hud.Col("<b>" + r.nombre + "</b>", Hud.Tenue), Hud.Normal);
-            // Cuántas puedes hacer con lo que llevas
-            if (pagina == 0 && !ModoCreativo.Activo && req == null)
-            {
-                int veces = VecesQueAlcanza(r);
-                if (veces > 1) GUI.Label(new Rect(tx2, celda.y + 6f, tw, 18f), Hud.Col("alcanza para " + veces, Hud.Tenue), new GUIStyle(Hud.Pequeno) { alignment = TextAnchor.MiddleRight });
-            }
-            // Segunda línea: lo que falta (si algo impide hacerlo) o para qué sirve
-            GUI.Label(new Rect(tx2, celda.y + 24f, tw, 15f), req != null ? Hud.Col(req, Hud.Ambar) : (r.detalle != null ? r.detalle() ?? r.descripcion : r.descripcion), new GUIStyle(Hud.Pequeno) { clipping = TextClipping.Clip });
-
-            string costo = "";
-            foreach (var c in r.costo())
-            {
-                bool alcanza = ModoCreativo.Activo || inv.Cantidad(c.Key) >= c.Value;
-                string tiene = ModoCreativo.Activo ? "" : alcanza ? Hud.Col(" (" + inv.Cantidad(c.Key) + ")", Hud.Tenue)
-                                                              : Hud.Col(" (faltan " + (c.Value - inv.Cantidad(c.Key)) + ")", Hud.Mal);
-                costo += (costo == "" ? "" : "  ") + Hud.Col(c.Value + " " + Corto(c.Key), alcanza ? Hud.Bien : Hud.Mal) + tiene;
-            }
-            if (costo == "") costo = Hud.Col("sin costo", Hud.Tenue);
-            else if (ModoCreativo.Activo) costo = Hud.Col("gratis (creativo)   ", Hud.Oro) + costo;
-            GUI.Label(new Rect(tx2, celda.y + 40f, tw, 16f), costo, new GUIStyle(Hud.Normal) { fontSize = 12, clipping = TextClipping.Clip });
+            if (MenuAbierto) { Ventanas.Cerrar(VentanaFabricacion.I); Ventanas.Cerrar(VentanaComercio.I); }
+            else if (Mercader.Cercano(transform.position) != null) Ventanas.Abrir(VentanaComercio.I);
+            else Ventanas.Abrir(VentanaFabricacion.I);
         }
     }
 }

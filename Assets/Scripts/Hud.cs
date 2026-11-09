@@ -1,15 +1,10 @@
 using UnityEngine;
 
-// Capa de compatibilidad del HUD antiguo (IMGUI). La interfaz nueva está en Scripts/UI (HudNuevo, Ventanas…).
-// Aquí quedan la paleta, los estilos y las piezas de dibujo que todavía usan las pantallas IMGUI que faltan por renovar
-// (el menú de fabricación y el mapa), y el OnGUI que las dibuja. Cuando todas estén renovadas, este archivo se va.
-[DefaultExecutionOrder(100)]
-public class Hud : MonoBehaviour
+// Restos del HUD antiguo (IMGUI): paleta, estilos y piezas de dibujo que aún usan el Taller (IMGUI) y el código viejo del mapa.
+// Toda la interfaz en pantalla está ahora en Scripts/UI (HudNuevo, ventanas, avisos). Ya no dibuja nada por sí mismo.
+public static class Hud
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("HUD (IMGUI)").AddComponent<Hud>();
-
-    public static float Escala { get; private set; } = 1f;
+    public static float Escala => Mathf.Clamp(Screen.height / 720f, 0.8f, 2f);
     public static float Ancho => Screen.width / Escala;
     public static float Alto => Screen.height / Escala;
 
@@ -31,7 +26,7 @@ public class Hud : MonoBehaviour
     public static GUIStyle Normal, Pequeno, Titulo, Centrado, Derecha, Tecla;
     static int skinId;
 
-    static void Estilos()
+    public static void Estilos()
     {
         if (Normal != null && skinId == GUI.skin.GetInstanceID()) return;
         skinId = GUI.skin.GetInstanceID();
@@ -87,22 +82,4 @@ public class Hud : MonoBehaviour
 
     public static string Col(string s, Color c) => "<color=#" + ColorUtility.ToHtmlStringRGB(c) + ">" + s + "</color>";
 
-    void OnGUI()
-    {
-        Personaje p = Personaje.Instancia;
-        if (p == null || MenuPrincipal.Visible) return;
-        Estilos();
-        Escala = Mathf.Clamp(Screen.height / 720f, 0.8f, 2f);
-        GUI.matrix = Matrix4x4.Scale(new Vector3(Escala, Escala, 1f));
-        GUI.depth = 0;
-
-        Navegacion nav = Navegacion.Instancia;
-        if (nav != null && Navegacion.MapaAbierto) nav.DibujarMapa(p);
-        else
-        {
-            Fabricacion fab = p.GetComponent<Fabricacion>();
-            if (Fabricacion.MenuAbierto && fab != null) fab.DibujarMenu();
-        }
-        GUI.matrix = Matrix4x4.identity;
-    }
 }

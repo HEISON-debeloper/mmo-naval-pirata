@@ -101,6 +101,7 @@ public static class Objetos
     {
         string c = Corto(tipo);
         if (n == 1) return c;
+        if (c.EndsWith("ón")) return c.Substring(0, c.Length - 2) + "ones";
         if (c.EndsWith("z")) return c.Substring(0, c.Length - 1) + "ces";
         if (c.EndsWith("n") || c.EndsWith("r") || c.EndsWith("l") || c.EndsWith("d")) return c + "es";
         return c + "s";
