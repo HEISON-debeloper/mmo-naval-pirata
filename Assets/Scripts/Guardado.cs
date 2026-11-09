@@ -32,7 +32,7 @@ public class Guardado : MonoBehaviour
 
         public bool tieneBarco;
         public int molde, largo, ancho, alto, nivelCasco, nivelVelas;
-        public int cBabor, cEstribor, cProa, cPopa;
+        public int cBabor, cEstribor, cProa, cPopa, nivelBarriles;
         public float vidaBarco = 1f;   // fracción de la vida máxima
         public Vector3 posBarco;
         public float rumboBarco;
@@ -100,7 +100,7 @@ public class Guardado : MonoBehaviour
             PiezasBarco pz = b.GetComponent<PiezasBarco>();
             if (pz != null) { d.nivelCasco = pz.nivelCasco; d.nivelVelas = pz.nivelVelas; }
             Canones cn = b.GetComponent<Canones>();
-            if (cn != null) { d.cBabor = cn.enBabor; d.cEstribor = cn.enEstribor; d.cProa = cn.enProa; d.cPopa = cn.enPopa; }
+            if (cn != null) { d.cBabor = cn.enBabor; d.cEstribor = cn.enEstribor; d.cProa = cn.enProa; d.cPopa = cn.enPopa; d.nivelBarriles = cn.nivelBarriles; }
             if (vb != null && vb.vidaMaxima > 0f) d.vidaBarco = vb.vida / vb.vidaMaxima;
             d.posBarco = b.transform.position;
             d.rumboBarco = b.transform.eulerAngles.y;
@@ -169,7 +169,7 @@ public class Guardado : MonoBehaviour
             ControlBarco b = fab.CrearBarcoPropio(d.molde, d.largo, d.ancho, d.alto, d.posBarco, d.rumboBarco);
             if (d.nivelCasco + d.nivelVelas > 0) b.gameObject.AddComponent<PiezasBarco>().Copiar(d.nivelCasco, d.nivelVelas);
             Canones cn = b.GetComponent<Canones>();
-            if (cn != null) cn.Fijar(d.cBabor, d.cEstribor, d.cProa, d.cPopa);
+            if (cn != null) { cn.Fijar(d.cBabor, d.cEstribor, d.cProa, d.cPopa); cn.nivelBarriles = d.nivelBarriles; }
             VidaBarco vb = b.GetComponent<VidaBarco>();
             if (vb != null) vb.vida = Mathf.Max(1f, vb.vidaMaxima * Mathf.Clamp01(d.vidaBarco));
             if (d.bodega.Count > 0)

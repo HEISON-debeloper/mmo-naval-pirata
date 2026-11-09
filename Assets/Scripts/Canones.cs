@@ -24,6 +24,10 @@ public class Canones : MonoBehaviour
     public float recarga = 2.5f;
     public const float ExtraPorCanon = 0.045f;   // +4.5 % por cada cañón más: 10 cañones ≈ 1.4×, 64 ≈ 3.8×
     public const float RecargaBarriles = 7f;
+    public const int MaxNivelBarriles = 4;
+    [Tooltip("Mejoras de los barriles en llamas: cada nivel suelta un barril más por tanda (1 a 5).")]
+    public int nivelBarriles;
+    public int BarrilesPorTanda => 1 + Mathf.Clamp(nivelBarriles, 0, MaxNivelBarriles);
     public float dano = 12f;
     [Tooltip("Si está activo, el jugador lo controla (Q, E y la puntería).")]
     public bool controlJugador = true;
@@ -170,7 +174,15 @@ public class Canones : MonoBehaviour
                     if (x.name == "Aros") hierro = x.sharedMaterial;
                     else if (madera == null && x.name != "Repisa") madera = x.sharedMaterial;
                 }
-                BarrilLlamas.Soltar(SalidaBarril(r[i]), r[i].rotation, rb.linearVelocity * 0.5f + r[i].forward * 3f + Vector3.up * 1f, vida, madera, hierro != null ? hierro : madera);
+                // Varios barriles por tanda (según la mejora): se abren en abanico detrás del barco
+                int nb = BarrilesPorTanda;
+                for (int j = 0; j < nb; j++)
+                {
+                    float abre = nb == 1 ? 0f : Mathf.Lerp(-1f, 1f, (float)j / (nb - 1));
+                    Vector3 lateral = r[i].right * abre;
+                    Vector3 vel = rb.linearVelocity * 0.5f + r[i].forward * (3f + 0.6f * Mathf.Abs(abre)) + lateral * 2.2f + Vector3.up * 1f;
+                    BarrilLlamas.Soltar(SalidaBarril(r[i]) + lateral * 0.9f, r[i].rotation, vel, vida, madera, hierro != null ? hierro : madera);
+                }
             }
             return true;
         }

@@ -129,7 +129,7 @@ public static class Astillero
         for (int k = 0; k < puestos.Count; k++)
         {
             float y = puestos[k].x, z = puestos[k].y;
-            if (enCubierta)
+            if (y >= h / 2f - 0.01f)
             {
                 float x = CascoProcedural.Costado(z, h / 2f, w, h, L) - 0.75f;
                 babor[k] = Canon("Cañón babor " + (k + 1), t, new Vector3(-x, h / 2f + 0.1f, z), -90f, 1f, m.canon, true, m.mastil);
@@ -142,9 +142,16 @@ public static class Astillero
                 estribor[k] = Canon("Cañón estribor " + (k + 1), t, new Vector3(x, y, z), 90f, 1f, m.canon);
             }
         }
-        if (!enCubierta && puestos.Count > 0)
+        // Portas: en el casco para los pisos de abajo; en la borda para los de cubierta si la borda es alta
+        var conPorta = new System.Collections.Generic.List<Vector2>();
+        foreach (Vector2 pu in puestos)
         {
-            CascoProcedural.Portas(puestos, w, h, L, out Mesh huecos, out Mesh marcos, out Mesh tapas);
+            if (pu.x < h / 2f - 0.01f) conPorta.Add(pu);
+            else if (CascoProcedural.AltoBorda(h) >= 1.05f) conPorta.Add(new Vector2(h / 2f + 0.52f, pu.y));
+        }
+        if (conPorta.Count > 0)
+        {
+            CascoProcedural.Portas(conPorta, w, h, L, out Mesh huecos, out Mesh marcos, out Mesh tapas);
             Rendimiento.Capa(Malla("Portas", t, huecos, Modelos.DeColor(m.canon, new Color(0.04f, 0.03f, 0.025f))), Rendimiento.CapaBarcoDetalle);
             Rendimiento.Capa(Malla("Marcos", t, marcos, m.mastil), Rendimiento.CapaBarcoDetalle);
             Rendimiento.Capa(Malla("Tapas", t, tapas, m.casco), Rendimiento.CapaBarcoDetalle);
@@ -218,17 +225,22 @@ public static class Astillero
         float sepFilas = Mathf.Min(FormaBarco.AltoPiso, (h - 1.2f) / nf);
         float b = CascoProcedural.AltoPorta / 2f;
         float sep = FormaBarco.SeparacionCanones;
-        for (int f = 0; f < nf; f++)
+        // Filas: la de la cubierta de arriba (cañones sobre cureña detrás de la borda) y las de los pisos de abajo (por portas)
+        var filasY = new System.Collections.Generic.List<float> { h / 2f };
+        if (!enCubierta) for (int f = 0; f < nf; f++) filasY.Add(Mathf.Max(h / 2 - PrimeraFila - f * sepFilas, -h / 2 + 0.6f));
+        float frenteCastillo = Cubierta.CentroCamarote(L) + Cubierta.LargoCamarote(L) / 2f;
+        foreach (float y in filasY)
         {
-            float y = enCubierta ? h / 2f : Mathf.Max(h / 2 - PrimeraFila - f * sepFilas, -h / 2 + 0.6f);
+            bool cubierta = y >= h / 2f - 0.01f;
             // Cabe un cañón en z si el casco a esa altura es ancho de sobra (arriba y abajo de la porta)
-            bool Cabe(float z) => enCubierta
+            bool Cabe(float z) => cubierta
                 ? CascoProcedural.Costado(z, y, w, h, L) >= Mathf.Max(0.9f, 0.3f * w)
                 : Mathf.Min(CascoProcedural.Costado(z, y - b, w, h, L), CascoProcedural.Costado(z, y + b, w, h, L)) >= 0.33f * w;
             float zA = -0.5f * L + Mathf.Max(1.4f, 0.07f * L);   // atrás queda el espejo de popa
+            if (cubierta && !enCubierta) zA = Mathf.Max(zA, frenteCastillo + 1f);   // en cubierta, delante del castillo de popa
             float zB = 0.3f * L - 0.6f * w - 0.9f;                 // adelante, donde empieza a cerrarse la proa
             while (zB < CascoProcedural.ZProa(w, L) - 1f && Cabe(zB + 0.25f)) zB += 0.25f;   // pisos altos: un poco más adelante
-            if (enCubierta) zB = Mathf.Min(zB, 0.3f * L - 0.6f * w - 2.1f);   // que no choquen con los cañones de proa
+            if (cubierta) zB = Mathf.Min(zB, 0.3f * L - 0.6f * w - 2.1f);   // que no choquen con los cañones de proa
             while (zB > zA && !Cabe(zB)) zB -= 0.25f;
             while (zA < zB && !Cabe(zA)) zA += 0.25f;
             if (zB < zA) continue;

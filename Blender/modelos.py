@@ -3,7 +3,7 @@
 import bpy, bmesh, math, json, os, sys
 from mathutils import Vector, Matrix
 
-SAL = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'salida') + os.sep   # los .json van a Assets/Resources/Modelos
+SAL = sys.argv[-1] if len(sys.argv) > 1 and sys.argv[-1].endswith('/') else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'salida') + '/'
 os.makedirs(SAL, exist_ok=True)
 
 def limpiar():
@@ -87,6 +87,10 @@ def exportar(nombre_archivo):
     for o in bpy.context.scene.objects:
         if o.type != 'MESH': continue
         bm = bmesh.new(); bm.from_mesh(o.data); bm.transform(o.matrix_world)
+        # Sin huecos (tapas de los tornos) y todas las caras hacia afuera: si no, en Unity se ven huecos
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+        bmesh.ops.holes_fill(bm, edges=bm.edges, sides=0)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         bmesh.ops.triangulate(bm, faces=bm.faces)
         v, t = [], []
         for f in bm.faces:

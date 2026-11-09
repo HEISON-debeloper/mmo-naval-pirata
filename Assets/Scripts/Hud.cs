@@ -293,7 +293,8 @@ public class Hud : MonoBehaviour
             {
                 if (cn.RanurasLado(l) == 0) return "";
                 float t = cn.Recarga(l);
-                return Col(tecla, Oro) + " " + cn.EnLado(l) + "/" + cn.RanurasLado(l) + " "
+                string cuantos = l == LadoCanon.Popa ? (cn.EnLado(l) > 0 ? "x" + cn.BarrilesPorTanda : "0") : cn.EnLado(l) + "/" + cn.RanurasLado(l);
+                return Col(tecla, Oro) + " " + cuantos + " "
                     + (cn.EnLado(l) == 0 ? Col("vacío", Tenue) : t <= 0f ? Col("listo", Bien) : Col(t.ToString("0.0") + "s", Ambar)) + "   ";
             }
             GUI.Label(new Rect(r.x + 10f, y, w, 17f), "Cañones  " + Lado(LadoCanon.Babor, "Babor") + Lado(LadoCanon.Estribor, "Estribor"), Normal);

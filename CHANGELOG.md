@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.25.0 — Cubierta armada  (2026-11-08)
+- La cámara ya no atraviesa paredes: se detiene antes del casco, del castillo de popa y de las islas.
+- Fila de cañones en la cubierta de arriba: sobre cureña, detrás de la borda (con portas en la borda si es alta). Cuenta como un piso más: cada vez que alargas también suma uno por costado ahí.
+- Modelos sin huecos: el cañón, el barril, el espolón y el mascarón de sirena tenían las tapas abiertas; ahora todos los modelos se exportan cerrados y con las caras hacia afuera.
+- Mejorar barriles (Tab → Cañones y bodega): cada mejora suelta un barril más por tanda, hasta 5, abiertos en abanico detrás del barco. Se guarda con la partida.
+
 ## 0.24.0 — Interiores  (2026-11-08)
 - Interiores: en cubierta, F junto a la escotilla baja por una escalera a las cubiertas de cañones (una por cada fila de portas) y, en cascos hondos, a la bodega. F al pie de la escalera sube.
 - Cubiertas de cañones por dentro: los cañones sobre su cureña con ruedas, las portas abiertas por donde entra la luz, pilas de balas, vigas, faroles con luz cálida y los mástiles que bajan hasta el fondo.

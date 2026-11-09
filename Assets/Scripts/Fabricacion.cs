@@ -115,6 +115,19 @@ public class Fabricacion : MonoBehaviour
                         return c.HayRanura(LadoCanon.Popa) ? null : "Ya los tienes"; },
                     hacer = () => BarcoAbordo().GetComponent<Canones>().Instalar(LadoCanon.Popa) ? null : "Ya los tienes",
                     mensaje = "Barriles en llamas listos en la popa" },
+                new Receta { nombre = "Mejorar barriles", descripcion = "Suelta un barril más por tanda (hasta 5).",
+                    costo = () => { Canones c = BarcoAbordo() != null ? BarcoAbordo().GetComponent<Canones>() : null;
+                        int n = c != null ? c.nivelBarriles : 0;
+                        return C(Inventario.Madera, 8 * (n + 1), Inventario.Cuerda, 3 * (n + 1), Inventario.Lingote, n + 1); },
+                    requisito = () => {
+                        string r = RequisitoBarco(); if (r != null) return r;
+                        Canones c = BarcoAbordo().GetComponent<Canones>();
+                        if (c == null || c.EnLado(LadoCanon.Popa) == 0) return "Primero pon los barriles en llamas";
+                        return c.nivelBarriles >= Canones.MaxNivelBarriles ? "Ya sueltas " + c.BarrilesPorTanda + " barriles (máximo)" : null; },
+                    detalle = () => { Canones c = BarcoAbordo() != null ? BarcoAbordo().GetComponent<Canones>() : null;
+                        return c != null ? "Ahora: " + c.BarrilesPorTanda + " por tanda → " + Mathf.Min(c.BarrilesPorTanda + 1, Canones.MaxNivelBarriles + 1) : null; },
+                    hacer = () => { BarcoAbordo().GetComponent<Canones>().nivelBarriles++; return null; },
+                    mensaje = "Barriles mejorados" },
                 new Receta { nombre = "Guardar comida", descripcion = "Pasa tus cocos y frutas a la bodega.",
                     costo = () => Gratis, requisito = RequisitoBarco, mensaje = "",
                     hacer = () => {
@@ -470,6 +483,7 @@ public class Fabricacion : MonoBehaviour
         Pintura ptVieja = viejo.GetComponent<Pintura>();
         if (ptVieja != null) nuevo.AddComponent<Pintura>().Copiar(ptVieja);   // la pintura se conserva
         nuevo.GetComponent<Canones>().Fijar(cBabor, cEstribor, cProa, cPopa);   // lo que no quepa se queda en las ranuras que hay
+        if (cnViejo != null) nuevo.GetComponent<Canones>().nivelBarriles = cnViejo.nivelBarriles;
 
         p.AsignarBarcoPropio(nuevo.GetComponent<ControlBarco>());
         p.IrAlTimonPropio();
