@@ -6,6 +6,13 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.23.0 — Proa y popa de guerra  (2026-11-08)
+- Espolón de bronce en la proa (modelado en Blender): si embistes yendo hacia adelante, el otro barco recibe mucho más daño (más si eres más grande) y el tuyo casi nada.
+- Dos cañones de proa en cubierta, uno a cada lado, que solo disparan al frente.
+- Barriles en llamas en la popa (Tab → Cañones y bodega): mira atrás y haz clic para soltar uno; flota y explota si lo toca otro barco o una bala, y hace explotar a los barriles cercanos.
+- Velas realistas: cada mástil lleva de 1 a 4 velas una encima de otra según su altura, más bauprés con foque en la proa y cangreja en el mástil de popa. Todo se adapta al largo, ancho y alto del barco.
+- Recarga según los cañones: cada cañón más en un lado alarga su recarga un 4,5 % (10 cañones ≈ 1,4 veces; 64 ≈ 3,8 veces).
+
 ## 0.22.0 — Barcos con forma  (2026-11-08)
 - Cascos de verdad: proa en punta, fondo curvo, popa plana con ventanas y borda (baranda) alrededor de la cubierta. Se arman por código y se adaptan a los 15 moldes y a todos los tamaños.
 - Velas curvas, infladas por el viento.

@@ -83,8 +83,12 @@ public class Punteria : MonoBehaviour
         // (el clic que vuelve a capturar el cursor no dispara)
         if (boton && capturadoAntes && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (cn.EnLado(lado) == 0) p.Avisar(cn.RanurasLado(lado) == 0 ? "No hay cañones de " + Canones.Nombre(lado) + " en este barco" : "No tienes cañones a " + Canones.Nombre(lado) + ". Instálalos en Tab → Tu barco");
-            else if (!cn.Disparar(lado)) p.Avisar("Recargando " + Canones.Nombre(lado) + "…");
+            if (cn.EnLado(lado) == 0)
+            {
+                string que = lado == LadoCanon.Popa ? "barriles en llamas" : "cañones a " + Canones.Nombre(lado);
+                p.Avisar(cn.RanurasLado(lado) == 0 ? "Este barco no tiene " + que : "No tienes " + que + ". Ponlos en Tab → Cañones y bodega");
+            }
+            else if (!cn.Disparar(lado)) p.Avisar((lado == LadoCanon.Popa ? "Preparando barriles" : "Recargando " + Canones.Nombre(lado)) + "… " + cn.Recarga(lado).ToString("0.0") + " s");
         }
     }
 
@@ -139,6 +143,24 @@ public class Punteria : MonoBehaviour
         float ancho = Mathf.Clamp(bc != null ? bc.size.z / 60f : 0.3f, 0.12f, 0.45f);
         if (r == null || r.Length == 0) { Mostrar(0); return; }
 
+        if (lado == LadoCanon.Popa)
+        {
+            // Barriles: caen justo detrás; se marca dónde van a quedar flotando
+            Mostrar(1);
+            Cinta(false);
+            Vector3 ini = cn.SalidaBarril(r[0]);
+            Vector3 fin = ini + r[0].forward * 4f; fin.y = Olas.Altura(fin);
+            puntos.Clear(); puntos.Add(ini); puntos.Add(Vector3.Lerp(ini, fin, 0.5f) + Vector3.up * 0.6f); puntos.Add(fin);
+            PuntoCaida = fin;
+            Linea(lineas[0], puntos, c, ancho * 0.6f, ancho * 1.4f);
+            Transform mb = marcas[0];
+            mb.position = fin + Vector3.up * 0.15f;
+            mb.rotation = Quaternion.identity;
+            mb.localScale = new Vector3(BarrilLlamas.Radio * 2f, 0.02f, BarrilLlamas.Radio * 2f);
+            mb.GetComponent<Renderer>().material.color = new Color(1f, 0.4f, 0.1f, c.a * 0.35f);
+            return;
+        }
+
         if (instalados <= 1)
         {
             // Barra: un solo cañón (o fantasma gris si no hay ninguno)
@@ -162,12 +184,14 @@ public class Punteria : MonoBehaviour
         int n = Mathf.Min(instalados, r.Length);
         int iA = 0, iB = 0;
         float zMin = float.MaxValue, zMax = float.MinValue;
+        // Eje de la cinta: a lo largo del barco en los costados, de lado a lado en la proa
+        Vector3 ejeLocal = lado == LadoCanon.Proa ? Vector3.right : Vector3.forward;
         for (int i = 0; i < n; i++)
         {
             if (r[i] == null) continue;
-            Vector3 l = cn.transform.InverseTransformPoint(r[i].position);
-            if (l.z < zMin - 0.01f || (Mathf.Abs(l.z - zMin) <= 0.01f && r[i].position.y > r[iA].position.y)) { zMin = l.z; iA = i; }
-            if (l.z > zMax + 0.01f || (Mathf.Abs(l.z - zMax) <= 0.01f && r[i].position.y > r[iB].position.y)) { zMax = l.z; iB = i; }
+            float lz = Vector3.Dot(cn.transform.InverseTransformPoint(r[i].position), ejeLocal);
+            if (lz < zMin - 0.01f || (Mathf.Abs(lz - zMin) <= 0.01f && r[i].position.y > r[iA].position.y)) { zMin = lz; iA = i; }
+            if (lz > zMax + 0.01f || (Mathf.Abs(lz - zMax) <= 0.01f && r[i].position.y > r[iB].position.y)) { zMax = lz; iB = i; }
         }
         Vector3 inicioA = cn.Salida(r[iA]), inicioB = cn.Salida(r[iB]);
         float altura = Mathf.Max(inicioA.y, inicioB.y);
@@ -178,7 +202,7 @@ public class Punteria : MonoBehaviour
         Remuestrear(puntos, bordeB);
 
         // Se abre un poco hacia el final: más cañones, cinta algo más ancha (con tope, para que no se dispare)
-        Vector3 lat = cn.transform.forward; lat.y = 0f; lat.Normalize();
+        Vector3 lat = lado == LadoCanon.Proa ? cn.transform.right : cn.transform.forward; lat.y = 0f; lat.Normalize();
         if (Vector3.Dot(bordeB[Muestras - 1] - bordeA[Muestras - 1], lat) < 0f) lat = -lat;
         float apertura = Mathf.Min(0.8f + 0.25f * (n - 1), 5f);
         for (int k = 0; k < Muestras; k++)

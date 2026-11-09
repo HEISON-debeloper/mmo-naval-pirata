@@ -173,6 +173,74 @@ public static class CascoProcedural
         return m;
     }
 
+    // ---------- Velas de cuchillo (en el plano del barco, se inflan hacia los lados) ----------
+    // Foque: triángulo con la punta arriba (0,0,0), el puño de atrás abajo (0,-1,0) y el de adelante en (0,-1,1).
+    // Escala del pivote: (inflado, alto, largo).
+    public static Mesh VelaFoque()
+    {
+        if (cache.TryGetValue("foque", out Mesh m) && m != null) return m;
+        const int n = 7;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        Vector3 P(float a, float b, float desfase)   // a: 0 arriba → 1 abajo; b: 0 atrás → 1 adelante (sobre esa altura)
+        {
+            float inflado = Mathf.Sin(Mathf.PI * a) * Mathf.Sin(Mathf.PI * Mathf.Clamp01(b)) * 0.9f;
+            return new Vector3(inflado + desfase, -a, a * b);
+        }
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j <= i; j++)
+            {
+                float a0 = (float)i / n, a1 = (float)(i + 1) / n;
+                float b00 = i == 0 ? 0f : (float)j / i, b10 = (float)j / (i + 1), b11 = (float)(j + 1) / (i + 1);
+                foreach (float d in new[] { 0.05f, -0.05f })
+                {
+                    Vector3 A = P(a0, b00, d), B = P(a1, b10, d), C = P(a1, b11, d);
+                    if (d > 0) TriUV(v, uv, A, C, B); else TriUV(v, uv, A, B, C);
+                    if (j < i)
+                    {
+                        float b01 = (float)(j + 1) / i;
+                        Vector3 D = P(a0, b01, d);
+                        if (d > 0) TriUV(v, uv, A, D, C); else TriUV(v, uv, A, C, D);
+                    }
+                }
+            }
+        m = Armar("Foque", v, uv);
+        cache["foque"] = m;
+        return m;
+    }
+
+    // Cangreja: trapecio detrás del mástil; el borde de arriba (el pico) sube hacia atrás.
+    // Va de z = 0 (mástil) a z = -1 (atrás), y de y = 0 (arriba) a y = -1 (botavara). Escala: (inflado, alto, largo).
+    public static Mesh VelaCangreja()
+    {
+        if (cache.TryGetValue("cangreja", out Mesh m) && m != null) return m;
+        const int nz = 6, ny = 6;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        Vector3 P(int i, int j, float desfase)
+        {
+            float u = (float)i / nz, t = (float)j / ny;
+            float arriba = 0.35f * u;   // el pico sube hacia atrás
+            float y = Mathf.Lerp(arriba, -1f, t);
+            float inflado = Mathf.Sin(Mathf.PI * u) * Mathf.Sin(Mathf.PI * t) * 0.9f;
+            return new Vector3(inflado + desfase, y, -u);
+        }
+        for (int i = 0; i < nz; i++)
+            for (int j = 0; j < ny; j++)
+                foreach (float d in new[] { 0.05f, -0.05f })
+                {
+                    Vector3 a = P(i, j, d), b = P(i + 1, j, d), c = P(i + 1, j + 1, d), e = P(i, j + 1, d);
+                    if (d > 0) { TriUV(v, uv, a, b, c); TriUV(v, uv, a, c, e); }
+                    else { TriUV(v, uv, a, c, b); TriUV(v, uv, a, e, c); }
+                }
+        m = Armar("Cangreja", v, uv);
+        cache["cangreja"] = m;
+        return m;
+    }
+
+    static void TriUV(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c)
+    {
+        foreach (Vector3 p in new[] { a, b, c }) { v.Add(p); uv.Add(new Vector2(-p.z, 1f + p.y)); }
+    }
+
     // ---------- Ayudas ----------
     static void Quad(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, float w, float h, float L)
     {

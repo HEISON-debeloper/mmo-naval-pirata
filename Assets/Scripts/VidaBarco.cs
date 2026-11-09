@@ -69,7 +69,19 @@ public class VidaBarco : MonoBehaviour
     void OnCollisionEnter(Collision c)
     {
         if (c.collider.GetComponentInParent<BalaCanon>() != null) return;
+        if (c.collider.GetComponentInParent<BarrilLlamas>() != null) return;
         float impacto = c.relativeVelocity.magnitude;
-        if (impacto > 1.5f) Dano((impacto - 1.5f) * danoPorChoque);
+        if (impacto <= 1.5f) return;
+        float d = (impacto - 1.5f) * danoPorChoque;
+        // Espolón: si embestí yo con la proa, mi barco casi no sufre; si me embistieron, sufro mucho más
+        Espolon mio = GetComponent<Espolon>();
+        if (mio != null && mio.Golpea(c)) d *= 0.25f;
+        Espolon suyo = c.rigidbody != null ? c.rigidbody.GetComponent<Espolon>() : null;
+        if (suyo != null && suyo != mio && suyo.Golpea(c))
+        {
+            d *= suyo.Multiplicador(rb);
+            Espolon.Avisar(suyo.gameObject, gameObject, d);
+        }
+        Dano(d);
     }
 }

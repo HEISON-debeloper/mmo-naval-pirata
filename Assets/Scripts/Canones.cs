@@ -20,7 +20,10 @@ public class Canones : MonoBehaviour
     public float velocidadBala = 44f;
     public float elevacion = 5f;
     public float dispersion = 0.04f;
+    [Tooltip("Recarga con un solo cañón. Cada cañón más en ese lado la alarga (más cañones que cargar).")]
     public float recarga = 2.5f;
+    public const float ExtraPorCanon = 0.045f;   // +4.5 % por cada cañón más: 10 cañones ≈ 1.4×, 64 ≈ 3.8×
+    public const float RecargaBarriles = 7f;
     public float dano = 12f;
     [Tooltip("Si está activo, el jugador lo controla (Q, E y la puntería).")]
     public bool controlJugador = true;
@@ -41,6 +44,13 @@ public class Canones : MonoBehaviour
     public float Recarga(LadoCanon l) => recargas[(int)l];
     public int Ranuras() => RanurasLado(LadoCanon.Babor) + RanurasLado(LadoCanon.Estribor) + RanurasLado(LadoCanon.Proa) + RanurasLado(LadoCanon.Popa);
     public int Instalados => enBabor + enEstribor + enProa + enPopa;
+
+    // Cuánto tarda en recargar un lado con n cañones instalados
+    public float TiempoRecarga(LadoCanon l)
+    {
+        if (l == LadoCanon.Popa) return RecargaBarriles;
+        return recarga * (1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1));
+    }
 
     public static string Nombre(LadoCanon l) => l == LadoCanon.Babor ? "babor" : l == LadoCanon.Estribor ? "estribor" : l == LadoCanon.Proa ? "proa" : "popa";
 
@@ -126,6 +136,7 @@ public class Canones : MonoBehaviour
 
     // ---------- Tiro ----------
     // Dónde sale la bala y con qué velocidad (la puntería usa lo mismo para dibujar el fantasma)
+    public Vector3 SalidaBarril(Transform c) => c.position + c.forward * 1.6f + Vector3.up * 0.4f;
     public Vector3 Salida(Transform c) => c.position + c.forward * 1.2f + Vector3.up * 0.6f;
     public Vector3 VelocidadInicial(Transform c)
     {
@@ -143,10 +154,26 @@ public class Canones : MonoBehaviour
         int n = EnLado(lado);
         if (n == 0) return false;
         if (recargas[(int)lado] > 0f) return false;
-        recargas[(int)lado] = recarga;
+        recargas[(int)lado] = TiempoRecarga(lado);
         propios = GetComponentsInChildren<Collider>();
 
         Transform[] r = Ranuras(lado);
+        if (lado == LadoCanon.Popa)
+        {
+            // Popa: barriles en llamas que caen al agua detrás del barco
+            for (int i = 0; i < n && i < r.Length; i++)
+            {
+                if (r[i] == null) continue;
+                Material madera = null, hierro = null;
+                foreach (Renderer x in r[i].GetComponentsInChildren<Renderer>())
+                {
+                    if (x.name == "Aros") hierro = x.sharedMaterial;
+                    else if (madera == null && x.name != "Repisa") madera = x.sharedMaterial;
+                }
+                BarrilLlamas.Soltar(SalidaBarril(r[i]), r[i].rotation, rb.linearVelocity * 0.5f + r[i].forward * 3f + Vector3.up * 1f, vida, madera, hierro != null ? hierro : madera);
+            }
+            return true;
+        }
         for (int i = 0; i < n && i < r.Length; i++)
         {
             Transform c = r[i];

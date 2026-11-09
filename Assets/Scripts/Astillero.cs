@@ -65,23 +65,67 @@ public static class Astillero
                     n => n == "Cepo" ? m.mastil : m.canon);
         }
 
-        // Mástiles y velas proporcionales al barco real (largo, ancho y alto), sin importar el molde:
-        // más largo = más mástiles; más ancho = velas más anchas; todo crece junto.
+        // Aparejo real: mástiles con varias velas cuadradas una encima de otra (más pisos de vela si el mástil es alto),
+        // bauprés con foque (vela triangular) en la proa y cangreja (vela de cuchillo) en el mástil de popa.
+        // Todo sale del largo, el ancho y el alto del barco: más largo = más mástiles; más ancho = velas más anchas;
+        // más alto (más pisos) = mástiles más altos con más velas.
         int nMast = Mathf.Max(mastiles, Mathf.Clamp(Mathf.RoundToInt(L / 20f), 1, 5));
         float zIni = -0.28f * L, zFin = 0.24f * L;
+        if (nMast == 1) { zIni = zFin = 0.05f * L; }
         float espacio = nMast > 1 ? (zFin - zIni) / (nMast - 1) : L * 0.6f;
-        float anchoVela = Mathf.Min(Mathf.Max(w * 1.8f, L * 0.25f / nMast), espacio * 0.95f);
-        float hm = 0.6f * L / Mathf.Sqrt(nMast) + w * 1.2f;
-        int principal = (nMast - 1) / 2;   // el del medio es el más alto
+        float anchoVela = Mathf.Min(Mathf.Max(w * 1.8f, L * 0.25f / nMast), espacio * 1.1f);
+        float hm = 0.55f * L / Mathf.Sqrt(nMast) + w * 1.1f + h * 0.6f;
+        int principal = nMast / 2;   // el del medio es el más alto
         Transform velaPrincipal = null;
-        Transform[] extras = new Transform[nMast - 1];
-        for (int i = 0, e = 0; i < nMast; i++)
+        var extras = new System.Collections.Generic.List<Transform>();
+        float zProaMastil = zFin, hmProa = hm;
+        for (int i = 0; i < nMast; i++)
         {
-            float zm = nMast == 1 ? 0.05f * L : Mathf.Lerp(zIni, zFin, (float)i / (nMast - 1));
+            float zm = nMast == 1 ? zIni : Mathf.Lerp(zIni, zFin, (float)i / (nMast - 1));
             bool esPrincipal = i == principal;
-            Transform v = Mastil(t, zm, esPrincipal ? hm : hm * 0.85f, esPrincipal ? anchoVela : anchoVela * 0.9f, h, m, esPrincipal);
-            if (esPrincipal) velaPrincipal = v; else extras[e++] = v;
+            float alto = esPrincipal ? hm : hm * (i == 0 ? 0.78f : 0.88f);   // el de popa (mesana) más bajo
+            float ancho = esPrincipal ? anchoVela : anchoVela * (i == 0 ? 0.75f : 0.9f);
+            var velas = Mastil(t, zm, alto, ancho, h, m, esPrincipal);
+            foreach (Transform v in velas) { if (esPrincipal && velaPrincipal == null) velaPrincipal = v; else extras.Add(v); }
+            if (i == nMast - 1) { zProaMastil = zm; hmProa = alto; }
+            // Cangreja: vela de cuchillo detrás del mástil de popa (solo con 2 o más mástiles)
+            if (i == 0 && nMast >= 2)
+            {
+                float hc = alto * 0.42f, lc = Mathf.Min(espacio * 0.55f, zm - (-0.5f * L) + 1f);
+                Pieza(PrimitiveType.Cylinder, "Botavara", t, new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.4f, zm - lc / 2f), Quaternion.Euler(90, 0, 0), new Vector3(0.18f, lc / 2f, 0.18f), m.mastil);
+                GameObject pc = new GameObject("Vela");
+                pc.transform.SetParent(t, false);
+                pc.transform.localPosition = new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.5f + hc, zm - 0.3f);
+                pc.transform.localScale = new Vector3(hc * 0.12f, hc, lc);
+                Malla("Lona", pc.transform, CascoProcedural.VelaCangreja(), m.vela);
+                extras.Add(pc.transform);
+            }
         }
+        // Bauprés (palo que sale de la proa) y foque: vela triangular del bauprés al mástil de proa
+        float zRoda = CascoProcedural.ZProa(w, L);
+        float largoBaupres = Mathf.Clamp(0.16f * L, 2.5f, 22f);
+        Vector3 baseBaupres = new Vector3(0, h / 2 + 0.3f, zRoda - 0.6f);
+        Quaternion giroBaupres = Quaternion.Euler(70f, 0, 0);   // apunta adelante y un poco arriba
+        Vector3 puntaBaupres = baseBaupres + giroBaupres * Vector3.up * largoBaupres;
+        Pieza(PrimitiveType.Cylinder, "Bauprés", t, baseBaupres + giroBaupres * Vector3.up * (largoBaupres / 2f), giroBaupres, new Vector3(0.22f + L * 0.003f, largoBaupres / 2f, 0.22f + L * 0.003f), m.mastil);
+        {
+            float topeY = h / 2 + hmProa * 0.72f;
+            float altoF = topeY - (puntaBaupres.y + 0.3f);
+            GameObject pf = new GameObject("Vela");
+            pf.transform.SetParent(t, false);
+            pf.transform.localPosition = new Vector3(0, topeY, zProaMastil + 0.4f);
+            float largoF = Mathf.Max(1f, puntaBaupres.z - (zProaMastil + 0.4f));
+            pf.transform.localScale = new Vector3(altoF * 0.1f, altoF, largoF);
+            Malla("Lona", pf.transform, CascoProcedural.VelaFoque(), m.vela);
+            extras.Add(pf.transform);
+        }
+        // Espolón de bronce en la punta de la proa, a ras del agua: parte barcos al embestir
+        float eEsp = Mathf.Clamp(w / 4f, 0.7f, 3.5f);
+        if (Modelos.Existe("espolon"))
+            Modelos.Crear("espolon", t, new Vector3(0f, -h / 2f + 0.62f * h, zRoda - 0.25f * eEsp), Quaternion.identity, eEsp, _ => m.canon);
+        else
+            Pieza(PrimitiveType.Cube, "Espolon", t, new Vector3(0f, 0.1f * h, zRoda + 0.6f * eEsp), Quaternion.Euler(0, 45, 0), new Vector3(eEsp, eEsp * 0.6f, eEsp), m.canon);
+        raiz.AddComponent<Espolon>();
 
         // Ranuras de cañón: una o varias filas (pisos) por costado. Los cañones son siempre del mismo tamaño.
         int n = Mathf.Max(1, porFila), nf = Mathf.Max(1, filas);
@@ -96,9 +140,12 @@ public static class Astillero
             babor[k] = Canon("Cañón babor " + (k + 1), t, new Vector3(-(w / 2 + 0.1f), y, z), -90f, 1f, m.canon);
             estribor[k] = Canon("Cañón estribor " + (k + 1), t, new Vector3(w / 2 + 0.1f, y, z), 90f, 1f, m.canon);
         }
-        // Un cañón de proa (adelante) y uno de popa (atrás)
-        Transform proa = Canon("Cañón proa", t, new Vector3(0, h / 2 - 0.8f, 0.3f * L + w * 0.5f), 0f, 1f, m.canon);
-        Transform popa = Canon("Cañón popa", t, new Vector3(0, h / 2 - 0.8f, -0.5f * L - 0.1f), 180f, 1f, m.canon);
+        // Dos cañones de proa en cubierta, uno a cada lado, mirando al frente (no giran hacia los lados)
+        float zCp = 0.3f * L - 0.6f * w - 0.6f, xCp = Mathf.Max(0.6f, w / 2f - 0.7f);
+        Transform proaB = Canon("Cañón proa babor", t, new Vector3(-xCp, h / 2 + 0.1f, zCp), 0f, 1f, m.canon, true, m.mastil);
+        Transform proaE = Canon("Cañón proa estribor", t, new Vector3(xCp, h / 2 + 0.1f, zCp), 0f, 1f, m.canon, true, m.mastil);
+        // Popa: repisa con barriles en llamas que se sueltan al agua
+        Transform popa = Barriles("Barriles popa", t, new Vector3(0, h / 2 - 0.2f, -0.5f * L - 0.5f), Mathf.Clamp(w / 5f, 0.8f, 2f), m);
 
         // Puntos de flotación en las esquinas de abajo
         Transform[] puntos = new Transform[4];
@@ -120,7 +167,7 @@ public static class Astillero
         Canones c = raiz.AddComponent<Canones>();
         c.babor = babor;
         c.estribor = estribor;
-        c.proa = new[] { proa };
+        c.proa = new[] { proaB, proaE };
         c.popa = new[] { popa };
         c.controlJugador = esJugador;
         if (!esJugador) c.recarga = 3.6f;
@@ -128,31 +175,60 @@ public static class Astillero
 
         ControlBarco cb = raiz.AddComponent<ControlBarco>();
         cb.vela = velaPrincipal;
-        cb.velasExtra = extras;
+        cb.velasExtra = extras.ToArray();
         cb.controlActivo = esJugador;
         cb.mostrarPanel = esJugador;
         return raiz;
     }
 
-    // Un mástil con su verga, su vela (que cuelga de un pivote para subirla y bajarla) y, el principal, la bandera
-    // Un mástil con su verga, su vela (que cuelga de un pivote para subirla y bajarla) y, el principal, la bandera.
-    // hm = alto del mástil sobre la cubierta; anchoVela = ancho de la vela.
-    static Transform Mastil(Transform t, float zm, float hm, float anchoVela, float h, Materiales m, bool principal)
+    // Un mástil con sus velas cuadradas, una encima de otra (1 a 4 según lo alto), cada una con su verga,
+    // y la bandera arriba en el principal. Cada vela cuelga de un pivote que se estira para subirla y bajarla.
+    // hm = alto del mástil sobre la cubierta; anchoVela = ancho de la vela de abajo (las de arriba son más angostas).
+    static System.Collections.Generic.List<Transform> Mastil(Transform t, float zm, float hm, float anchoVela, float h, Materiales m, bool principal)
     {
+        var velas = new System.Collections.Generic.List<Transform>();
         float grosor = 0.25f + hm * 0.012f;
         Pieza(PrimitiveType.Cylinder, "Mástil", t, new Vector3(0, h / 2 + hm / 2, zm), Quaternion.identity, new Vector3(grosor, hm / 2, grosor), m.mastil);
-        float yv = h / 2 + hm * 0.92f;
-        Pieza(PrimitiveType.Cube, "Verga", t, new Vector3(0, yv, zm + grosor), Quaternion.identity, new Vector3(anchoVela * 1.08f, grosor * 0.7f, grosor * 0.7f), m.mastil);
-        GameObject pivote = new GameObject("Vela");
-        pivote.transform.SetParent(t, false);
-        pivote.transform.localPosition = new Vector3(0, yv, zm + grosor * 1.5f);
-        pivote.transform.localScale = new Vector3(anchoVela, hm * 0.72f, anchoVela * 0.18f);
-        Lona(pivote.transform, m.vela);
+        int pisos = hm < 9f ? 1 : hm < 18f ? 2 : hm < 30f ? 3 : 4;
+        float abajo = h / 2 + Mathf.Max(2.2f, hm * 0.12f), arriba = h / 2 + hm * 0.95f;
+        float tramo = (arriba - abajo) / pisos;
+        for (int k = 0; k < pisos; k++)
+        {
+            float yv = abajo + tramo * (k + 1);                        // verga arriba de cada vela
+            float ancho = anchoVela * (1f - 0.17f * k);                 // más angostas hacia arriba
+            float gv = grosor * (0.75f - 0.08f * k);
+            Pieza(PrimitiveType.Cylinder, "Verga", t, new Vector3(0, yv, zm + grosor), Quaternion.Euler(0, 0, 90), new Vector3(gv, ancho * 0.56f, gv), m.mastil);
+            GameObject pivote = new GameObject("Vela");
+            pivote.transform.SetParent(t, false);
+            pivote.transform.localPosition = new Vector3(0, yv, zm + grosor * 1.5f);
+            pivote.transform.localScale = new Vector3(ancho, tramo * 0.93f, ancho * 0.16f);
+            Lona(pivote.transform, m.vela);
+            velas.Add(pivote.transform);
+        }
         if (principal)
         {
             float b = 0.6f + hm * 0.05f;
             Pieza(PrimitiveType.Cube, "Bandera", t, new Vector3(0, h / 2 + hm + b * 0.6f, zm - b), Quaternion.identity, new Vector3(0.08f, b, b * 1.8f), m.bandera);
         }
+        return velas;
+    }
+
+    // Repisa de popa con barriles en llamas (se ven dos; al soltar uno sale por detrás)
+    static Transform Barriles(string nombre, Transform padre, Vector3 pos, float e, Materiales m)
+    {
+        GameObject pivote = new GameObject(nombre);
+        pivote.transform.SetParent(padre, false);
+        pivote.transform.localPosition = pos;
+        pivote.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);   // su eje Z mira hacia atrás
+        Pieza(PrimitiveType.Cube, "Repisa", pivote.transform, new Vector3(0, -0.1f * e, 0.2f * e), Quaternion.identity, new Vector3(2.2f * e, 0.15f * e, 1.1f * e), m.mastil);
+        foreach (float x in new[] { -0.5f, 0.5f })
+        {
+            if (Modelos.Existe("barril"))
+                Modelos.Crear("barril", pivote.transform, new Vector3(x * e, -0.02f * e, 0.2f * e), Quaternion.identity, e, n => n == "Aros" ? m.canon : m.mastil);
+            else
+                Pieza(PrimitiveType.Cylinder, "Barril", pivote.transform, new Vector3(x * e, 0.45f * e, 0.2f * e), Quaternion.identity, new Vector3(0.65f * e, 0.45f * e, 0.65f * e), m.mastil);
+        }
+        Rendimiento.Capa(pivote, Rendimiento.CapaBarcoDetalle);
         return pivote.transform;
     }
 

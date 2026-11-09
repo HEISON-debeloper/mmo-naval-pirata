@@ -106,7 +106,15 @@ public class Fabricacion : MonoBehaviour
                 RecetaCanon(LadoCanon.Babor),
                 RecetaCanon(LadoCanon.Estribor),
                 RecetaCanon(LadoCanon.Proa),
-                RecetaCanon(LadoCanon.Popa),
+                new Receta { nombre = "Barriles en llamas (popa)", descripcion = "Se sueltan por atrás: flotan y explotan si los toca otro barco. Mira atrás y apunta.",
+                    costo = () => C(Inventario.Madera, 6, Inventario.Cuerda, 2, Inventario.Fibra, 4),
+                    requisito = () => {
+                        string r = RequisitoBarco(); if (r != null) return r;
+                        Canones c = BarcoAbordo().GetComponent<Canones>();
+                        if (c == null || c.RanurasLado(LadoCanon.Popa) == 0) return "La balsa no tiene popa: agrándala";
+                        return c.HayRanura(LadoCanon.Popa) ? null : "Ya los tienes"; },
+                    hacer = () => BarcoAbordo().GetComponent<Canones>().Instalar(LadoCanon.Popa) ? null : "Ya los tienes",
+                    mensaje = "Barriles en llamas listos en la popa" },
                 new Receta { nombre = "Guardar comida", descripcion = "Pasa tus cocos y frutas a la bodega.",
                     costo = () => Gratis, requisito = RequisitoBarco, mensaje = "",
                     hacer = () => {
@@ -341,7 +349,7 @@ public class Fabricacion : MonoBehaviour
         string nombre = Canones.Nombre(lado);
         string desc = lado == LadoCanon.Babor ? "Izquierda. Apunta o dispara con Q"
                     : lado == LadoCanon.Estribor ? "Derecha. Apunta o dispara con E"
-                    : lado == LadoCanon.Proa ? "Adelante. Mira al frente y apunta" : "Atrás. Mira hacia atrás y apunta";
+                    : lado == LadoCanon.Proa ? "Adelante, en cubierta (2). Solo disparan al frente" : "Atrás. Mira hacia atrás y apunta";
         return new Receta
         {
             nombre = "Cañón a " + nombre, descripcion = desc,

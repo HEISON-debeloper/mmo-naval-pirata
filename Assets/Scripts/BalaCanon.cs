@@ -21,6 +21,8 @@ public class BalaCanon : MonoBehaviour
 
     void OnCollisionEnter(Collision c)
     {
+        BarrilLlamas barril = c.collider.GetComponentInParent<BarrilLlamas>();
+        if (barril != null) { barril.Explotar(); Destroy(gameObject); return; }
         VidaBarco objetivo = c.collider.GetComponentInParent<VidaBarco>();
         if (objetivo != null && objetivo != dueno) objetivo.Dano(dano);
         Destroy(gameObject);
