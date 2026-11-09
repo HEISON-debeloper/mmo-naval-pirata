@@ -7,6 +7,8 @@ using UnityEngine;
 //  · Cintas: las franjas oscuras que recorren el casco bajo cada fila de portas y bajo la borda.
 //  · Castillo de popa: baranda arriba, galería (balcón) atrás, escaleras al timón, faroles en las esquinas y moldura dorada.
 //  · Mascarón de proa, cabrestante y campana.
+//  · Tablones de cubierta (juntas oscuras), bote salvavidas boca abajo en los barcos grandes,
+//    bitácora con brújula junto al timón y catalejo en la baranda de la toldilla.
 public static class Detalles
 {
     public struct Mastil { public float z, alto, grosor; }
@@ -38,6 +40,9 @@ public static class Detalles
         }
 
         Mascaron(t, L, w, h, m, oro);
+        Tablones(t, L, w, h, m);
+        BoteSalvavidas(t, L, w, h, mastiles, frenteCastillo, m);
+        Bitacora(t, L, w, h, m, oro);
         // Cabrestante en cubierta, detrás del mástil mayor; campana en el frente del castillo de popa
         if (mastiles.Count > 0 && Modelos.Existe("cabrestante") && w >= 3.5f)
         {
@@ -59,6 +64,155 @@ public static class Detalles
                 n => n == "Campana" ? oro : m.mastil);
             Rendimiento.Capa(c, Rendimiento.CapaBarcoDetalle);
         }
+    }
+
+    // ---------- Tablones de cubierta ----------
+    // Juntas oscuras a lo largo de la cubierta, cada ~0,32 m, siguiendo la forma real del casco (se cierran en la proa)
+    static void Tablones(Transform t, float L, float w, float h, Astillero.Materiales m)
+    {
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        float y = h / 2f + 0.1f + 0.006f;
+        float borda = CascoProcedural.GrosorBorda(w) + 0.05f;
+        float zA = CascoProcedural.ZPopa(L) + 0.15f, zB = CascoProcedural.ZProa(w, L) - 0.2f;
+        const float paso = 0.32f, tramo = 0.5f;
+        for (float x = -w / 2f + paso; x < w / 2f; x += paso)
+        {
+            float inicio = float.NaN;
+            for (float z = zA; z <= zB + 0.001f; z += tramo)
+            {
+                bool dentro = Mathf.Abs(x) < CascoProcedural.Costado(z, h / 2f, w, h, L) - borda;
+                if (dentro && float.IsNaN(inicio)) inicio = z;
+                if ((!dentro || z + tramo > zB) && !float.IsNaN(inicio))
+                {
+                    float fin = dentro ? z : z - tramo;
+                    if (fin - inicio > 0.3f) Caja(v, uv, new Vector3(x, y, (inicio + fin) / 2f), new Vector3(0.025f, 0.008f, fin - inicio));
+                    inicio = float.NaN;
+                }
+            }
+        }
+        // Juntas de testa: cortes cruzados escalonados cada ~2,4 m
+        for (float x = -w / 2f + paso / 2f; x < w / 2f; x += paso)
+        {
+            int fila = Mathf.RoundToInt((x + w) / paso);
+            for (float z = zA + (fila % 3) * 0.8f; z < zB; z += 2.4f)
+                if (Mathf.Abs(x) + paso / 2f < CascoProcedural.Costado(z, h / 2f, w, h, L) - borda)
+                    Caja(v, uv, new Vector3(x, y, z), new Vector3(paso - 0.03f, 0.008f, 0.025f));
+        }
+        if (v.Count == 0) return;
+        GameObject g = Astillero.Malla("Tablones", t, CascoProcedural.MallaDe("Tablones", v, uv), Modelos.DeColor(m.vela, new Color(0.16f, 0.11f, 0.07f)));
+        g.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
+    }
+
+    // ---------- Bote salvavidas ----------
+    // Un bote de remos boca abajo sobre dos calzos, entre el mástil mayor y el de proa (solo en barcos que lo aguantan)
+    static void BoteSalvavidas(Transform t, float L, float w, float h, List<Mastil> mastiles, float frenteCastillo, Astillero.Materiales m)
+    {
+        if (L < 16f || w < 4.5f || mastiles.Count == 0) return;
+        float lb = Mathf.Clamp(0.16f * L, 3f, 6f), ab = Mathf.Clamp(0.3f * w, 1.2f, 2f), hb = ab * 0.42f;
+        // Hueco libre en el eje: entre dos mástiles o delante del castillo, lejos de la escotilla del centro
+        float mejorZ = float.NaN, mejorHueco = 0f;
+        var zs = new List<float> { frenteCastillo + 0.8f };
+        foreach (var ma in mastiles) zs.Add(ma.z);
+        zs.Add(0.3f * L - 0.6f * w);
+        zs.Sort();
+        for (int i = 0; i < zs.Count - 1; i++)
+        {
+            float hueco = zs[i + 1] - zs[i] - 1.6f;
+            float zc = (zs[i] + zs[i + 1]) / 2f;
+            if (Mathf.Abs(zc) < 1.8f) zc += zc >= 0f ? 1.8f : -1.8f;   // la escotilla está cerca del centro
+            if (hueco > lb + 0.6f && hueco > mejorHueco) { mejorHueco = hueco; mejorZ = zc; }
+        }
+        if (float.IsNaN(mejorZ)) return;
+        // El bote va a un costado de la cubierta para no tapar el paso
+        float xb = Mathf.Min(CascoProcedural.Costado(mejorZ, h / 2f, w, h, L) - CascoProcedural.GrosorBorda(w) - ab / 2f - 0.25f, w * 0.22f);
+        if (xb < ab / 2f + 0.4f) return;
+        float y0 = h / 2f + 0.1f + 0.35f;   // sobre los calzos
+
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        const int est = 12, lados = 8;
+        Vector3 P(int e, int k)
+        {
+            float s = e / (float)est;                       // 0 popa → 1 proa del bote
+            float z = Mathf.Lerp(-lb / 2f, lb / 2f, s);
+            float fin = Mathf.Pow(Mathf.Sin(Mathf.PI * Mathf.Lerp(0.06f, 0.94f, s)), 0.6f);
+            if (s > 0.5f) fin *= Mathf.Pow(1f - (s - 0.5f) * 2f, 0.25f) * 0.9f + 0.1f;
+            float a = Mathf.PI * k / lados;                 // media vuelta: del borde de un lado al del otro
+            float x = Mathf.Cos(a) * ab / 2f * fin;
+            float yy = Mathf.Sin(a) * hb * Mathf.Lerp(0.6f, 1f, fin);
+            return new Vector3(xb + x, y0 + yy, mejorZ + z);   // boca abajo: la quilla arriba
+        }
+        for (int e = 0; e < est; e++)
+            for (int k = 0; k < lados; k++)
+            {
+                Vector3 a = P(e, k), b = P(e + 1, k), c = P(e + 1, k + 1), d = P(e, k + 1);
+                Vector3 n = Vector3.Cross(b - a, d - a).normalized;
+                if (Vector3.Dot(n, (a + c) / 2f - new Vector3(xb, y0, mejorZ)) < 0f) n = -n;
+                CascoProcedural.Cara(v, uv, a, b, c, d, n);
+            }
+        // Quilla y regala (borde)
+        Linea(v, uv, P(0, lados / 2) + Vector3.up * 0.04f, P(est, lados / 2) + Vector3.up * 0.04f, 0.08f);
+        for (int e = 0; e < est; e++) { Linea(v, uv, P(e, 0), P(e + 1, 0), 0.07f); Linea(v, uv, P(e, lados), P(e + 1, lados), 0.07f); }
+        // Calzos
+        foreach (float f in new[] { -0.28f, 0.28f })
+            Caja(v, uv, new Vector3(xb, h / 2f + 0.1f + 0.18f, mejorZ + f * lb), new Vector3(ab * 1.1f, 0.36f, 0.18f));
+        // Remos encima, cruzados
+        Linea(v, uv, new Vector3(xb - ab * 0.25f, y0 + hb + 0.1f, mejorZ - lb * 0.42f), new Vector3(xb - ab * 0.15f, y0 + hb + 0.1f, mejorZ + lb * 0.42f), 0.06f);
+        Linea(v, uv, new Vector3(xb + ab * 0.2f, y0 + hb + 0.1f, mejorZ - lb * 0.4f), new Vector3(xb + ab * 0.1f, y0 + hb + 0.1f, mejorZ + lb * 0.4f), 0.06f);
+
+        GameObject g = Astillero.Malla("Bote salvavidas", t, CascoProcedural.MallaDe("Bote salvavidas", v, uv), m.casco != null ? m.casco : m.mastil);
+        Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
+        ObstaculosCubierta ob = t.GetComponent<ObstaculosCubierta>();
+        if (ob != null) for (float f = -0.35f; f <= 0.351f; f += 0.35f) ob.Agregar(xb, mejorZ + f * lb, ab * 0.55f);
+    }
+
+    // ---------- Bitácora con brújula y catalejo ----------
+    // La bitácora (el pedestal de la brújula) va delante del timón; el catalejo descansa sobre la baranda de la toldilla.
+    static void Bitacora(Transform t, float L, float w, float h, Astillero.Materiales m, Material oro)
+    {
+        bool plana = Cubierta.EsPlana(t);
+        if (plana || w < 3f) return;
+        Vector3 timon = Cubierta.Timon(h, L);
+        float yPiso = timon.y - 0.1f + 0.0f;
+        Transform cast = t.Find("Camarote");
+        if (cast == null) return;
+        var vm = new List<Vector3>(); var um = new List<Vector2>();
+        var vo = new List<Vector3>(); var uo = new List<Vector2>();
+        var vv = new List<Vector3>(); var uvv = new List<Vector2>();
+        float zb = timon.z + 1.0f;
+        // Pedestal de madera con tapa
+        Caja(vm, um, new Vector3(0f, yPiso + 0.5f, zb), new Vector3(0.42f, 1.0f, 0.42f));
+        Caja(vm, um, new Vector3(0f, yPiso + 1.02f, zb), new Vector3(0.52f, 0.06f, 0.52f));
+        // Cúpula de bronce (octágono escalonado) con la rosa de la brújula adentro
+        for (int i = 0; i < 4; i++)
+        {
+            float r = 0.22f * Mathf.Cos(i * 0.35f), yy = yPiso + 1.07f + i * 0.06f;
+            CascoProcedural.Caja(vo, uo, new Vector3(0f, yy, zb), new Vector3(r * 2f, 0.06f, r * 2f), Quaternion.Euler(0f, 22.5f, 0f));
+            CascoProcedural.Caja(vo, uo, new Vector3(0f, yy, zb), new Vector3(r * 2f, 0.06f, r * 2f), Quaternion.identity);
+        }
+        // Dos esferas compensadoras a los lados (como en las bitácoras de verdad)
+        foreach (float sx in new[] { -1f, 1f })
+        {
+            Linea(vo, uo, new Vector3(sx * 0.21f, yPiso + 1.05f, zb), new Vector3(sx * 0.36f, yPiso + 1.08f, zb), 0.04f);
+            CascoProcedural.Caja(vv, uvv, new Vector3(sx * 0.4f, yPiso + 1.1f, zb), new Vector3(0.12f, 0.12f, 0.12f), Quaternion.Euler(45f, 45f, 0f));
+        }
+
+        // Catalejo sobre la baranda de babor de la toldilla, apoyado en dos horquillas
+        float cw = cast.localScale.x;
+        float xs = -(cw / 2f - 0.05f), ys = timon.y - 0.1f + 0.9f + 0.08f, zs = timon.z - 0.2f;
+        foreach (float dz in new[] { -0.25f, 0.25f })
+            Caja(vm, um, new Vector3(xs, ys - 0.02f, zs + dz), new Vector3(0.08f, 0.08f, 0.04f));
+        // Tres tramos que se van afinando (latón) y el ocular
+        float zc0 = zs - 0.45f;
+        float[] grosores = { 0.09f, 0.075f, 0.06f };
+        for (int i = 0; i < 3; i++)
+            Linea(vo, uo, new Vector3(xs, ys + 0.04f, zc0 + i * 0.3f), new Vector3(xs, ys + 0.04f, zc0 + (i + 1) * 0.3f + 0.02f), grosores[i]);
+        Linea(vv, uvv, new Vector3(xs, ys + 0.04f, zc0 - 0.04f), new Vector3(xs, ys + 0.04f, zc0 + 0.02f), 0.1f);
+
+        GameObject gm = Astillero.Malla("Bitácora madera", t, CascoProcedural.MallaDe("Bitácora madera", vm, um), m.mastil);
+        GameObject go = Astillero.Malla("Bitácora bronce", t, CascoProcedural.MallaDe("Bitácora bronce", vo, uo), oro);
+        GameObject gv = Astillero.Malla("Bitácora hierro", t, CascoProcedural.MallaDe("Bitácora hierro", vv, uvv), m.canon);
+        foreach (var g in new[] { gm, go, gv }) Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
     }
 
     // ---------- Ayudas ----------
