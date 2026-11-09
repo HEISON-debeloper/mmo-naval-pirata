@@ -313,7 +313,7 @@ public class Fabricacion : MonoBehaviour
                 if (barco == null) return null;
                 FormaBarco.Leer(barco, out int mo, out int a, out int b, out int c);
                 if (mo >= FormaBarco.UltimoMolde) return null;
-                return FormaBarco.De(mo).nombre + " → " + FormaBarco.Nombre(mo + 1, a, b, c) + ", " + FormaBarco.CanonesTotales(mo + 1, a, c) + " cañones"; },
+                return FormaBarco.De(mo).nombre + " → " + FormaBarco.Nombre(mo + 1, a, b, c) + ", " + FormaBarco.CanonesTotales(mo + 1, a, b, c) + " cañones"; },
             hacer = () => Rehacer(1, 0, 0, 0), mensaje = ""
         };
     }
@@ -338,7 +338,7 @@ public class Fabricacion : MonoBehaviour
                 FormaBarco.Leer(barco, out int mo, out int a, out int b, out int c);
                 if (eje == 0) a++; else if (eje == 1) b++; else c++;
                 FormaBarco.Medidas(mo, a, b, c, out float L, out float w, out float h);
-                return "→ " + L.ToString("0.#") + " x " + w.ToString("0.#") + " m, " + FormaBarco.Filas(mo, c) + " filas, " + FormaBarco.CanonesTotales(mo, a, c) + " cañones"; },
+                return "→ " + L.ToString("0.#") + " x " + w.ToString("0.#") + " m, " + FormaBarco.Filas(mo, c) + " filas, " + FormaBarco.CanonesTotales(mo, a, b, c) + " cañones"; },
             hacer = () => Rehacer(0, eje == 0 ? 1 : 0, eje == 1 ? 1 : 0, eje == 2 ? 1 : 0), mensaje = ""
         };
     }
@@ -474,7 +474,7 @@ public class Fabricacion : MonoBehaviour
         p.AsignarBarcoPropio(nuevo.GetComponent<ControlBarco>());
         p.IrAlTimonPropio();
         Destroy(viejo.gameObject);
-        p.Avisar(dMolde > 0 ? "¡Tu barco ahora es " + FormaBarco.Nombre(mo, a, b, c).ToLower() + "! " + FormaBarco.CanonesTotales(mo, a, c) + " ranuras de cañón"
+        p.Avisar(dMolde > 0 ? "¡Tu barco ahora es " + FormaBarco.Nombre(mo, a, b, c).ToLower() + "! " + FormaBarco.CanonesTotales(mo, a, b, c) + " ranuras de cañón"
                             : FormaBarco.Nombre(mo, a, b, c) + ": " + L.ToString("0.#") + " m, " + FormaBarco.Filas(mo, c) + " filas de cañones");
         return null;
     }

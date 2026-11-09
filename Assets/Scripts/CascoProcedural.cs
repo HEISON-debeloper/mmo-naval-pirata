@@ -55,6 +55,78 @@ public static class CascoProcedural
         return new Vector3(lado * hw * cx, arriba - (arriba - abajo) * sy, z);
     }
 
+    // Medio ancho del casco a la altura y (local) en el punto z (local): dónde está el costado
+    public static float Costado(float z, float y, float w, float h, float L)
+    {
+        float s = Mathf.Clamp01((z - ZPopa(L)) / (ZProa(w, L) - ZPopa(L)));
+        float hw = 0.5f * w * Ancho(s, w, L);
+        float arriba = h / 2f, abajo = Quilla(s, w, h, L);
+        if (y >= arriba) return hw;
+        if (y <= abajo) return 0f;
+        const float n = 2.6f;
+        float sy = (arriba - y) / (arriba - abajo);
+        float sen = Mathf.Pow(sy, n / 2f);
+        float cos = Mathf.Sqrt(Mathf.Max(0f, 1f - sen * sen));
+        return hw * Mathf.Pow(cos, 2f / n);
+    }
+
+    // ---------- Portas de cañón (huecos en el casco con marco y tapa abierta) ----------
+    // puestos: (y, z) de cada cañón de un costado; se ponen en los dos costados.
+    // Devuelve tres mallas: el hueco oscuro, los marcos y las tapas.
+    public const float AnchoPorta = 1.0f, AltoPorta = 0.85f;
+    public static void Portas(List<Vector2> puestos, float w, float h, float L, out Mesh huecos, out Mesh marcos, out Mesh tapas)
+    {
+        var vh = new List<Vector3>(); var uh = new List<Vector2>();
+        var vm = new List<Vector3>(); var um = new List<Vector2>();
+        var vt = new List<Vector3>(); var ut = new List<Vector2>();
+        float a = AnchoPorta / 2f, b = AltoPorta / 2f, g = 0.09f;
+        foreach (float lado in new[] { 1f, -1f })
+            foreach (Vector2 p in puestos)
+            {
+                float y = p.x, z = p.y;
+                float x = Mathf.Max(Costado(z, y - b, w, h, L), Costado(z, y + b, w, h, L)) + 0.03f;
+                Vector3 c = new Vector3(lado * x, y, z);
+                // Hueco: un cuadro oscuro hundido un poco
+                Vector3 n = new Vector3(lado, 0f, 0f);
+                Vector3 A = c + new Vector3(0, -b, -a), B = c + new Vector3(0, -b, a), C = c + new Vector3(0, b, a), D = c + new Vector3(0, b, -a);
+                CaraH(vh, uh, A, B, C, D, n);
+                // Marco: cuatro listones alrededor
+                Caja(vm, um, c + new Vector3(lado * 0.04f, b + g / 2f, 0f), new Vector3(0.12f, g, AnchoPorta + 2f * g), Quaternion.identity);
+                Caja(vm, um, c + new Vector3(lado * 0.04f, -b - g / 2f, 0f), new Vector3(0.12f, g, AnchoPorta + 2f * g), Quaternion.identity);
+                Caja(vm, um, c + new Vector3(lado * 0.04f, 0f, a + g / 2f), new Vector3(0.12f, AltoPorta, g), Quaternion.identity);
+                Caja(vm, um, c + new Vector3(lado * 0.04f, 0f, -a - g / 2f), new Vector3(0.12f, AltoPorta, g), Quaternion.identity);
+                // Tapa: colgada del borde de arriba y abierta hacia afuera y arriba
+                Quaternion giro = Quaternion.Euler(0f, 0f, lado * 120f);
+                Vector3 bisagra = c + new Vector3(lado * 0.1f, b + g, 0f);
+                Caja(vt, ut, bisagra + giro * new Vector3(0f, -(AltoPorta + g) / 2f, 0f), new Vector3(0.07f, AltoPorta + g, AnchoPorta + g), giro);
+            }
+        huecos = Armar("Portas", vh, uh);
+        marcos = Armar("Marcos", vm, um);
+        tapas = Armar("Tapas", vt, ut);
+    }
+
+    // Una cara de 4 puntos que mira hacia "normal"
+    static void CaraH(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)
+    {
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), normal) < 0f) { Vector3 t = b; b = d; d = t; }
+        v.Add(a); v.Add(b); v.Add(c); v.Add(a); v.Add(c); v.Add(d);
+        uv.Add(Vector2.zero); uv.Add(Vector2.right); uv.Add(Vector2.one); uv.Add(Vector2.zero); uv.Add(Vector2.one); uv.Add(Vector2.up);
+    }
+
+    // Una caja (centro, tamaño, giro) agregada a la lista de triángulos
+    public static void Caja(List<Vector3> v, List<Vector2> uv, Vector3 c, Vector3 t, Quaternion r)
+    {
+        Vector3 P(float x, float y, float z) => c + r * new Vector3(x * t.x / 2f, y * t.y / 2f, z * t.z / 2f);
+        Vector3 cen = c;
+        void Cara(Vector3 a, Vector3 b, Vector3 cc, Vector3 d) => CaraH(v, uv, a, b, cc, d, (a + b + cc + d) / 4f - cen);
+        Cara(P(1, -1, -1), P(1, -1, 1), P(1, 1, 1), P(1, 1, -1));
+        Cara(P(-1, -1, -1), P(-1, -1, 1), P(-1, 1, 1), P(-1, 1, -1));
+        Cara(P(-1, 1, -1), P(1, 1, -1), P(1, 1, 1), P(-1, 1, 1));
+        Cara(P(-1, -1, -1), P(1, -1, -1), P(1, -1, 1), P(-1, -1, 1));
+        Cara(P(-1, -1, 1), P(1, -1, 1), P(1, 1, 1), P(-1, 1, 1));
+        Cara(P(-1, -1, -1), P(1, -1, -1), P(1, 1, -1), P(-1, 1, -1));
+    }
+
     // ---------- Casco ----------
     public static Mesh Casco(float w, float h, float L)
     {

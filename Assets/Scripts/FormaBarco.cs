@@ -55,29 +55,38 @@ public static class FormaBarco
     public const int MaxPasos = 10;            // tope de alargar, ensanchar y pisos
     public const float AltoPiso = 2.2f;        // cada piso sube el casco esto (balsa: 1.2)
     public const float SeparacionCanones = 2.4f;   // los cañones son siempre del mismo tamaño
+    public const float LargoEstacion = 3f;         // cada vez que alargas: 3 m más de casco = un cañón más por costado y piso
 
     public static Molde De(int molde) => Moldes[Mathf.Clamp(molde, 0, UltimoMolde)];
 
     public static void Medidas(int molde, int a, int b, int c, out float L, out float w, out float h)
     {
         Molde m = De(molde);
-        L = m.largo * Mathf.Pow(1.1f, a);
+        L = m.largo + a * (m.balsa ? 1.2f : LargoEstacion);
         w = m.ancho * Mathf.Pow(1.1f, b);
         h = m.alto + c * (m.balsa ? 1.2f : AltoPiso);
     }
 
     public static int Filas(int molde, int c) => De(molde).filas + c;
 
-    // Cañones por fila y por costado: según el largo, siempre con la misma separación
+    // Tope de cañones por piso y por costado: los del molde y uno más por cada vez que lo alargaste.
+    // Cada piso lleva los que le quepan hasta ese tope (Astillero.PuestosCanones).
     public static int PorFila(int molde, int a)
     {
-        Medidas(molde, a, 0, 0, out float L, out _, out _);
-        if (De(molde).balsa) return 1;
-        return Mathf.Clamp(Mathf.FloorToInt(L * 0.62f / SeparacionCanones), 1, 40);
+        Molde m = De(molde);
+        if (m.balsa) return 1;
+        return Mathf.Clamp(Mathf.FloorToInt(m.largo * 0.62f / SeparacionCanones), 1, 40) + a;
     }
 
-    public static int CanonesTotales(int molde, int a, int c) =>
-        PorFila(molde, a) * Filas(molde, c) * 2 + (De(molde).balsa ? 0 : 2);
+    // Ranuras de cañón del barco con esa forma: los dos costados de cada piso, más los 2 de proa
+    public static int CanonesTotales(int molde, int a, int c) => CanonesTotales(molde, a, 0, c);
+    public static int CanonesTotales(int molde, int a, int b, int c)
+    {
+        Molde m = De(molde);
+        if (m.balsa) return Filas(molde, c) * 2;
+        Medidas(molde, a, b, c, out float L, out float w, out float h);
+        return Astillero.PuestosCanones(L, w, h, PorFila(molde, a), Filas(molde, c)).Count * 2 + 2;
+    }
 
     public static string Nombre(int molde, int a, int b, int c)
     {

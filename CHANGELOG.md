@@ -12,6 +12,9 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 - Barriles en llamas en la popa (Tab → Cañones y bodega): mira atrás y haz clic para soltar uno; flota y explota si lo toca otro barco o una bala, y hace explotar a los barriles cercanos.
 - Velas realistas: cada mástil lleva de 1 a 4 velas una encima de otra según su altura, más bauprés con foque en la proa y cangreja en el mástil de popa. Todo se adapta al largo, ancho y alto del barco.
 - Recarga según los cañones: cada cañón más en un lado alarga su recarga un 4,5 % (10 cañones ≈ 1,4 veces; 64 ≈ 3,8 veces).
+- Cañones según el tamaño: cada vez que alargas el barco crece 3 m (una estación) y lleva exactamente un cañón más por costado en cada piso. Al subir un piso, cada piso lleva los cañones que le caben según la forma del casco.
+- Portas en el casco: los cañones de los pisos asoman por huecos con marco y tapa abierta, fila por fila. Los barcos de casco bajo llevan los cañones en cubierta, con cureña.
+- Las anclas van delante de las portas.
 
 ## 0.22.0 — Barcos con forma  (2026-11-08)
 - Cascos de verdad: proa en punta, fondo curvo, popa plana con ventanas y borda (baranda) alrededor de la cubierta. Se arman por código y se adaptan a los 15 moldes y a todos los tamaños.
