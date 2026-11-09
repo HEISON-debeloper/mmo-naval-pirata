@@ -6,8 +6,11 @@ public static class AtajosUI
 {
     internal static void Actualizar()
     {
-        if (Personaje.Instancia == null || MenuPrincipal.Visible) return;
+        if (Personaje.Instancia == null || MenuPrincipal.Visible || Pausa.Visible) return;
         if (Teclas.Pulsada(Accion.Ayuda, true)) Ventanas.Alternar(VentanaAyuda.I);
         if (Teclas.Pulsada(Accion.Inventario, true)) Ventanas.Alternar(VentanaInventario.I);
+        if (Teclas.Pulsada(Accion.Barco, true)) Ventanas.Alternar(VentanaBarco.I);
+        if (Teclas.Pulsada(Accion.Mapa, true) && !Taller.Abierto) Ventanas.Alternar(VentanaMapa.I);
+        if (Teclas.Pulsada(Accion.Bitacora, true)) Ventanas.Alternar(VentanaBitacora.I);
     }
 }

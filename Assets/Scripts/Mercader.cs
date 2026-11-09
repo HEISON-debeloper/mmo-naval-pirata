@@ -74,6 +74,56 @@ public class Mercader : MonoBehaviour
         return "";
     }
 
+    // ---------- Ventas y compras por cantidad (ventana del mercado) ----------
+    // Lo que se mueve de una vez: cada lote mueve el precio un 3 %, así vender 50 maderas baja el precio igual que antes 5 tratos de 10
+    public static readonly string[] SeVende = { Inventario.Madera, Inventario.Palo, Inventario.Fibra, Inventario.Piedra, Inventario.Cuerda, Inventario.Mineral, Inventario.Lingote, Inventario.Canon, Inventario.Coco, Inventario.Fruta };
+    public static readonly string[] SeCompra = { Inventario.Canon, Inventario.Lingote, Inventario.Cuerda, Inventario.Madera, Inventario.Coco, Inventario.Fruta };
+    public static int Lote(string tipo) =>
+        tipo == Inventario.Lingote || tipo == Inventario.Canon ? 1
+        : tipo == Inventario.Cuerda || tipo == Inventario.Mineral || tipo == Inventario.Coco || tipo == Inventario.Fruta ? 5 : 10;
+
+    // Total de vender (o comprar) n unidades; con aplicar = true además mueve los precios del mercado
+    public int Total(string tipo, int n, bool vender, bool aplicar)
+    {
+        if (n <= 0 || !PrecioBase.ContainsKey(tipo)) return 0;
+        float r = region.TryGetValue(tipo, out float x) ? x : 1f;
+        float mk = mercado.TryGetValue(tipo, out float y) ? y : 1f;
+        int lote = Lote(tipo), total = 0;
+        while (n > 0)
+        {
+            int q = Mathf.Min(lote, n);
+            float precio = PrecioBase[tipo] * r * mk * q * (vender ? 1f : Margen);
+            total += Mathf.Max(1, Mathf.RoundToInt(precio));
+            mk = vender ? Mathf.Max(0.5f, mk - CambioPorTrato) : Mathf.Min(1.6f, mk + CambioPorTrato);
+            n -= q;
+        }
+        if (aplicar) mercado[tipo] = mk;
+        return total;
+    }
+
+    // Precio de una unidad ahora mismo (para mostrar)
+    public float Unidad(string tipo, bool vender) => PrecioBase.ContainsKey(tipo) ? PrecioBase[tipo] * Factor(tipo) * (vender ? 1f : Margen) : 0f;
+
+    // Cuántas unidades se pueden comprar con este oro
+    public int MaxCompra(string tipo, int oro)
+    {
+        if (!PrecioBase.ContainsKey(tipo)) return 0;
+        float r = region.TryGetValue(tipo, out float x) ? x : 1f;
+        float mk = mercado.TryGetValue(tipo, out float y) ? y : 1f;
+        int lote = Lote(tipo), n = 0;
+        while (n < 999)
+        {
+            int q = lote;
+            while (q > 0 && Mathf.Max(1, Mathf.RoundToInt(PrecioBase[tipo] * r * mk * q * Margen)) > oro) q--;
+            if (q <= 0) break;
+            oro -= Mathf.Max(1, Mathf.RoundToInt(PrecioBase[tipo] * r * mk * q * Margen));
+            n += q;
+            if (q < lote) break;
+            mk = Mathf.Min(1.6f, mk + CambioPorTrato);
+        }
+        return Mathf.Min(n, 999);
+    }
+
     public void Vendiste(string tipo) => mercado[tipo] = Mathf.Max(0.5f, mercado[tipo] - CambioPorTrato);
     public void Compraste(string tipo) => mercado[tipo] = Mathf.Min(1.6f, mercado[tipo] + CambioPorTrato);
 
@@ -92,7 +142,7 @@ public class Mercader : MonoBehaviour
         if (p == null) return;
         Vector3 d = transform.position - p.transform.position; d.y = 0f;
         bool cerca = d.magnitude <= Alcance;
-        if (cerca && !avisado) p.Avisar("Mercader de " + isla + ": Tab para vender y comprar");
+        if (cerca && !avisado) Notificaciones.Mostrar("Mercader de " + isla + ": " + Teclas.Nombre(Accion.Fabricar) + " para vender y comprar", Notificaciones.Tipo.Comercio, 5f, "mercader");
         avisado = cerca;
     }
 

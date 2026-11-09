@@ -56,6 +56,7 @@ public class Lienzo : MonoBehaviour
             es.AddComponent<InputSystemUIInputModule>();
         }
 
+        Ventanas.Reiniciar();
         Raiz = Doc.rootVisualElement;
         Raiz.name = "raiz";
         Raiz.style.flexGrow = 1f;
@@ -160,6 +161,7 @@ public class Lienzo : MonoBehaviour
         Ventanas.Actualizar();
         Notificaciones.Actualizar();
         AtajosUI.Actualizar();
+        if (Teclas.De(Accion.Pausa) != Key.Escape && Teclas.Pulsada(Accion.Pausa, true) && Personaje.Instancia != null && !MenuPrincipal.Visible) Ventanas.Alternar(Pausa.I);
     }
 
     // Animación sencilla de un valor 0→1 (usa el reloj sin escala para que funcione en pausa)

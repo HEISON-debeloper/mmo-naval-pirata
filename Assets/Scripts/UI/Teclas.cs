@@ -110,11 +110,27 @@ public static class Teclas
         try { return kb[k]; } catch { return null; }
     }
 
+    // Botones táctiles (teléfono): los controles en pantalla marcan aquí lo que se está tocando.
+    // Los toques llegan con los eventos de la interfaz; ControlesTactiles los pasa a "este cuadro" al principio de cada cuadro,
+    // así cada toque cuenta exactamente una vez para todos los scripts.
+    static readonly HashSet<Accion> tocadas = new HashSet<Accion>();
+    static readonly HashSet<Accion> pendientes = new HashSet<Accion>();
+    static readonly HashSet<Accion> esteCuadro = new HashSet<Accion>();
+    public static void Tocar(Accion a, bool si)
+    {
+        if (si && !tocadas.Contains(a)) pendientes.Add(a);
+        if (si) tocadas.Add(a); else tocadas.Remove(a);
+    }
+    public static void Toque(Accion a) => pendientes.Add(a);
+    internal static void NuevoCuadro() { esteCuadro.Clear(); foreach (var a in pendientes) esteCuadro.Add(a); pendientes.Clear(); }
+    static bool TocadaAhora(Accion a) => esteCuadro.Contains(a);
+
     // Se pulsó en este cuadro (y no hay una ventana que se quede con el teclado)
     public static bool Pulsada(Accion a, bool aunqueHayaVentana = false)
     {
         if (Capturando) return false;
         if (!aunqueHayaVentana && Ventanas.AlgunaAbierta) return false;
+        if (TocadaAhora(a)) return true;
         KeyControl c = Control(a);
         return c != null && c.wasPressedThisFrame;
     }
@@ -123,6 +139,7 @@ public static class Teclas
     {
         if (Capturando) return false;
         if (!aunqueHayaVentana && Ventanas.AlgunaAbierta) return false;
+        if (tocadas.Contains(a)) return true;
         KeyControl c = Control(a);
         return c != null && c.isPressed;
     }

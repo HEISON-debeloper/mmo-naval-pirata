@@ -42,6 +42,7 @@ public class Guardado : MonoBehaviour
 
         public List<HornoGuardado> hornos = new List<HornoGuardado>();
         public List<IslaConocida> islas = new List<IslaConocida>();
+        public List<Navegacion.Marca> marcas = new List<Navegacion.Marca>();   // marcas puestas en la carta
     }
 
     float t;
@@ -134,6 +135,7 @@ public class Guardado : MonoBehaviour
         if (nav != null)
             foreach (var kv in nav.Descubiertas)
                 d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado });
+        if (nav != null) d.marcas.AddRange(nav.Marcas);
 
         try
         {
@@ -163,6 +165,7 @@ public class Guardado : MonoBehaviour
         if (nav != null)
             foreach (IslaConocida i in d.islas)
                 nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla, mercado = i.mercado });
+        if (nav != null && d.marcas != null) { nav.Marcas.Clear(); nav.Marcas.AddRange(d.marcas); }
         Inventario inv = p.GetComponent<Inventario>();
         if (inv != null) foreach (Cosa c in d.inventario) inv.Fijar(c.tipo, c.n);
         p.FijarVida(d.vida);

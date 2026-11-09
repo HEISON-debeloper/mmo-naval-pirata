@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.29.0";
-    public const string Nombre = "Interfaz nueva";
+    public const string Numero = "0.30.0";
+    public const string Nombre = "Ventanas nuevas";
     public static string Texto => "v" + Numero;
 }

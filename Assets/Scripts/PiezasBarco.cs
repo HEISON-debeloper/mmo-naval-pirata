@@ -33,7 +33,7 @@ public class PiezasBarco : MonoBehaviour
     void Start() { if (!listo) { Preparar(); Aplicar(); } }
 
     // Costo de la siguiente mejora: crece 50 % por nivel
-    public static int Costo(int baseCosto, int nivelActual) => Mathf.CeilToInt(baseCosto * Mathf.Pow(1.5f, nivelActual));
+    public static int Costo(int baseCosto, int nivelActual) => Mathf.CeilToInt(Mathf.Min(baseCosto * Mathf.Pow(1.5f, Mathf.Min(nivelActual, 40)), 999999f));   // con tope: niveles muy altos (creativo) no se desbordan
 
     // Pone estos niveles en un barco recién hecho (al agrandar el barco se conservan las mejoras)
     public void Copiar(int casco, int velas)

@@ -6,6 +6,20 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.30.0 — Ventanas nuevas  (2026-11-09)
+- Menú principal cinematográfico: la cámara gira despacio alrededor de tu barco; Continuar, Nueva partida (con confirmación), Opciones, Créditos y Salir, con la fecha de la partida guardada.
+- Mochila nueva (I): casillas con icono, categorías, búsqueda y orden; ficha de cada objeto con descripción, de dónde sale, en qué recetas se usa y botones (comer, vender, ver recetas). A bordo, la bodega aparece abajo para pasar cosas de un lado a otro (clic, Mayús+clic 10, doble clic todo).
+- Fabricación nueva (Tab): categorías (Herramientas, Materiales, Supervivencia, Construcción, Barco, Armamento, Creativo), favoritos con estrella, búsqueda por receta o material, "solo lo que puedo hacer", materiales con lo que tienes y lo que falta, cantidad, Enter para fabricar y Q/E para cambiar de categoría.
+- Mercado nuevo (Tab junto a un mercader): pestañas Vender y Comprar, precio por unidad de cada isla, cantidad con Máx y total antes de confirmar. Vender mucho baja el precio por lotes, como antes.
+- Tu barco (B): plano visto desde arriba con cada porta (llena o vacía), estado, medidas, mejoras; armamento por lado con + y − (lo que quitas vuelve a la mochila) y bodega con traslados.
+- Carta de navegación nueva (M): pergamino con rosa de los vientos, islas con nombre, mercaderes, tu barco y tú; zoom (se recuerda), arrastrar, Centrar, y marcas propias con doble clic que se guardan con la partida.
+- Pausa (Esc): detiene el juego; opciones, controles, bitácora, guardar, menú principal y salir.
+- Opciones: cambiar cualquier tecla, volumen, calidad gráfica, resolución de render, sombras, VSync, límite de FPS, pantalla completa, tamaño de texto, alto contraste, reducir movimiento, escala de la interfaz, opacidad de paneles y qué partes del HUD se ven.
+- Bitácora (G): todos los avisos de la sesión con hora, filtros por tipo y búsqueda.
+- Taller de pintura (P) con la interfaz nueva: partes con su color, paleta, color libre, vista previa de cada dibujo y mascarón.
+- Controles táctiles para Android (palanca y botones); solo aparecen en el teléfono.
+- Arreglos: el costo de mejorar velas ya no se desborda en barcos muy mejorados; un clic en la interfaz no cuenta como espadazo.
+
 ## 0.29.0 — Interfaz nueva  (2026-11-08)
 - Interfaz nueva hecha con UI Toolkit (base de toda la renovación): madera oscura, pergamino, cuero y bronce, con fuentes Cinzel (títulos) y Alegreya Sans (texto) y texturas hechas por código.
 - HUD nuevo por zonas, sin que nada se tape: vida, hambre y sed con barras animadas (lo perdido se ve un momento en claro y parpadean cuando queda poco), brújula con iconos de islas, mercaderes, tu barco y enemigos, tarjeta del enemigo con su tripulación, mochila rápida con casillas e iconos, y tarjeta de tu barco con velas, nudos, rumbo, bodega y una barra de recarga por cada lado de cañones.

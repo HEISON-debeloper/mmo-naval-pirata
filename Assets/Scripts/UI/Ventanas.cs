@@ -11,6 +11,7 @@ public abstract class Ventana : VisualElement
     public bool Modal;                     // oscurece el fondo y bloquea lo demás
     public bool Arrastrable = true;
     public bool RecordarPosicion = true;
+    public bool CerrableConEsc = true;
     public bool Abierta { get; private set; }
     public System.Action alAbrir, alCerrar;
 
@@ -135,11 +136,14 @@ public abstract class Ventana : VisualElement
     protected virtual void AlCerrar() { }
     // Se llama cada cuadro mientras está abierta; las ventanas refrescan aquí lo que cambia (cantidades, barras)
     public virtual void Actualizar() { }
+    // Se llama cada cuadro mientras está abierta (teclado de la ventana)
+    public virtual void CadaCuadro() { }
     // Cuántas veces por segundo refrescar (0 = solo al abrir)
     protected virtual float Refrescos => 8f;
 
     internal void Tic()
     {
+        CadaCuadro();
         if (Refrescos <= 0f) return;
         if (Time.unscaledTime - ultimaActualizacion < 1f / Refrescos) return;
         ultimaActualizacion = Time.unscaledTime;
@@ -226,6 +230,13 @@ public static class Ventanas
     public static int Cuantas => abiertas.Count;
     public static Ventana Superior => abiertas.Count > 0 ? abiertas[abiertas.Count - 1] : null;
 
+    // Al recargar la escena (nueva partida) el lienzo es otro: se olvidan las ventanas del anterior
+    public static void Reiniciar()
+    {
+        todas.Clear(); abiertas.Clear(); modalActual = null; oscurecedor = null;
+        Tooltip.Ocultar();
+    }
+
     public static void Registrar(Ventana v)
     {
         if (todas.Contains(v)) return;
@@ -300,7 +311,7 @@ public static class Ventanas
     // Lo llama Lienzo cada cuadro
     internal static void Actualizar()
     {
-        foreach (var v in abiertas) v.Tic();
+        foreach (var v in abiertas.ToArray()) v.Tic();
         modalActual?.Tic();
         Tooltip.Actualizar();
 
@@ -308,8 +319,10 @@ public static class Ventanas
         Keyboard kb = Keyboard.current;
         if (kb != null && kb.escapeKey.wasPressedThisFrame && !Teclas.Capturando)
         {
-            if (modalActual != null) { Cerrar(modalActual); return; }
+            if (modalActual != null) { if (modalActual.CerrableConEsc) Cerrar(modalActual); return; }
             if (abiertas.Count > 0) { Cerrar(Superior); return; }
+            // Sin nada abierto: Esc abre la pausa (salvo en el menú principal o con el taller abierto)
+            if (Personaje.Instancia != null && !MenuPrincipal.Visible && !Taller.Abierto && Teclas.De(Accion.Pausa) == Key.Escape) Abrir(Pausa.I);
         }
     }
 
@@ -360,7 +373,7 @@ public static class Tooltip
 
     static void Asegurar()
     {
-        if (globo != null) return;
+        if (globo != null && globo.panel != null) return;
         globo = new VisualElement { name = "tooltip", pickingMode = PickingMode.Ignore };
         globo.style.position = Position.Absolute;
         globo.style.maxWidth = 320f;
@@ -376,6 +389,7 @@ public static class Tooltip
     {
         if (objetivo == null) return;
         if (objetivo.panel == null) { Ocultar(); return; }
+
         if (!visible && Time.unscaledTime - desde >= Espera)
         {
             string t = fuente?.Invoke();
