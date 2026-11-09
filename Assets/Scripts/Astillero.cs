@@ -71,6 +71,7 @@ public static class Astillero
         int principal = nMast / 2;   // el del medio es el más alto
         Transform velaPrincipal = null;
         var extras = new System.Collections.Generic.List<Transform>();
+        var listaMastiles = new System.Collections.Generic.List<Detalles.Mastil>();
         float zProaMastil = zFin, hmProa = hm;
         for (int i = 0; i < nMast; i++)
         {
@@ -79,6 +80,7 @@ public static class Astillero
             float alto = esPrincipal ? hm : hm * (i == 0 ? 0.78f : 0.88f);   // el de popa (mesana) más bajo
             float ancho = esPrincipal ? anchoVela : anchoVela * (i == 0 ? 0.75f : 0.9f);
             var velas = Mastil(t, zm, alto, ancho, h, m, esPrincipal);
+            listaMastiles.Add(new Detalles.Mastil { z = zm, alto = alto, grosor = 0.25f + alto * 0.012f });
             foreach (Transform v in velas) { if (esPrincipal && velaPrincipal == null) velaPrincipal = v; else extras.Add(v); }
             if (i == nMast - 1) { zProaMastil = zm; hmProa = alto; }
             // Cangreja: vela de cuchillo detrás del mástil de popa (solo con 2 o más mástiles)
@@ -175,6 +177,9 @@ public static class Astillero
         Transform proaE = Canon("Cañón proa estribor", t, new Vector3(xCp, h / 2 + 0.1f, zCp), 0f, 1f, m.canon, true, m.mastil);
         // Popa: repisa con barriles en llamas que se sueltan al agua
         Transform popa = Barriles("Barriles popa", t, new Vector3(0, h / 2 - 0.2f, -0.5f * L - 0.5f), Mathf.Clamp(w / 5f, 0.8f, 2f), m);
+
+        // Jarcia, cofas, cintas del casco, castillo de popa detallado, mascarón, cabrestante y campana
+        Detalles.Armar(t, L, w, h, listaMastiles, puntaBaupres, m);
 
         // Puntos de flotación en las esquinas de abajo
         Transform[] puntos = new Transform[4];

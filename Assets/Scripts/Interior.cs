@@ -228,7 +228,7 @@ public class Interior : MonoBehaviour
     void ElegirEscaleras()
     {
         var mastiles = new List<float>();
-        foreach (Transform hijo in transform) if (hijo.name == "Mástil") mastiles.Add(hijo.localPosition.z);
+        foreach (Transform hijo in transform) if (hijo.name == "Mástil" || hijo.name == "cabrestante") mastiles.Add(hijo.localPosition.z);
         float frenteCastillo = Cubierta.CentroCamarote(L) + Cubierta.LargoCamarote(L) / 2f;
         for (int i = 0; i < niveles.Count - 1; i++)
         {

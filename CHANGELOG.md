@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.26.0 — Barco detallado  (2026-11-08)
+- Barco detallado según la lámina de referencia (docs/referencia-barco.png), todo hecho por código para cualquier tamaño:
+- Jarcia: obenques con flechates (las escalas de cuerda) en cada mástil y estays de mástil a mástil y al bauprés.
+- Cofas: plataformas con baranda en los mástiles con varias velas.
+- Cintas: franjas oscuras a lo largo del casco bajo cada fila de portas y bajo la borda.
+- Castillo de popa: baranda en la toldilla, moldura dorada, galería (balcón) detrás de las ventanas, escaleras de la cubierta al timón y faroles en las esquinas.
+- Mascarón de proa dorado (león, sirena, dragón o calavera) y, en cubierta, cabrestante y campana modelados en Blender.
+
 ## 0.25.0 — Cubierta armada  (2026-11-08)
 - La cámara ya no atraviesa paredes: se detiene antes del casco, del castillo de popa y de las islas.
 - Fila de cañones en la cubierta de arriba: sobre cureña, detrás de la borda (con portas en la borda si es alta). Cuenta como un piso más: cada vez que alargas también suma uno por costado ahí.
