@@ -53,6 +53,13 @@ public class Personaje : MonoBehaviour
     public float Vida { get; private set; }
     public ControlBarco BarcoActual { get; private set; }
     public Vector3 LocalEnBarco => local;
+    // Interiores: 0 = cubierta de arriba, 1.. = cubiertas de cañones y bodega, -1 = camarote del capitán
+    int nivel;
+    public int Nivel => nivel;
+    public bool Bajo => estado == Estado.Cubierta && nivel != 0 && BarcoActual != null;
+    Interior interior;
+    // Ojos del personaje (la cámara en primera persona adentro del barco)
+    public Vector3 Ojos => barcoT.TransformPoint(local + Vector3.up * (interior != null ? interior.AlturaOjos(nivel) : 1.6f));
     public bool SobreBarco(ControlBarco b) => estado != Estado.Libre && BarcoActual == b;
 
     CharacterController cc;
@@ -111,6 +118,8 @@ public class Personaje : MonoBehaviour
     void Asignar(ControlBarco b)
     {
         BarcoActual = b;
+        nivel = 0;
+        interior = null;
         barcoT = b.transform;
         barcoRb = b.GetComponent<Rigidbody>();
         canones = b.GetComponent<Canones>();
@@ -179,16 +188,28 @@ public class Personaje : MonoBehaviour
         {
             case Estado.Timon:
                 if (hundido) { SalirDelBarco(0f); break; }
-                if (usar) { local = Cubierta.SalidaTimon(h, L, plana); CambiarEstado(Estado.Cubierta); }
+                if (usar) { local = Cubierta.SalidaTimon(h, L, plana, w); CambiarEstado(Estado.Cubierta); }
                 break;
 
             case Estado.Cubierta:
                 if (hundido) { SalirDelBarco(0f); break; }
-                if (k.rKey.wasPressedThisFrame) BarcoActual.AlternarAncla();
-                if (usar && CercaDelTimon()) { IntentarTomarTimon(); break; }
+                if (interior == null) interior = Interior.De(BarcoActual);   // se arma la primera vez que pisas este barco
+                if (k.rKey.wasPressedThisFrame && nivel == 0) BarcoActual.AlternarAncla();
+                // La puerta del camarote gana si estás justo frente a ella; si no, F cerca del castillo toma el timón
+                if (usar && nivel == 0 && CercaDelTimon() && (interior == null || !interior.FrenteAPuerta(local))) { IntentarTomarTimon(); break; }
+                // Escaleras, escotillas y la puerta del camarote
+                if (usar)
+                {
+                    if (interior != null && interior.Usar(ref nivel, ref local))
+                    {
+                        Avisar(nivel == 0 ? "En cubierta" : "Estás en " + interior.Nombre(nivel));
+                        break;
+                    }
+                }
                 float sp = correr ? velocidadCorrer : velocidadCaminar;
                 Vector3 dl = barcoT.InverseTransformDirection(dir) * sp * dt;
                 dl.y = 0f;
+                if (nivel != 0 && interior != null) { local = interior.Limitar(nivel, local + dl); break; }
                 Vector3 nuevo = Cubierta.EvitarCamarote(local + dl, w, L, plana);
                 local = nuevo;
                 if (!Cubierta.Dentro(nuevo, w, L, plana)) { SalirDelBarco(1.5f); break; }
@@ -437,6 +458,7 @@ public class Personaje : MonoBehaviour
     void CambiarEstado(Estado e)
     {
         estado = e;
+        if (e != Estado.Cubierta) nivel = 0;
         bool timon = e == Estado.Timon;
         foreach (ControlBarco b in ControlBarco.Todos)
         {
@@ -499,6 +521,7 @@ public class Personaje : MonoBehaviour
     public float Golpe => Mathf.Clamp01(tGolpe / 0.3f);
 
     public string TextoModo() => estado == Estado.Timon ? "Al timón de " + BarcoActual.name
+        : estado == Estado.Cubierta && nivel != 0 && interior != null ? "En " + interior.Nombre(nivel) + " de " + BarcoActual.name
         : estado == Estado.Cubierta ? (EsEnemigo(BarcoActual) ? "A bordo del enemigo" : "En cubierta de " + BarcoActual.name)
         : Nadando ? "Nadando" : EnTierra ? "En tierra" : "En el aire";
 
@@ -516,7 +539,11 @@ public class Personaje : MonoBehaviour
         }
         if (estado == Estado.Cubierta)
         {
-            if (CercaDelTimon()) return T("F") + " tomar el timón";
+            Interior it = interior != null ? interior : (BarcoActual != null ? BarcoActual.GetComponent<Interior>() : null);
+            if (nivel == 0 && CercaDelTimon() && (it == null || !it.FrenteAPuerta(local))) return T("F") + " tomar el timón";
+            string accion = it != null ? it.Ayuda(nivel, local) : null;
+            if (accion != null) return T("F") + " " + accion;
+            if (nivel != 0) return EnemigoCerca() ? T("Clic") + " atacar con la espada" : T("WASD") + " caminar   " + T("Shift") + " correr";
             return EnemigoCerca() ? T("Clic") + " atacar con la espada" : T("WASD") + " caminar   " + T("R") + " ancla   " + T("Clic") + " espada";
         }
         if (PuedeSubirAUnBarco(out _, out _)) return T("F") + " subir al barco";

@@ -86,7 +86,7 @@ public static class Astillero
             {
                 float hc = alto * 0.42f, lc = Mathf.Min(espacio * 0.55f, zm - (-0.5f * L) + 1f);
                 Pieza(PrimitiveType.Cylinder, "Botavara", t, new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.4f, zm - lc / 2f), Quaternion.Euler(90, 0, 0), new Vector3(0.18f, lc / 2f, 0.18f), m.mastil);
-                GameObject pc = new GameObject("Vela");
+                GameObject pc = new GameObject(VelaCuchillo);
                 pc.transform.SetParent(t, false);
                 pc.transform.localPosition = new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.5f + hc, zm - 0.3f);
                 pc.transform.localScale = new Vector3(hc * 0.12f, hc, lc);
@@ -104,7 +104,7 @@ public static class Astillero
         {
             float topeY = h / 2 + hmProa * 0.72f;
             float altoF = topeY - (puntaBaupres.y + 0.3f);
-            GameObject pf = new GameObject("Vela");
+            GameObject pf = new GameObject(VelaCuchillo);
             pf.transform.SetParent(t, false);
             pf.transform.localPosition = new Vector3(0, topeY, zProaMastil + 0.4f);
             float largoF = Mathf.Max(1f, puntaBaupres.z - (zProaMastil + 0.4f));
@@ -203,8 +203,10 @@ public static class Astillero
         return raiz;
     }
 
+    public const string VelaCuchillo = "Vela de cuchillo";   // foque y cangreja: al recogerlas se esconden
     public const float AltoMinPortas = 2.6f;   // con casco más bajo los cañones van en cubierta
     public const float SeparacionMin = 1.9f;   // lo más juntos que pueden quedar dos cañones
+    public const float PrimeraFila = 1.2f;     // la fila de arriba va 1,2 m bajo la cubierta (deja altura para caminar adentro)
 
     // Dónde va cada cañón de un costado: (y, z) en el barco, piso por piso (de arriba hacia abajo).
     // porFila es el tope por piso (lo que da el largo); cada piso lleva los que le quepan.
@@ -218,7 +220,7 @@ public static class Astillero
         float sep = FormaBarco.SeparacionCanones;
         for (int f = 0; f < nf; f++)
         {
-            float y = enCubierta ? h / 2f : Mathf.Max(h / 2 - 0.8f - f * sepFilas, -h / 2 + 0.6f);
+            float y = enCubierta ? h / 2f : Mathf.Max(h / 2 - PrimeraFila - f * sepFilas, -h / 2 + 0.6f);
             // Cabe un cañón en z si el casco a esa altura es ancho de sobra (arriba y abajo de la porta)
             bool Cabe(float z) => enCubierta
                 ? CascoProcedural.Costado(z, y, w, h, L) >= Mathf.Max(0.9f, 0.3f * w)

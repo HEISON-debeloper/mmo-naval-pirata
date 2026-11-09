@@ -6,6 +6,17 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.24.0 — Interiores  (2026-11-08)
+- Interiores: en cubierta, F junto a la escotilla baja por una escalera a las cubiertas de cañones (una por cada fila de portas) y, en cascos hondos, a la bodega. F al pie de la escalera sube.
+- Cubiertas de cañones por dentro: los cañones sobre su cureña con ruedas, las portas abiertas por donde entra la luz, pilas de balas, vigas, faroles con luz cálida y los mástiles que bajan hasta el fondo.
+- Bodega con barriles, cajas y sacos.
+- Camarote del capitán dentro del castillo de popa: F frente a la puerta. Mesa con mapa, sillas, cama, cofre, alfombra, farol y las ventanas de popa.
+- Adentro la cámara pasa a primera persona y se mueve con el barco.
+- Todo el interior se arma la primera vez que pisas un barco y solo se muestra cuando estás abajo, para no gastar rendimiento.
+- La primera fila de portas baja 40 cm para que quepa una persona de pie en la cubierta de cañones.
+- Al soltar el timón quedas a un lado (al frente está la puerta del camarote).
+- El foque y la cangreja recogidos ya no se ven como una tabla.
+
 ## 0.23.0 — Proa y popa de guerra  (2026-11-08)
 - Espolón de bronce en la proa (modelado en Blender): si embistes yendo hacia adelante, el otro barco recibe mucho más daño (más si eres más grande) y el tuyo casi nada.
 - Dos cañones de proa en cubierta, uno a cada lado, que solo disparan al frente.

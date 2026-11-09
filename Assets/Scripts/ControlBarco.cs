@@ -93,6 +93,13 @@ public class ControlBarco : MonoBehaviour
                     Vector3 se = velasExtra[i].localScale;
                     se.y = Mathf.Lerp(se.y, altoExtras[i] * objetivo, Time.deltaTime * 3f);
                     velasExtra[i].localScale = se;
+                    // El foque y la cangreja recogidos no se ven como una tabla: se esconden
+                    if (velasExtra[i].name == Astillero.VelaCuchillo && velasExtra[i].childCount > 0)
+                    {
+                        bool ver = se.y > altoExtras[i] * 0.15f;
+                        GameObject lona = velasExtra[i].GetChild(0).gameObject;
+                        if (lona.activeSelf != ver) lona.SetActive(ver);
+                    }
                 }
             }
         }

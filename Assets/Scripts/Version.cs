@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.23.0";
-    public const string Nombre = "Proa y popa de guerra";
+    public const string Numero = "0.24.0";
+    public const string Nombre = "Interiores";
     public static string Texto => "v" + Numero;
 }

@@ -71,9 +71,38 @@ public class CamaraBarco : MonoBehaviour
 
     void OnDisable() => Capturar(false);
 
+    // Primera persona dentro del barco (cubiertas de abajo, bodega y camarote)
+    float yawLocal, pitchFP;
+    bool primeraPersona;
+
+    bool PrimeraPersona()
+    {
+        Personaje p = Personaje.Instancia;
+        bool dentro = p != null && p.Bajo;
+        if (!dentro)
+        {
+            if (primeraPersona && p != null && p.BarcoActual != null) anguloH = p.BarcoActual.transform.eulerAngles.y + yawLocal;
+            primeraPersona = false;
+            return false;
+        }
+        Transform barco = p.BarcoActual.transform;
+        if (!primeraPersona) { yawLocal = anguloH - barco.eulerAngles.y; pitchFP = 0f; primeraPersona = true; }
+        Mouse m = Mouse.current;
+        if (m != null && CursorCapturado)
+        {
+            Vector2 d = m.delta.ReadValue();
+            yawLocal += d.x * sensibilidad;
+            pitchFP = Mathf.Clamp(pitchFP + (invertirVertical ? d.y : -d.y) * sensibilidad, -75f, 75f);
+        }
+        transform.position = p.Ojos;
+        transform.rotation = barco.rotation * Quaternion.Euler(pitchFP, yawLocal, 0f);
+        return true;
+    }
+
     void LateUpdate()
     {
         if (objetivo == null) return;
+        if (PrimeraPersona()) return;
 
         Mouse m = Mouse.current;
         if (m != null)

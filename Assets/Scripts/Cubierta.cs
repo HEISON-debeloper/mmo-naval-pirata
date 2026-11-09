@@ -17,9 +17,9 @@ public static class Cubierta
         : new Vector3(0f, Altura(h) + AltoCamarote, CentroCamarote(L) - LargoCamarote(L) * 0.2f);
 
     // Dónde queda el personaje al soltar el timón (en la cubierta, delante del castillo de popa)
-    public static Vector3 SalidaTimon(float h, float L, bool plana = false) => plana
+    public static Vector3 SalidaTimon(float h, float L, bool plana = false, float w = 4f) => plana
         ? Timon(h, L, true) + new Vector3(0.9f, 0f, 0f)
-        : new Vector3(0f, Altura(h), CentroCamarote(L) + LargoCamarote(L) / 2f + 0.9f);
+        : new Vector3(Mathf.Min(0.4f * w, 1.6f), Altura(h), CentroCamarote(L) + LargoCamarote(L) / 2f + 0.9f);   // a un lado: al frente está la puerta del camarote
 
     // ¿Puede tomar el timón desde aquí? (en los barcos, basta con estar al pie del castillo de popa)
     public static bool CercaDelTimon(Vector3 v, float w, float h, float L, bool plana = false)

@@ -105,6 +105,9 @@ public static class CascoProcedural
         tapas = Armar("Tapas", vt, ut);
     }
 
+    public static void Cara(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal) => CaraH(v, uv, a, b, c, d, normal);
+    public static Mesh MallaDe(string nombre, List<Vector3> v, List<Vector2> uv) => Armar(nombre, v, uv);
+
     // Una cara de 4 puntos que mira hacia "normal"
     static void CaraH(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)
     {
