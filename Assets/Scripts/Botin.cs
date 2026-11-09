@@ -91,7 +91,7 @@ public class Botin : MonoBehaviour
         }
         carga.Clear();
 
-        Material madera = MaterialDe("Mástil"), banda = MaterialDe("Cañón babor 1/Tubo");   // madera café con bandas de hierro
+        Material madera = MaterialDe("Mástil"), banda = MaterialDe("Tubo");   // madera café con bandas de hierro
         Vector3 centro = transform.position;
         for (int i = 0; i < cajas; i++)
         {
@@ -105,8 +105,9 @@ public class Botin : MonoBehaviour
     // Un material del barco para pintar las cajas (si no hay, el de cualquier pieza)
     Material MaterialDe(string pieza)
     {
-        Transform t = transform.Find(pieza);
-        Renderer r = t != null ? t.GetComponent<Renderer>() : GetComponentInChildren<Renderer>();
+        Renderer r = null;
+        foreach (Renderer x in GetComponentsInChildren<Renderer>(true)) if (x.name == pieza) { r = x; break; }
+        if (r == null) r = GetComponentInChildren<Renderer>();
         return r != null ? r.sharedMaterial : null;
     }
 

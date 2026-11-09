@@ -61,7 +61,7 @@ public class Pintura : MonoBehaviour
         Renderer cascoR = Buscar("Casco");
         if (cascoR == null)   // balsa: los troncos
             foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
-                if (r.transform.parent == transform && r.name.StartsWith("Cylinder")) { cascoR = r; break; }
+                if (r.transform.parent == transform && r.name == "Tronco") { cascoR = r; break; }
         Renderer velaR = Buscar("Vela/Lona");
         Renderer banderaR = Buscar("Bandera");
         Agrupar(Parte.Casco, cascoR);

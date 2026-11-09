@@ -34,14 +34,36 @@ public static class Astillero
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         Transform t = raiz.transform;
-        Pieza(PrimitiveType.Cube, "Casco", t, new Vector3(0, 0, -0.1f * L), Quaternion.identity, new Vector3(w, h, L * 0.8f), m.casco);
-        Pieza(PrimitiveType.Cube, "Proa", t, new Vector3(0, 0, 0.3f * L), Quaternion.Euler(0, 45, 0), new Vector3(w * 0.7071f, h, w * 0.7071f), m.casco);
-        Pieza(PrimitiveType.Cube, "Cubierta", t, new Vector3(0, h / 2 + 0.05f, -0.1f * L), Quaternion.identity, new Vector3(w * 0.92f, 0.1f, L * 0.78f), m.cubierta);
+        // Casco con forma de barco (proa en punta, fondo curvo), cubierta y borda: hechos por código para cualquier tamaño
+        Malla("Casco", t, CascoProcedural.Casco(w, h, L), m.casco);
+        Malla("Borda", t, CascoProcedural.Borda(w, h, L), m.casco);
+        Malla("Cubierta", t, CascoProcedural.CubiertaMalla(w, h, L), m.cubierta);
         // Castillo de popa: el timón va encima, atrás del todo, como en los barcos de verdad
         float zCam = Cubierta.CentroCamarote(L), largoCam = Cubierta.LargoCamarote(L);
         Pieza(PrimitiveType.Cube, "Camarote", t, new Vector3(0, h / 2 + Cubierta.AltoCamarote / 2f, zCam), Quaternion.identity, new Vector3(w * 0.8f, Cubierta.AltoCamarote, largoCam), m.casco);
+        // Ventanas del castillo, mirando hacia atrás
+        int ventanas = Mathf.Clamp(Mathf.RoundToInt(w * 0.8f / 1.4f), 1, 7);
+        for (int i = 0; i < ventanas; i++)
+        {
+            float x = ventanas == 1 ? 0f : Mathf.Lerp(-w * 0.3f, w * 0.3f, (float)i / (ventanas - 1));
+            Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamarote * 0.55f, zCam - largoCam / 2f - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
+        }
         Vector3 timon = Cubierta.Timon(h, L, false);
-        Pieza(PrimitiveType.Cylinder, "Rueda del timón", t, timon + new Vector3(0, 0.9f, 0.7f), Quaternion.Euler(90, 0, 0), new Vector3(1.1f, 0.08f, 1.1f), m.mastil);
+        if (Modelos.Existe("timon"))
+            Modelos.Crear("timon", t, timon + new Vector3(0, 0.95f, 0.7f), Quaternion.identity, 1f, _ => m.mastil);
+        else
+            Pieza(PrimitiveType.Cylinder, "Rueda", t, timon + new Vector3(0, 0.9f, 0.7f), Quaternion.Euler(90, 0, 0), new Vector3(1.1f, 0.08f, 1.1f), m.mastil);
+        // Farol de popa y anclas a los lados de la proa
+        if (Modelos.Existe("farol"))
+            Modelos.Crear("farol", t, new Vector3(0f, h / 2 + Cubierta.AltoCamarote, zCam - largoCam / 2f + 0.3f), Quaternion.identity, Mathf.Clamp(w / 4f, 1f, 2.5f),
+                n => n == "Vidrio" ? Modelos.DeColor(m.vela, new Color(1f, 0.78f, 0.35f), true) : m.canon);
+        if (Modelos.Existe("ancla"))
+        {
+            float za = 0.3f * L - 0.75f * w, ea = Mathf.Clamp(h / 3.5f, 0.7f, 2.5f);
+            foreach (float lado in new[] { -1f, 1f })
+                Modelos.Crear("ancla", t, new Vector3(lado * (w / 2f + 0.12f * ea), h / 2f - 0.85f * ea, za), Quaternion.Euler(0f, lado * 90f, 0f), ea,
+                    n => n == "Cepo" ? m.mastil : m.canon);
+        }
 
         // Mástiles y velas proporcionales al barco real (largo, ancho y alto), sin importar el molde:
         // más largo = más mástiles; más ancho = velas más anchas; todo crece junto.
@@ -124,8 +146,8 @@ public static class Astillero
         GameObject pivote = new GameObject("Vela");
         pivote.transform.SetParent(t, false);
         pivote.transform.localPosition = new Vector3(0, yv, zm + grosor * 1.5f);
-        pivote.transform.localScale = new Vector3(anchoVela, hm * 0.72f, 0.15f);
-        Pieza(PrimitiveType.Cube, "Lona", pivote.transform, new Vector3(0, -0.5f, 0), Quaternion.identity, Vector3.one, m.vela);
+        pivote.transform.localScale = new Vector3(anchoVela, hm * 0.72f, anchoVela * 0.18f);
+        Lona(pivote.transform, m.vela);
         if (principal)
         {
             float b = 0.6f + hm * 0.05f;
@@ -134,13 +156,41 @@ public static class Astillero
         return pivote.transform;
     }
 
-    public static Transform Canon(string nombre, Transform padre, Vector3 pos, float giro, float s, Material m)
+    // cureña: con su base de madera y ruedas (en cubierta, en la balsa) o solo el tubo (asomando por las portas del casco)
+    // Vela curva (inflada por el viento) dentro del pivote que sube y baja
+    public static GameObject Lona(Transform pivote, Material m)
+    {
+        GameObject g = new GameObject("Lona");
+        g.transform.SetParent(pivote, false);
+        g.AddComponent<MeshFilter>().sharedMesh = CascoProcedural.Vela();
+        g.AddComponent<MeshRenderer>().sharedMaterial = m;
+        return g;
+    }
+
+    // Una pieza con malla hecha por código
+    public static GameObject Malla(string nombre, Transform padre, Mesh malla, Material m)
+    {
+        GameObject g = new GameObject(nombre);
+        g.transform.SetParent(padre, false);
+        g.AddComponent<MeshFilter>().sharedMesh = malla;
+        g.AddComponent<MeshRenderer>().sharedMaterial = m;
+        return g;
+    }
+
+    public static Transform Canon(string nombre, Transform padre, Vector3 pos, float giro, float s, Material m, bool cureña = false, Material madera = null)
     {
         GameObject pivote = new GameObject(nombre);
         pivote.transform.SetParent(padre, false);
         pivote.transform.localPosition = pos;
         pivote.transform.localRotation = Quaternion.Euler(0f, giro, 0f);
-        Pieza(PrimitiveType.Cylinder, "Tubo", pivote.transform, new Vector3(0, 0, 0.4f * s), Quaternion.Euler(90, 0, 0), new Vector3(0.45f * s, 0.8f * s, 0.45f * s), m);
+        if (Modelos.Existe("canon"))
+        {
+            Material mad = madera != null ? madera : m;
+            if (cureña) Modelos.Crear("canon", pivote.transform, new Vector3(0f, 0.42f * s, 0.25f * s), Quaternion.identity, s, n => n == "Tubo" ? m : mad);
+            else Modelos.Crear("canon", pivote.transform, new Vector3(0f, 0f, 0.25f * s), Quaternion.identity, s, _ => m, "Tubo");
+        }
+        else
+            Pieza(PrimitiveType.Cylinder, "Tubo", pivote.transform, new Vector3(0, 0, 0.4f * s), Quaternion.Euler(90, 0, 0), new Vector3(0.45f * s, 0.8f * s, 0.45f * s), m);
         Rendimiento.Capa(pivote, Rendimiento.CapaBarcoDetalle);   // de lejos no se dibujan
         return pivote.transform;
     }

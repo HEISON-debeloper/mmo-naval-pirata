@@ -31,26 +31,27 @@ public static class Balsa
         for (int i = 0; i < troncos; i++)
         {
             float x = -w / 2f + 0.3f + i * (w - 0.6f) / (troncos - 1);
-            Pieza(PrimitiveType.Cylinder, raiz.transform, new Vector3(x, abajo + 0.5f, 0f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.6f, L / 2f, 0.6f), madera);
+            Pieza(PrimitiveType.Cylinder, raiz.transform, new Vector3(x, abajo + 0.5f, 0f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.6f, L / 2f, 0.6f), madera, "Tronco");
         }
         // Pisos: postes en las esquinas y una plataforma de tablas encima
         for (int p = 1; p <= pisos; p++)
         {
             float y = abajo + 0.8f + p * altoPiso;
-            Pieza(PrimitiveType.Cube, raiz.transform, new Vector3(0f, y - 0.06f, 0f), Quaternion.identity, new Vector3(w, 0.12f, L), madera);
+            Pieza(PrimitiveType.Cube, raiz.transform, new Vector3(0f, y - 0.06f, 0f), Quaternion.identity, new Vector3(w, 0.12f, L), madera, "Piso");
             foreach (float px in new[] { -w / 2f + 0.2f, w / 2f - 0.2f })
             foreach (float pz in new[] { -L / 2f + 0.2f, 0f, L / 2f - 0.2f })
-                Pieza(PrimitiveType.Cube, raiz.transform, new Vector3(px, y - altoPiso / 2f, pz), Quaternion.identity, new Vector3(0.25f, altoPiso, 0.25f), madera);
+                Pieza(PrimitiveType.Cube, raiz.transform, new Vector3(px, y - altoPiso / 2f, pz), Quaternion.identity, new Vector3(0.25f, altoPiso, 0.25f), madera, "Poste");
         }
 
         // Mástil y vela, desde la cubierta de arriba
         float arriba = h / 2f;
-        Pieza(PrimitiveType.Cylinder, raiz.transform, new Vector3(0f, arriba + 2f * e, 0.8f * e), Quaternion.identity, new Vector3(0.15f * e, 2f * e, 0.15f * e), madera);
+        Pieza(PrimitiveType.Cylinder, raiz.transform, new Vector3(0f, arriba + 2f * e, 0.8f * e), Quaternion.identity, new Vector3(0.15f * e, 2f * e, 0.15f * e), madera, "Mástil");
         GameObject pivote = new GameObject("Vela");
         pivote.transform.SetParent(raiz.transform, false);
         pivote.transform.localPosition = new Vector3(0f, arriba + 3.8f * e, 0.8f * e + 0.15f);
-        pivote.transform.localScale = new Vector3(Mathf.Min(2f * e, w * 0.9f), 2.6f * e, 0.08f);
-        Pieza(PrimitiveType.Cube, pivote.transform, new Vector3(0f, -0.5f, 0f), Quaternion.identity, Vector3.one, lona);
+        float anchoVela = Mathf.Min(2f * e, w * 0.9f);
+        pivote.transform.localScale = new Vector3(anchoVela, 2.6f * e, anchoVela * 0.18f);
+        Astillero.Lona(pivote.transform, lona);   // vela curva
 
         // Una ranura de cañón por costado en cada piso (vacías al principio). Cañones del tamaño de siempre.
         int filas = 1 + pisos;
@@ -58,8 +59,8 @@ public static class Balsa
         for (int f = 0; f < filas; f++)
         {
             float y = arriba - 0.25f - f * altoPiso;
-            babor[f] = Astillero.Canon("Cañón babor " + (f + 1), raiz.transform, new Vector3(-(w / 2f - 0.3f), y, -0.13f * L), -90f, 1f, hierro);
-            estribor[f] = Astillero.Canon("Cañón estribor " + (f + 1), raiz.transform, new Vector3(w / 2f - 0.3f, y, -0.13f * L), 90f, 1f, hierro);
+            babor[f] = Astillero.Canon("Cañón babor " + (f + 1), raiz.transform, new Vector3(-(w / 2f - 0.3f), y, -0.13f * L), -90f, 1f, hierro, true, madera);
+            estribor[f] = Astillero.Canon("Cañón estribor " + (f + 1), raiz.transform, new Vector3(w / 2f - 0.3f, y, -0.13f * L), 90f, 1f, hierro, true, madera);
         }
 
         // Flotación: troncos ligeros, flotan alto
@@ -100,9 +101,10 @@ public static class Balsa
         return raiz;
     }
 
-    static void Pieza(PrimitiveType tipo, Transform padre, Vector3 pos, Quaternion rot, Vector3 escala, Material m)
+    static void Pieza(PrimitiveType tipo, Transform padre, Vector3 pos, Quaternion rot, Vector3 escala, Material m, string nombre = null)
     {
         GameObject g = GameObject.CreatePrimitive(tipo);
+        if (nombre != null) g.name = nombre;
         Object.Destroy(g.GetComponent<Collider>());
         g.transform.SetParent(padre, false);
         g.transform.localPosition = pos;

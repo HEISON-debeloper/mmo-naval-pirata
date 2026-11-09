@@ -6,6 +6,13 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.22.0 — Barcos con forma  (2026-11-08)
+- Cascos de verdad: proa en punta, fondo curvo, popa plana con ventanas y borda (baranda) alrededor de la cubierta. Se arman por código y se adaptan a los 15 moldes y a todos los tamaños.
+- Velas curvas, infladas por el viento.
+- Piezas modeladas en Blender: cañón con cureña y ruedas, timón de rueda, anclas, farol de popa que brilla, barril y 4 mascarones de proa (calavera, sirena, dragón, león) para el taller que viene.
+- Las balsas también llevan los cañones con cureña.
+- Los archivos de Blender quedan en la carpeta Blender del proyecto.
+
 ## 0.21.0 — Pintura del barco  (2026-11-08)
 - Nueva página Pintura en el menú Tab (a bordo de tu barco): color del casco, de las velas y de la bandera, 12 colores.
 - Cada cambio cuesta 5 de oro (gratis en creativo); "Colores originales" quita la pintura sin costo.

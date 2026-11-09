@@ -1,0 +1,217 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+// Formas de barco hechas por código, para cualquier tamaño (los barcos se alargan, ensanchan y suben de pisos,
+// así que un modelo fijo no serviría): casco con proa en punta, fondo curvo y popa plana; cubierta;
+// borda (la baranda alrededor de la cubierta); y velas curvas, infladas por el viento.
+// Todo en las mismas medidas que el BoxCollider del barco: ancho w, alto h, largo L, centrado.
+public static class CascoProcedural
+{
+    const int Estaciones = 18;   // cortes a lo largo del barco
+    const int Lados = 6;          // puntos de cada corte, de la borda a la quilla
+
+    static readonly Dictionary<string, Mesh> cache = new Dictionary<string, Mesh>();
+
+    // Dónde termina el barco: popa en -L/2, punta de la proa como la tenía el modelo de cubos
+    public static float ZPopa(float L) => -0.5f * L;
+    public static float ZProa(float w, float L) => 0.3f * L + 0.5f * w;
+
+    // Medio ancho (fracción) en la estación s (0 = popa, 1 = proa)
+    static float Ancho(float s, float w, float L)
+    {
+        float z = Mathf.Lerp(ZPopa(L), ZProa(w, L), s);
+        float z0 = 0.3f * L - 0.6f * w;                     // donde la proa empieza a cerrarse
+        float f = 1f;
+        if (s < 0.08f) f = Mathf.Lerp(0.82f, 1f, s / 0.08f);  // espejo de popa un poco más angosto
+        if (z > z0)
+        {
+            float t = Mathf.Clamp01((z - z0) / (ZProa(w, L) - z0));
+            f *= Mathf.Pow(Mathf.Max(0f, 1f - Mathf.Pow(t, 1.8f)), 0.7f);
+        }
+        return f;
+    }
+
+    // Altura de la quilla en la estación s: sube en la proa (pie de roda) y un poco en la popa
+    static float Quilla(float s, float w, float h, float L)
+    {
+        float y = -h / 2f;
+        float z = Mathf.Lerp(ZPopa(L), ZProa(w, L), s), z0 = 0.3f * L - 0.6f * w;
+        if (z > z0) { float t = Mathf.Clamp01((z - z0) / (ZProa(w, L) - z0)); y += h * 0.6f * t * t; }
+        if (s < 0.1f) y += h * 0.12f * (1f - s / 0.1f);
+        return y;
+    }
+
+    // Punto k del corte (0 = borde de cubierta, Lados = quilla) en un costado (lado = +1 estribor, -1 babor)
+    static Vector3 Punto(int e, int k, float lado, float w, float h, float L)
+    {
+        float s = (float)e / Estaciones;
+        float z = Mathf.Lerp(ZPopa(L), ZProa(w, L), s);
+        float hw = 0.5f * w * Ancho(s, w, L);
+        float arriba = h / 2f, abajo = Quilla(s, w, h, L);
+        float th = (float)k / Lados * Mathf.PI / 2f;
+        const float n = 2.6f;   // forma del pantoque: 2 = redondo, más = más cuadrado
+        // Max(0): cos(90°) sale -0.00000004 y una potencia fraccionaria de un negativo da NaN
+        float cx = Mathf.Pow(Mathf.Max(0f, Mathf.Cos(th)), 2f / n), sy = Mathf.Pow(Mathf.Max(0f, Mathf.Sin(th)), 2f / n);
+        return new Vector3(lado * hw * cx, arriba - (arriba - abajo) * sy, z);
+    }
+
+    // ---------- Casco ----------
+    public static Mesh Casco(float w, float h, float L)
+    {
+        string clave = "casco" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00");
+        if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        foreach (float lado in new[] { 1f, -1f })
+            for (int e = 0; e < Estaciones; e++)
+                for (int k = 0; k < Lados; k++)
+                {
+                    Vector3 a = Punto(e, k, lado, w, h, L), b = Punto(e + 1, k, lado, w, h, L);
+                    Vector3 c = Punto(e + 1, k + 1, lado, w, h, L), d = Punto(e, k + 1, lado, w, h, L);
+                    // Hacia afuera: el orden depende del costado
+                    if (lado > 0) Quad(v, uv, a, b, c, d, w, h, L); else Quad(v, uv, a, d, c, b, w, h, L);
+                }
+        // Espejo de popa (la pared plana de atrás)
+        for (int k = 0; k < Lados; k++)
+        {
+            Vector3 a = Punto(0, k, -1f, w, h, L), b = Punto(0, k, 1f, w, h, L);
+            Vector3 c = Punto(0, k + 1, 1f, w, h, L), d = Punto(0, k + 1, -1f, w, h, L);
+            Quad(v, uv, a, b, c, d, w, h, L);
+        }
+        m = Armar("Casco", v, uv);
+        cache[clave] = m;
+        return m;
+    }
+
+    // ---------- Cubierta (la superficie donde se camina) ----------
+    public static Mesh CubiertaMalla(float w, float h, float L)
+    {
+        string clave = "cub" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00");
+        if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        float y = h / 2f + 0.1f;   // misma altura que Cubierta.Altura
+        for (int e = 0; e < Estaciones; e++)
+        {
+            Vector3 a = Punto(e, 0, -1f, w, h, L), b = Punto(e, 0, 1f, w, h, L);
+            Vector3 c = Punto(e + 1, 0, 1f, w, h, L), d = Punto(e + 1, 0, -1f, w, h, L);
+            a.y = b.y = c.y = d.y = y;
+            Quad(v, uv, a, d, c, b, w, h, L);
+            // Canto de la cubierta (para que no se vea hueca desde abajo)
+        }
+        m = Armar("Cubierta", v, uv);
+        cache[clave] = m;
+        return m;
+    }
+
+    // ---------- Borda: baranda alrededor de la cubierta, más alta en proa y popa ----------
+    public static Mesh Borda(float w, float h, float L)
+    {
+        string clave = "borda" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00");
+        if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        float grosor = Mathf.Clamp(0.06f * w, 0.1f, 0.35f);
+        float alto = Mathf.Clamp(0.12f * h + 0.35f, 0.45f, 1.4f);
+        Vector3 Base(int e, float lado) => Punto(e, 0, lado, w, h, L);
+        float Arrufo(int e) { float s = (float)e / Estaciones; return alto * (1f + 0.6f * Mathf.Pow(Mathf.Abs(2f * s - 1f), 2f)); }   // sube en los extremos
+        Vector3 Adentro(int e, float lado)
+        {
+            Vector3 p = Base(e, lado);
+            float hw = Mathf.Abs(p.x);
+            p.x = lado * Mathf.Max(0f, hw - grosor);
+            return p;
+        }
+        foreach (float lado in new[] { 1f, -1f })
+            for (int e = 0; e < Estaciones; e++)
+            {
+                Vector3 a = Base(e, lado), b = Base(e + 1, lado);
+                Vector3 ai = Adentro(e, lado), bi = Adentro(e + 1, lado);
+                Vector3 up0 = Vector3.up * Arrufo(e), up1 = Vector3.up * Arrufo(e + 1);
+                QuadH(v, uv, a, b, b + up1, a + up0, new Vector3(lado, 0f, 0f), w, h, L);      // cara de afuera
+                QuadH(v, uv, a + up0, b + up1, bi + up1, ai + up0, Vector3.up, w, h, L);      // tope
+                QuadH(v, uv, ai, bi, bi + up1, ai + up0, new Vector3(-lado, 0f, 0f), w, h, L); // cara de adentro
+            }
+        // Tablón de popa entre los dos costados
+        {
+            Vector3 a = Base(0, -1f), b = Base(0, 1f), up = Vector3.up * Arrufo(0);
+            Vector3 ai = a + Vector3.forward * grosor, bi = b + Vector3.forward * grosor;
+            QuadH(v, uv, a, b, b + up, a + up, Vector3.back, w, h, L);
+            QuadH(v, uv, ai, bi, bi + up, ai + up, Vector3.forward, w, h, L);
+            QuadH(v, uv, a + up, b + up, bi + up, ai + up, Vector3.up, w, h, L);
+        }
+        m = Armar("Borda", v, uv);
+        cache[clave] = m;
+        return m;
+    }
+
+    // Altura de la borda en un punto (para poner cañones de cubierta, faroles, etc.)
+    public static float AltoBorda(float h) => Mathf.Clamp(0.12f * h + 0.35f, 0.45f, 1.4f);
+
+    // ---------- Vela curva ----------
+    // En el espacio del pivote de la vela: x de -0.5 a 0.5, y de 0 (verga) a -1 (abajo), y se infla hacia +z.
+    // Con la escala del pivote (ancho, alto, ancho * 0.18) queda proporcional a cualquier vela.
+    public static Mesh Vela()
+    {
+        if (cache.TryGetValue("vela", out Mesh m) && m != null) return m;
+        const int nx = 8, ny = 6;
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        Vector3 P(int i, int j, float desfase)
+        {
+            float x = (float)i / nx - 0.5f, y = -(float)j / ny;
+            float inflado = (1f - 4f * x * x) * Mathf.Sin(Mathf.PI * Mathf.Clamp01(-y * 0.92f + 0.04f));
+            return new Vector3(x, y, inflado + desfase);
+        }
+        for (int i = 0; i < nx; i++)
+            for (int j = 0; j < ny; j++)
+            {
+                // Cara de adelante y de atrás (la vela se ve de los dos lados)
+                Vector3 a = P(i, j, 0.04f), b = P(i + 1, j, 0.04f), c = P(i + 1, j + 1, 0.04f), d = P(i, j + 1, 0.04f);
+                QuadUV(v, uv, a, d, c, b, i, j, nx, ny);
+                Vector3 a2 = P(i, j, -0.04f), b2 = P(i + 1, j, -0.04f), c2 = P(i + 1, j + 1, -0.04f), d2 = P(i, j + 1, -0.04f);
+                QuadUV(v, uv, a2, b2, c2, d2, i, j, nx, ny);
+            }
+        m = Armar("Vela", v, uv);
+        cache["vela"] = m;
+        return m;
+    }
+
+    // ---------- Ayudas ----------
+    static void Quad(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, float w, float h, float L)
+    {
+        Tri(v, uv, a, b, c, w, h, L);
+        Tri(v, uv, a, c, d, w, h, L);
+    }
+
+    // Como Quad, pero se voltea solo si la cara quedaría mirando hacia "normal" al revés
+    static void QuadH(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, float w, float h, float L)
+    {
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), normal) < 0f) Quad(v, uv, a, d, c, b, w, h, L);
+        else Quad(v, uv, a, b, c, d, w, h, L);
+    }
+
+    static void Tri(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, float w, float h, float L)
+    {
+        if ((Vector3.Cross(b - a, c - a)).sqrMagnitude < 1e-10f) return;   // triángulos aplastados en la punta de la proa
+        v.Add(a); v.Add(b); v.Add(c);
+        foreach (Vector3 p in new[] { a, b, c }) uv.Add(new Vector2(p.z / L + 0.5f, p.y / Mathf.Max(h, 0.1f) + 0.5f));
+    }
+
+    static void QuadUV(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, int i, int j, int nx, int ny)
+    {
+        Vector2 UV(Vector3 p) => new Vector2(p.x + 0.5f, 1f + p.y);
+        v.Add(a); v.Add(b); v.Add(c); uv.Add(UV(a)); uv.Add(UV(b)); uv.Add(UV(c));
+        v.Add(a); v.Add(c); v.Add(d); uv.Add(UV(a)); uv.Add(UV(c)); uv.Add(UV(d));
+    }
+
+    static Mesh Armar(string nombre, List<Vector3> v, List<Vector2> uv)
+    {
+        Mesh m = new Mesh { name = nombre };
+        if (v.Count > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        m.SetVertices(v);
+        m.SetUVs(0, uv);
+        var t = new int[v.Count];
+        for (int i = 0; i < t.Length; i++) t[i] = i;
+        m.triangles = t;
+        m.RecalculateNormals();
+        m.RecalculateBounds();
+        return m;
+    }
+}
