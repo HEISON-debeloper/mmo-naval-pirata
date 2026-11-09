@@ -22,7 +22,7 @@ public class Canones : MonoBehaviour
     public float dispersion = 0.04f;
     [Tooltip("Recarga con un solo cañón. Cada cañón más en ese lado la alarga (más cañones que cargar).")]
     public float recarga = 2.5f;
-    public const float ExtraPorCanon = 0.045f;   // +4.5 % por cada cañón más: 10 cañones ≈ 1.4×, 64 ≈ 3.8×
+    public const float ExtraPorCanon = 0.012f;   // +1,2 % por cada cañón más (10 cañones ≈ 1,1×), con tope de 2×
     public const float RecargaBarriles = 7f;
     public const int MaxNivelBarriles = 4;
     [Tooltip("Mejoras de los barriles en llamas: cada nivel suelta un barril más por tanda (1 a 5).")]
@@ -53,7 +53,7 @@ public class Canones : MonoBehaviour
     public float TiempoRecarga(LadoCanon l)
     {
         if (l == LadoCanon.Popa) return RecargaBarriles;
-        return recarga * (1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1));
+        return recarga * Mathf.Min(2f, 1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1));
     }
 
     public static string Nombre(LadoCanon l) => l == LadoCanon.Babor ? "babor" : l == LadoCanon.Estribor ? "estribor" : l == LadoCanon.Proa ? "proa" : "popa";
@@ -152,6 +152,46 @@ public class Canones : MonoBehaviour
     }
     public bool EsPropio(Collider c) { foreach (Collider p in propios) if (p == c) return true; return false; }
 
+    // Dispara los cañones uno tras otro; la ola entera dura más mientras más cañones (hasta 1,2 s)
+    System.Collections.IEnumerator Ola(System.Collections.Generic.List<Transform> orden, float angulo)
+    {
+        int n = orden.Count;
+        float total = Mathf.Clamp(0.04f * (n - 1), 0f, 1.2f);
+        float paso = n > 1 ? total / (n - 1) : 0f, espera = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            Transform c = orden[i];
+            if (c != null && (vida == null || !vida.Hundido))
+            {
+                float antes = anguloApunte;
+                anguloApunte = angulo;   // todos con el ángulo que había al dar la orden
+                Bala(c);
+                anguloApunte = antes;
+            }
+            espera += paso;
+            while (espera >= Time.deltaTime && i < n - 1) { espera -= Time.deltaTime; yield return null; }
+        }
+    }
+
+    void Bala(Transform c)
+    {
+        GameObject b = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        b.name = "Bala";
+        b.transform.position = Salida(c);
+        b.transform.localScale = Vector3.one * 0.4f;
+        Renderer rc = c.GetComponentInChildren<Renderer>();
+        if (rc != null) b.GetComponent<Renderer>().sharedMaterial = rc.sharedMaterial;
+        Rigidbody brb = b.AddComponent<Rigidbody>();
+        brb.mass = 10f;
+        brb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        brb.linearVelocity = VelocidadInicial(c) + Random.insideUnitSphere * dispersion * velocidadBala;
+        Collider bc = b.GetComponent<Collider>();
+        foreach (Collider p in propios) if (p != null) Physics.IgnoreCollision(bc, p);   // las piezas recién creadas pueden haber perdido su collider
+        BalaCanon bala = b.AddComponent<BalaCanon>();
+        bala.dueno = vida;
+        bala.dano = dano;
+    }
+
     public bool Disparar(LadoCanon lado)
     {
         if (vida != null && vida.Hundido) return false;
@@ -186,26 +226,11 @@ public class Canones : MonoBehaviour
             }
             return true;
         }
-        for (int i = 0; i < n && i < r.Length; i++)
-        {
-            Transform c = r[i];
-            if (c == null) continue;
-            GameObject b = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            b.name = "Bala";
-            b.transform.position = Salida(c);
-            b.transform.localScale = Vector3.one * 0.4f;
-            Renderer rc = c.GetComponentInChildren<Renderer>();
-            if (rc != null) b.GetComponent<Renderer>().sharedMaterial = rc.sharedMaterial;
-            Rigidbody brb = b.AddComponent<Rigidbody>();
-            brb.mass = 10f;
-            brb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            brb.linearVelocity = VelocidadInicial(c) + Random.insideUnitSphere * dispersion * velocidadBala;
-            Collider bc = b.GetComponent<Collider>();
-            foreach (Collider p in propios) if (p != null) Physics.IgnoreCollision(bc, p);   // las piezas recién creadas pueden haber perdido su collider
-            BalaCanon bala = b.AddComponent<BalaCanon>();
-            bala.dueno = vida;
-            bala.dano = dano;
-        }
+        // Andanada en ola: primero los de popa y luego hacia la proa, como una ola de disparos
+        var orden = new System.Collections.Generic.List<Transform>();
+        for (int i = 0; i < n && i < r.Length; i++) if (r[i] != null) orden.Add(r[i]);
+        orden.Sort((x, y) => transform.InverseTransformPoint(x.position).z.CompareTo(transform.InverseTransformPoint(y.position).z));
+        StartCoroutine(Ola(orden, anguloApunte));
         return true;
     }
 }

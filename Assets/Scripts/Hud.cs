@@ -371,7 +371,7 @@ public class Hud : MonoBehaviour
     {
         new[] { "A pie", "WASD caminar o nadar · Shift correr · Espacio saltar · F recoger a mano (fibra, ramas, piedras, frutas) · Clic golpear con hacha o pico · C comer · F subir al barco / tomar el timón" },
         new[] { "Al timón", "W/S subir o bajar velas · A/D girar · R ancla · F soltar" },
-        new[] { "Cañones", "Mantén clic derecho y mira hacia un lado (o al frente, o atrás): ves por dónde irán las balas. La cámara sigue la zona de caída. Mouse hacia el cielo: arco alto y lejos; hacia el barco: al agua, cerca. Clic izquierdo dispara. Q y E disparan babor y estribor directo. Más cañones en un lado = más tarda en recargar" },
+        new[] { "Cañones", "Mantén clic derecho y mira hacia un lado (o al frente, o atrás): ves por dónde irán las balas. La cámara sigue la zona de caída. Mouse hacia el cielo: arco alto y lejos; hacia el barco: al agua, cerca. Clic izquierdo dispara. Q y E disparan babor y estribor directo. Más cañones en un lado = recarga un poco más lenta (máximo el doble), y disparan en ola de popa a proa" },
         new[] { "Interiores", "En cubierta, F junto a la escotilla baja a las cubiertas de cañones y a la bodega (F al pie de la escalera sube). F frente a la puerta del castillo de popa entra al camarote del capitán. Adentro la cámara va en primera persona" },
         new[] { "Proa y popa", "Proa: 2 cañones en cubierta que solo disparan al frente, y el espolón: embiste a otro barco yendo rápido y le haces mucho daño (más si eres más grande). Popa: mira atrás y haz clic para soltar un barril en llamas; flota y explota cuando lo toca otro barco o una bala" },
         new[] { "Combate", "Clic espada (cerca de un enemigo)" },

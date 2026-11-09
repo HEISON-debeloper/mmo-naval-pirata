@@ -26,8 +26,15 @@ public static class Astillero
 
         GameObject raiz = new GameObject(nombre);
         raiz.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, rumbo, 0f));
+        // La caja guarda las medidas del barco (la leen muchos scripts) pero no choca: es un sensor.
+        // Lo que choca es la forma real del casco (convexa), así no hay esquinas invisibles en la proa.
         BoxCollider col = raiz.AddComponent<BoxCollider>();
         col.size = new Vector3(w, h, L);
+        col.isTrigger = true;
+        MeshCollider forma = raiz.AddComponent<MeshCollider>();
+        forma.sharedMesh = CascoProcedural.CascoColision(w, h, L);
+        forma.convex = true;
+        ObstaculosCubierta obstaculos = raiz.AddComponent<ObstaculosCubierta>();
 
         Rigidbody rb = raiz.AddComponent<Rigidbody>();
         rb.mass = 20000f * (L * w * h) / (18f * 4.5f * 3.06f);
@@ -40,13 +47,13 @@ public static class Astillero
         Malla("Cubierta", t, CascoProcedural.CubiertaMalla(w, h, L), m.cubierta);
         // Castillo de popa: el timón va encima, atrás del todo, como en los barcos de verdad
         float zCam = Cubierta.CentroCamarote(L), largoCam = Cubierta.LargoCamarote(L);
-        Pieza(PrimitiveType.Cube, "Camarote", t, new Vector3(0, h / 2 + Cubierta.AltoCamarote / 2f, zCam), Quaternion.identity, new Vector3(w * 0.8f, Cubierta.AltoCamarote, largoCam), m.casco);
+        Pieza(PrimitiveType.Cube, "Camarote", t, new Vector3(0, h / 2 + Cubierta.AltoCamaroteDe(h) / 2f, zCam), Quaternion.identity, new Vector3(w * 0.8f, Cubierta.AltoCamaroteDe(h), largoCam), m.casco);
         // Ventanas del castillo, mirando hacia atrás
         int ventanas = Mathf.Clamp(Mathf.RoundToInt(w * 0.8f / 1.4f), 1, 7);
         for (int i = 0; i < ventanas; i++)
         {
             float x = ventanas == 1 ? 0f : Mathf.Lerp(-w * 0.3f, w * 0.3f, (float)i / (ventanas - 1));
-            Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamarote * 0.55f, zCam - largoCam / 2f - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
+            Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamaroteDe(h) * 0.55f, zCam - largoCam / 2f - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
         }
         Vector3 timon = Cubierta.Timon(h, L, false);
         if (Modelos.Existe("timon"))
@@ -55,7 +62,7 @@ public static class Astillero
             Pieza(PrimitiveType.Cylinder, "Rueda", t, timon + new Vector3(0, 0.9f, 0.7f), Quaternion.Euler(90, 0, 0), new Vector3(1.1f, 0.08f, 1.1f), m.mastil);
         // Farol de popa y anclas a los lados de la proa
         if (Modelos.Existe("farol"))
-            Modelos.Crear("farol", t, new Vector3(0f, h / 2 + Cubierta.AltoCamarote, zCam - largoCam / 2f + 0.3f), Quaternion.identity, Mathf.Clamp(w / 4f, 1f, 2.5f),
+            Modelos.Crear("farol", t, new Vector3(0f, h / 2 + Cubierta.AltoCamaroteDe(h), zCam - largoCam / 2f + 0.3f), Quaternion.identity, Mathf.Clamp(w / 4f, 0.6f, 2.5f),
                 n => n == "Vidrio" ? Modelos.DeColor(m.vela, new Color(1f, 0.78f, 0.35f), true) : m.canon);
 
         // Aparejo real: mástiles con varias velas cuadradas una encima de otra (más pisos de vela si el mástil es alto),
@@ -66,7 +73,7 @@ public static class Astillero
         float zIni = -0.28f * L, zFin = 0.24f * L;
         if (nMast == 1) { zIni = zFin = 0.05f * L; }
         float espacio = nMast > 1 ? (zFin - zIni) / (nMast - 1) : L * 0.6f;
-        float anchoVela = Mathf.Min(Mathf.Max(w * 1.8f, L * 0.25f / nMast), espacio * 1.1f);
+        float anchoVela = Mathf.Min(Mathf.Max(w * 1.45f, L * 0.22f / nMast), espacio * 1.1f, 0.5f * L);   // la vela de abajo: ~1,5 veces la manga
         float hm = 0.55f * L / Mathf.Sqrt(nMast) + w * 1.1f + h * 0.6f;
         int principal = nMast / 2;   // el del medio es el más alto
         Transform velaPrincipal = null;
@@ -81,16 +88,17 @@ public static class Astillero
             float ancho = esPrincipal ? anchoVela : anchoVela * (i == 0 ? 0.75f : 0.9f);
             var velas = Mastil(t, zm, alto, ancho, h, m, esPrincipal);
             listaMastiles.Add(new Detalles.Mastil { z = zm, alto = alto, grosor = 0.25f + alto * 0.012f });
+            obstaculos.Agregar(0f, zm, (0.25f + alto * 0.012f) / 2f + 0.3f);
             foreach (Transform v in velas) { if (esPrincipal && velaPrincipal == null) velaPrincipal = v; else extras.Add(v); }
             if (i == nMast - 1) { zProaMastil = zm; hmProa = alto; }
             // Cangreja: vela de cuchillo detrás del mástil de popa (solo con 2 o más mástiles)
             if (i == 0 && nMast >= 2)
             {
                 float hc = alto * 0.42f, lc = Mathf.Min(espacio * 0.55f, zm - (-0.5f * L) + 1f);
-                Pieza(PrimitiveType.Cylinder, "Botavara", t, new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.4f, zm - lc / 2f), Quaternion.Euler(90, 0, 0), new Vector3(0.18f, lc / 2f, 0.18f), m.mastil);
+                Pieza(PrimitiveType.Cylinder, "Botavara", t, new Vector3(0, h / 2 + Cubierta.AltoCamaroteDe(h) + 1.4f, zm - lc / 2f), Quaternion.Euler(90, 0, 0), new Vector3(0.18f, lc / 2f, 0.18f), m.mastil);
                 GameObject pc = new GameObject(VelaCuchillo);
                 pc.transform.SetParent(t, false);
-                pc.transform.localPosition = new Vector3(0, h / 2 + Cubierta.AltoCamarote + 1.5f + hc, zm - 0.3f);
+                pc.transform.localPosition = new Vector3(0, h / 2 + Cubierta.AltoCamaroteDe(h) + 1.5f + hc, zm - 0.3f);
                 pc.transform.localScale = new Vector3(hc * 0.12f, hc, lc);
                 Malla("Lona", pc.transform, CascoProcedural.VelaCangreja(), m.vela);
                 extras.Add(pc.transform);
@@ -98,7 +106,7 @@ public static class Astillero
         }
         // Bauprés (palo que sale de la proa) y foque: vela triangular del bauprés al mástil de proa
         float zRoda = CascoProcedural.ZProa(w, L);
-        float largoBaupres = Mathf.Clamp(0.16f * L, 2.5f, 22f);
+        float largoBaupres = Mathf.Clamp(0.16f * L, 1.2f, 22f);
         Vector3 baseBaupres = new Vector3(0, h / 2 + 0.3f, zRoda - 0.6f);
         Quaternion giroBaupres = Quaternion.Euler(70f, 0, 0);   // apunta adelante y un poco arriba
         Vector3 puntaBaupres = baseBaupres + giroBaupres * Vector3.up * largoBaupres;
@@ -115,7 +123,7 @@ public static class Astillero
             extras.Add(pf.transform);
         }
         // Espolón de bronce en la punta de la proa, a ras del agua: parte barcos al embestir
-        float eEsp = Mathf.Clamp(w / 4f, 0.7f, 3.5f);
+        float eEsp = Mathf.Clamp(w / 4f, 0.45f, 3.5f);
         if (Modelos.Existe("espolon"))
             Modelos.Crear("espolon", t, new Vector3(0f, -h / 2f + 0.62f * h, zRoda - 0.25f * eEsp), Quaternion.identity, eEsp, _ => m.canon);
         else
@@ -135,6 +143,7 @@ public static class Astillero
             {
                 float x = CascoProcedural.Costado(z, h / 2f, w, h, L) - 0.75f;
                 babor[k] = Canon("Cañón babor " + (k + 1), t, new Vector3(-x, h / 2f + 0.1f, z), -90f, 1f, m.canon, true, m.mastil);
+                obstaculos.Agregar(-x, z, 0.65f); obstaculos.Agregar(x, z, 0.65f);
                 estribor[k] = Canon("Cañón estribor " + (k + 1), t, new Vector3(x, h / 2f + 0.1f, z), 90f, 1f, m.canon, true, m.mastil);
             }
             else
@@ -161,7 +170,7 @@ public static class Astillero
         // Anclas a los lados de la proa, más adelante que las portas
         if (Modelos.Existe("ancla"))
         {
-            float ea = Mathf.Clamp(h / 3.5f, 0.7f, 2.5f);
+            float ea = Mathf.Clamp(h / 3.5f, 0.35f, 2.5f);
             float zMax = 0.3f * L - 0.75f * w;
             foreach (Vector2 pu in puestos) zMax = Mathf.Max(zMax, pu.y + 0.9f + 0.35f * ea);
             float za = Mathf.Min(zMax, CascoProcedural.ZProa(w, L) - 1.2f * ea);
@@ -175,6 +184,7 @@ public static class Astillero
         float zCp = 0.3f * L - 0.6f * w - 0.6f, xCp = Mathf.Max(0.6f, w / 2f - 0.7f);
         Transform proaB = Canon("Cañón proa babor", t, new Vector3(-xCp, h / 2 + 0.1f, zCp), 0f, 1f, m.canon, true, m.mastil);
         Transform proaE = Canon("Cañón proa estribor", t, new Vector3(xCp, h / 2 + 0.1f, zCp), 0f, 1f, m.canon, true, m.mastil);
+        obstaculos.Agregar(-xCp, zCp, 0.65f); obstaculos.Agregar(xCp, zCp, 0.65f);
         // Popa: repisa con barriles en llamas que se sueltan al agua
         Transform popa = Barriles("Barriles popa", t, new Vector3(0, h / 2 - 0.2f, -0.5f * L - 0.5f), Mathf.Clamp(w / 5f, 0.8f, 2f), m);
 
@@ -196,6 +206,9 @@ public static class Astillero
         Flotacion fl = raiz.AddComponent<Flotacion>();
         fl.puntosFlotacion = puntos;
         fl.centroDeMasa = new Vector3(0f, -h * 0.4f, 0f);
+        // Calado proporcional al casco: la quilla queda Calado·h bajo el agua (antes era siempre 1,2 m:
+        // los botes casi se hundían y los navíos flotaban encima del agua)
+        fl.fuerzaEmpuje = 9.81f / Mathf.Max(0.35f, Calado * h);
 
         raiz.AddComponent<VidaBarco>();
         Canones c = raiz.AddComponent<Canones>();
@@ -216,6 +229,7 @@ public static class Astillero
     }
 
     public const string VelaCuchillo = "Vela de cuchillo";   // foque y cangreja: al recogerlas se esconden
+    public const float Calado = 0.38f;          // fracción del alto del casco que va bajo el agua
     public const float AltoMinPortas = 2.6f;   // con casco más bajo los cañones van en cubierta
     public const float SeparacionMin = 1.9f;   // lo más juntos que pueden quedar dos cañones
     public const float PrimeraFila = 1.2f;     // la fila de arriba va 1,2 m bajo la cubierta (deja altura para caminar adentro)
@@ -227,12 +241,15 @@ public static class Astillero
         var res = new System.Collections.Generic.List<Vector2>();
         bool enCubierta = h < AltoMinPortas;
         int nf = enCubierta ? 1 : Mathf.Max(1, filas);
-        float sepFilas = Mathf.Min(FormaBarco.AltoPiso, (h - 1.2f) / nf);
+        // Las filas van de arriba (1,2 m bajo la cubierta) hasta un poco sobre la línea de agua
+        float yMin = -h / 2f + Calado * h + 0.8f;
+        float sepFilas = nf > 1 ? Mathf.Min(FormaBarco.AltoPiso, (h / 2f - PrimeraFila - yMin) / (nf - 1)) : FormaBarco.AltoPiso;
+        if (nf > 1 && sepFilas < 1.6f) { nf = Mathf.Max(1, Mathf.FloorToInt((h / 2f - PrimeraFila - yMin) / 1.6f) + 1); sepFilas = nf > 1 ? (h / 2f - PrimeraFila - yMin) / (nf - 1) : FormaBarco.AltoPiso; }
         float b = CascoProcedural.AltoPorta / 2f;
         float sep = FormaBarco.SeparacionCanones;
         // Filas: la de la cubierta de arriba (cañones sobre cureña detrás de la borda) y las de los pisos de abajo (por portas)
         var filasY = new System.Collections.Generic.List<float> { h / 2f };
-        if (!enCubierta) for (int f = 0; f < nf; f++) filasY.Add(Mathf.Max(h / 2 - PrimeraFila - f * sepFilas, -h / 2 + 0.6f));
+        if (!enCubierta) for (int f = 0; f < nf; f++) { float yf = h / 2 - PrimeraFila - f * sepFilas; if (yf >= yMin - 0.01f || f == 0) filasY.Add(yf); }
         float frenteCastillo = Cubierta.CentroCamarote(L) + Cubierta.LargoCamarote(L) / 2f;
         foreach (float y in filasY)
         {

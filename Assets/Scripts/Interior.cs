@@ -581,10 +581,10 @@ public class Interior : MonoBehaviour
     void ArmarCamarote()
     {
         Transform castillo = transform.Find("Camarote");
-        if (castillo == null) return;
+        if (castillo == null || Cubierta.AltoCamaroteDe(h) < 2f || castillo.localScale.x < 2.2f) return;   // en barcos chicos no cabe un camarote
         tieneCamarote = true;
         float zc = Cubierta.CentroCamarote(L), lc = Cubierta.LargoCamarote(L);
-        float ancho = castillo.localScale.x, piso = Cubierta.Altura(h), techo = h / 2f + Cubierta.AltoCamarote - 0.05f;
+        float ancho = castillo.localScale.x, piso = Cubierta.Altura(h), techo = h / 2f + Cubierta.AltoCamaroteDe(h) - 0.05f;
         float xi = ancho / 2f - 0.08f, z0 = zc - lc / 2f + 0.08f, z1 = zc + lc / 2f - 0.08f;
         puertaZ = zc + lc / 2f;
         camX = Mathf.Max(0.3f, xi - 0.4f); camZ0 = z0 + 0.4f; camZ1 = z1 - 0.35f;
@@ -599,7 +599,7 @@ public class Interior : MonoBehaviour
         foreach (float s in new[] { -1f, 1f })
             CascoProcedural.Cara(v, uv, new Vector3(s * xi, piso, z0), new Vector3(s * xi, piso, z1), new Vector3(s * xi, techo, z1), new Vector3(s * xi, techo, z0), new Vector3(-s, 0f, 0f));
         // Pared de atrás con las ventanas (huecos donde están las ventanas de afuera)
-        float yv = h / 2f + Cubierta.AltoCamarote * 0.55f;
+        float yv = h / 2f + Cubierta.AltoCamaroteDe(h) * 0.55f;
         var ventanas = new List<float>();
         foreach (Transform hijo in transform) if (hijo.name == "Ventana") ventanas.Add(hijo.localPosition.x);
         ventanas.Sort();

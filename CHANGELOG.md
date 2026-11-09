@@ -6,6 +6,16 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.27.0 — Colisiones y proporciones  (2026-11-08)
+- Colisión con la forma real del casco: antes el barco chocaba como una caja y en la proa había esquinas invisibles donde se podía pararse en el aire. La caja queda solo para medidas.
+- En cubierta solo se camina sobre el casco de verdad (la proa se cierra hasta la punta), y los mástiles, los cañones de cubierta y el cabrestante son sólidos.
+- La cámara no atraviesa ningún barco (el tuyo ni los demás), ni la borda, ni el castillo; también se revisa mientras se mueve.
+- Flotación según el tamaño: la quilla va al 38 % del alto bajo el agua. Antes siempre era 1,2 m: los botes casi se hundían y los navíos flotaban encima.
+- Las filas de portas quedan siempre sobre la línea de agua.
+- Andanada en ola: los cañones disparan uno tras otro de popa a proa (la ola entera dura hasta 1,2 s).
+- Recarga más rápida en barcos grandes: cada cañón más suma 1,2 %, con tope del doble (antes 64 cañones tardaban casi 4 veces más).
+- Proporciones de los barcos chicos: el castillo de popa crece con el casco (1 m en un bote, 2,4 m en los grandes), anclas, bauprés, espolón y faroles más pequeños, y velas de ~1,5 veces la manga. El camarote por dentro solo existe en barcos donde cabe.
+
 ## 0.26.0 — Barco detallado  (2026-11-08)
 - Barco detallado según la lámina de referencia (docs/referencia-barco.png), todo hecho por código para cualquier tamaño:
 - Jarcia: obenques con flechates (las escalas de cuerda) en cada mástil y estays de mástil a mástil y al bauprés.

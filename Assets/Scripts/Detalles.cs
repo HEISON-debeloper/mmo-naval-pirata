@@ -47,12 +47,14 @@ public static class Detalles
             {
                 float e = Mathf.Clamp(w / 7f, 0.7f, 1.5f);
                 GameObject c = Modelos.Crear("cabrestante", t, new Vector3(0f, h / 2f + 0.1f, zc), Quaternion.identity, e, n => n == "Aros" ? m.canon : m.mastil);
+                ObstaculosCubierta ob = t.GetComponent<ObstaculosCubierta>();
+                if (ob != null) ob.Agregar(0f, zc, 0.55f * e);
                 Rendimiento.Capa(c, Rendimiento.CapaBarcoDetalle);
             }
         }
         if (Modelos.Existe("campana") && t.Find("Camarote") != null && w >= 3.5f)
         {
-            float yTop = h / 2f + Cubierta.AltoCamarote;
+            float yTop = h / 2f + Cubierta.AltoCamaroteDe(h);
             GameObject c = Modelos.Crear("campana", t, new Vector3(0f, yTop, frenteCastillo - 0.35f), Quaternion.identity, Mathf.Clamp(w / 9f, 0.6f, 1.1f),
                 n => n == "Campana" ? oro : m.mastil);
             Rendimiento.Capa(c, Rendimiento.CapaBarcoDetalle);
@@ -222,7 +224,7 @@ public static class Detalles
         float zc = Cubierta.CentroCamarote(L), lc = Cubierta.LargoCamarote(L);
         float frente = zc + lc / 2f;
         if (cast == null) return frente;
-        float cw = cast.localScale.x, yTop = h / 2f + Cubierta.AltoCamarote;
+        float cw = cast.localScale.x, yTop = h / 2f + Cubierta.AltoCamaroteDe(h);
         float x = cw / 2f - 0.05f, za = zc - lc / 2f + 0.05f, zb = frente - 0.05f;
 
         // Baranda alrededor de la toldilla (arriba del castillo), con hueco al frente para las escaleras
@@ -248,7 +250,7 @@ public static class Detalles
         else Baranda(Y(-x, zb), Y(x, zb));
 
         // Moldura dorada alrededor del borde de arriba y bajo las ventanas
-        float yv = h / 2f + Cubierta.AltoCamarote * 0.55f;
+        float yv = h / 2f + Cubierta.AltoCamaroteDe(h) * 0.55f;
         CascoProcedural.Caja(vo, uo, new Vector3(0f, yTop - 0.08f, za - 0.06f), new Vector3(cw + 0.1f, 0.16f, 0.06f), Quaternion.identity);
         CascoProcedural.Caja(vo, uo, new Vector3(0f, yv - 0.5f, za - 0.06f), new Vector3(cw + 0.1f, 0.1f, 0.06f), Quaternion.identity);
         foreach (float s in new[] { -1f, 1f })
@@ -270,7 +272,7 @@ public static class Detalles
         if (escaleras)
             foreach (float s in new[] { -1f, 1f })
             {
-                float xe = s * (cw / 2f - 0.5f), alto = Cubierta.AltoCamarote, largo = alto * 0.9f;
+                float xe = s * (cw / 2f - 0.5f), alto = Cubierta.AltoCamaroteDe(h), largo = alto * 0.9f;
                 int pasos = Mathf.RoundToInt(alto / 0.25f);
                 for (int i = 1; i <= pasos; i++)
                 {

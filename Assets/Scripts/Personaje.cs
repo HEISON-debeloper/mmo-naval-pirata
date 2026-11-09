@@ -211,6 +211,8 @@ public class Personaje : MonoBehaviour
                 dl.y = 0f;
                 if (nivel != 0 && interior != null) { local = interior.Limitar(nivel, local + dl); break; }
                 Vector3 nuevo = Cubierta.EvitarCamarote(local + dl, w, L, plana);
+                ObstaculosCubierta obs = BarcoActual.GetComponent<ObstaculosCubierta>();
+                if (obs != null) nuevo = obs.Empujar(nuevo);
                 local = nuevo;
                 if (!Cubierta.Dentro(nuevo, w, L, plana)) { SalirDelBarco(1.5f); break; }
                 if (saltar) SalirDelBarco(fuerzaSalto);
@@ -433,8 +435,8 @@ public class Personaje : MonoBehaviour
     {
         if (estado != Estado.Libre || hit.normal.y < 0.5f) return;
         ControlBarco cb = hit.collider.GetComponentInParent<ControlBarco>();
-        if (cb == null || hit.collider != cb.GetComponent<BoxCollider>()) return;
-        Cubierta.Medidas((BoxCollider)hit.collider, out float bw, out float bh, out float bl);
+        if (cb == null || hit.collider.isTrigger || hit.collider.attachedRigidbody != cb.GetComponent<Rigidbody>()) return;
+        Cubierta.Medidas(cb.GetComponent<BoxCollider>(), out float bw, out float bh, out float bl);
         Vector3 l = cb.transform.InverseTransformPoint(transform.position);
         l.y = Cubierta.Altura(bh);
         if (!Cubierta.Dentro(l, bw, bl, Cubierta.EsPlana(cb))) return;

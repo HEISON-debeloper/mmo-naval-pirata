@@ -130,6 +130,38 @@ public static class CascoProcedural
         Cara(P(-1, -1, -1), P(1, -1, -1), P(1, 1, -1), P(-1, 1, -1));
     }
 
+    // Casco simplificado para el collider (convexo, pocas caras): la misma forma, tapada arriba a la altura de la cubierta
+    public static Mesh CascoColision(float w, float h, float L)
+    {
+        string clave = "col" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00");
+        if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+        const int ne = 10, nk = 3;
+        var vs = new List<Vector3>();
+        for (int e = 0; e <= ne; e++)
+        {
+            float s = (float)e / ne;
+            float z = Mathf.Lerp(ZPopa(L), ZProa(w, L), s);
+            float hw = 0.5f * w * Ancho(s, w, L), arriba = h / 2f + 0.1f, abajo = Quilla(s, w, h, L);
+            for (int k = 0; k <= nk; k++)
+            {
+                float th = (float)k / nk * Mathf.PI / 2f;
+                const float n = 2.6f;
+                float cx = Mathf.Pow(Mathf.Max(0f, Mathf.Cos(th)), 2f / n), sy = Mathf.Pow(Mathf.Max(0f, Mathf.Sin(th)), 2f / n);
+                float y = arriba - (arriba - abajo) * sy;
+                vs.Add(new Vector3(hw * cx, y, z));
+                if (k < nk) vs.Add(new Vector3(-hw * cx, y, z));
+            }
+        }
+        // El collider convexo solo usa los puntos: basta un triángulo que los nombre a todos
+        var tr = new List<int>();
+        for (int i = 2; i < vs.Count; i++) { tr.Add(0); tr.Add(i - 1); tr.Add(i); }
+        m = new Mesh { name = "Casco (colisión)" };
+        m.SetVertices(vs); m.SetTriangles(tr, 0);
+        m.RecalculateBounds();
+        cache[clave] = m;
+        return m;
+    }
+
     // ---------- Casco ----------
     public static Mesh Casco(float w, float h, float L)
     {
@@ -218,6 +250,7 @@ public static class CascoProcedural
     }
 
     // Altura de la borda en un punto (para poner cañones de cubierta, faroles, etc.)
+    public static float GrosorBorda(float w) => Mathf.Clamp(0.06f * w, 0.1f, 0.35f);
     public static float AltoBorda(float h) => Mathf.Clamp(0.12f * h + 0.35f, 0.45f, 1.4f);
 
     // ---------- Vela curva ----------

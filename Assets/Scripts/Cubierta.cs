@@ -6,15 +6,16 @@ using UnityEngine;
 // El timón va siempre atrás: en la balsa, al fondo de los troncos; en los barcos, encima del castillo de popa.
 public static class Cubierta
 {
-    public const float AltoCamarote = 2.4f;
-    public static float LargoCamarote(float L) => Mathf.Max(2.5f, 0.14f * L);
+    // El castillo de popa crece con el barco: en un bote es una toldilla baja; en los grandes, un camarote de 2,4 m
+    public static float AltoCamaroteDe(float h) => Mathf.Clamp(0.5f * h + 0.6f, 1.0f, 2.4f);
+    public static float LargoCamarote(float L) => Mathf.Max(1.8f, 0.14f * L);
     public static float CentroCamarote(float L) => -0.5f * L + LargoCamarote(L) / 2f;
 
     public static float Altura(float h) => h / 2f + 0.1f;
 
     public static Vector3 Timon(float h, float L, bool plana = false) => plana
         ? new Vector3(0f, Altura(h), -0.42f * L)
-        : new Vector3(0f, Altura(h) + AltoCamarote, CentroCamarote(L) - LargoCamarote(L) * 0.2f);
+        : new Vector3(0f, Altura(h) + AltoCamaroteDe(h), CentroCamarote(L) - LargoCamarote(L) * 0.2f);
 
     // Dónde queda el personaje al soltar el timón (en la cubierta, delante del castillo de popa)
     public static Vector3 SalidaTimon(float h, float L, bool plana = false, float w = 4f) => plana
@@ -31,9 +32,9 @@ public static class Cubierta
     public static bool Dentro(Vector3 v, float w, float L, bool plana = false)
     {
         if (plana) return Mathf.Abs(v.x) <= 0.46f * w && Mathf.Abs(v.z) <= 0.48f * L;
-        if (v.z < -0.5f * L || v.z > 0.425f * L) return false;
-        float mitad = 0.46f * w;
-        if (v.z > 0.3f * L) mitad *= (0.425f * L - v.z) / (0.125f * L); // la proa se estrecha
+        // La forma real del casco: en la proa se cierra hasta la punta
+        if (v.z < -0.5f * L + 0.3f || v.z > CascoProcedural.ZProa(w, L) - 0.4f) return false;
+        float mitad = CascoProcedural.Costado(v.z, 1e4f, w, 0f, L) - 0.35f;
         return Mathf.Abs(v.x) <= mitad;
     }
 

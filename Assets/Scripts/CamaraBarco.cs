@@ -89,37 +89,50 @@ public class CamaraBarco : MonoBehaviour
             if (hit.distance < libre) libre = hit.distance;
         }
 
-        // El barco donde estás: el casco y el castillo son sólidos para la cámara
-        Personaje p = Personaje.Instancia;
-        ControlBarco b = p != null && p.estado != Personaje.Estado.Libre ? p.BarcoActual : null;
-        BoxCollider bc = b != null ? b.GetComponent<BoxCollider>() : null;
-        if (bc != null)
+        // Los barcos cercanos (el tuyo y los demás): el casco y el castillo son sólidos para la cámara
+        foreach (ControlBarco b in ControlBarco.Todos)
         {
+            if (b == null) continue;
+            BoxCollider bc = b.GetComponent<BoxCollider>();
+            if (bc == null) continue;
             Cubierta.Medidas(bc, out float w, out float h, out float L);
-            bool plana = Cubierta.EsPlana(b);
-            Transform castillo = b.transform.Find("Camarote");
-            float cx = castillo != null ? castillo.localScale.x / 2f + 0.25f : 0f;
-            float cz0 = Cubierta.CentroCamarote(L) - Cubierta.LargoCamarote(L) / 2f - 0.25f, cz1 = Cubierta.CentroCamarote(L) + Cubierta.LargoCamarote(L) / 2f + 0.25f;
-            const int pasos = 40;
+            // ¿pasa la línea cerca de este barco?
+            Vector3 c = b.transform.position;
+            float tc = Mathf.Clamp(Vector3.Dot(c - foco, dir), 0f, libre);
+            if (Vector3.Distance(foco + dir * tc, c) > L * 0.6f + h + 3f) continue;
+            float limite = DentroDeBarco(b, foco + dir * 0.05f, w, h, L) ? -1f : libre;   // si el foco ya está adentro (raro), no se corta
+            if (limite < 0f) continue;
+            int pasos = Mathf.Clamp(Mathf.CeilToInt(libre / 0.25f), 8, 160);
             for (int i = 1; i <= pasos; i++)
             {
                 float t = libre * i / pasos;
-                Vector3 l = b.transform.InverseTransformPoint(foco + dir * t);
-                bool solido;
-                if (plana) solido = l.y < h / 2f + 0.15f && Mathf.Abs(l.x) < w / 2f && Mathf.Abs(l.z) < L / 2f;
-                else
-                {
-                    solido = l.y < h / 2f + 0.15f && l.z > CascoProcedural.ZPopa(L) - 0.2f && l.z < CascoProcedural.ZProa(w, L) + 0.2f
-                             && Mathf.Abs(l.x) < CascoProcedural.Costado(l.z, Mathf.Min(l.y, h / 2f), w, h, L) + 0.25f && l.y > -h / 2f - 0.3f;
-                    if (!solido && castillo != null)
-                        solido = Mathf.Abs(l.x) < cx && l.z > cz0 && l.z < cz1 && l.y > h / 2f && l.y < h / 2f + Cubierta.AltoCamarote + 0.25f;
-                }
-                if (solido) { libre = Mathf.Max(0.3f, libre * (i - 1) / pasos); break; }
+                if (DentroDeBarco(b, foco + dir * t, w, h, L)) { libre = Mathf.Max(0.3f, libre * (i - 1) / pasos); break; }
             }
         }
         if (libre >= largo - 0.01f) return pos;
         tapado = true;
         return foco + dir * Mathf.Max(0.3f, libre - 0.2f);
+    }
+
+    static bool DentroDeBarco(ControlBarco b, Vector3 p, float w, float h, float L)
+    {
+        Vector3 l = b.transform.InverseTransformPoint(p);
+        if (Cubierta.EsPlana(b)) return l.y < h / 2f + 0.15f && l.y > -h / 2f - 0.3f && Mathf.Abs(l.x) < w / 2f + 0.2f && Mathf.Abs(l.z) < L / 2f + 0.2f;
+        if (l.y < h / 2f + CascoProcedural.AltoBorda(h) + 0.2f && l.y > -h / 2f - 0.3f && l.z > CascoProcedural.ZPopa(L) - 0.25f && l.z < CascoProcedural.ZProa(w, L) + 0.25f)
+        {
+            float borde = CascoProcedural.Costado(l.z, Mathf.Min(l.y, h / 2f), w, h, L);
+            // bajo la cubierta: todo el casco; sobre la cubierta: solo la borda (la franja del borde)
+            if (l.y < h / 2f + 0.15f) { if (Mathf.Abs(l.x) < borde + 0.25f) return true; }
+            else if (Mathf.Abs(l.x) < borde + 0.25f && Mathf.Abs(l.x) > borde - CascoProcedural.GrosorBorda(w) - 0.25f) return true;
+        }
+        Transform castillo = b.transform.Find("Camarote");
+        if (castillo != null)
+        {
+            float cx = castillo.localScale.x / 2f + 0.25f;
+            float cz0 = Cubierta.CentroCamarote(L) - Cubierta.LargoCamarote(L) / 2f - 0.25f, cz1 = Cubierta.CentroCamarote(L) + Cubierta.LargoCamarote(L) / 2f + 0.25f;
+            if (Mathf.Abs(l.x) < cx && l.z > cz0 && l.z < cz1 && l.y > h / 2f && l.y < h / 2f + Cubierta.AltoCamaroteDe(h) + 0.25f) return true;
+        }
+        return false;
     }
 
     // Primera persona dentro del barco (cubiertas de abajo, bodega y camarote)
@@ -246,7 +259,10 @@ public class CamaraBarco : MonoBehaviour
         bool tapado = false;
         if (mezcla <= 0.5f) posDeseada = Despejar(foco, posDeseada, out tapado);
 
-        transform.position = tapado ? posDeseada : Vector3.Lerp(transform.position, posDeseada, suavizado * Time.deltaTime);
+        Vector3 siguiente = tapado ? posDeseada : Vector3.Lerp(transform.position, posDeseada, suavizado * Time.deltaTime);
+        // En el camino (mientras se suaviza) tampoco puede quedar detrás de una pared
+        if (mezcla <= 0.5f) siguiente = Despejar(foco, siguiente, out _);
+        transform.position = siguiente;
         Quaternion objetivoRot = Quaternion.LookRotation(mirarDeseado - transform.position);
         transform.rotation = Quaternion.Angle(transform.rotation, objetivoRot) > 1f
             ? Quaternion.Slerp(transform.rotation, objetivoRot, suavizado * 1.5f * Time.deltaTime) : objetivoRot;
