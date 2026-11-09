@@ -13,7 +13,7 @@ public class Fabricacion : MonoBehaviour
     // El menú Tab (MenuAbierto) o el Taller: mientras cualquiera esté abierto, el cursor queda libre
     static bool menuAbierto;
     public static bool MenuAbierto => menuAbierto;
-    public static bool Abierto => menuAbierto || Taller.Abierto;
+    public static bool Abierto => menuAbierto || Taller.Abierto || Ventanas.AlgunaAbierta;
 
     [Header("Materiales para lo que se construye en el mundo")]
     public Material piedra;
@@ -481,7 +481,7 @@ public class Fabricacion : MonoBehaviour
         Preparar();
         Keyboard k = Keyboard.current;
         if (k == null) return;
-        if (k.tabKey.wasPressedThisFrame && !Taller.Abierto)
+        if (Teclas.Pulsada(Accion.Fabricar, menuAbierto) && !Taller.Abierto)
         {
             menuAbierto = !menuAbierto;
             if (menuAbierto && Mercader.Cercano(transform.position) != null) pagina = IndiceVender;   // junto a un mercader, directo al mercado

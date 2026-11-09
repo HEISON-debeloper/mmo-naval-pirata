@@ -61,15 +61,12 @@ public class Guardado : MonoBehaviour
     {
         Keyboard k = Keyboard.current;
         Personaje p = Personaje.Instancia;
-        if (k != null && p != null && !Fabricacion.Abierto)
+        if (k != null && p != null)
         {
-            if (k.f5Key.wasPressedThisFrame && listo) { borrada = false; Guardar(); p.Avisar("Partida guardada"); }
-            if (k.f8Key.wasPressedThisFrame)
-            {
-                if (File.Exists(Ruta)) File.Delete(Ruta);
-                borrada = true;
-                p.Avisar("Partida borrada. Al volver a entrar empiezas de cero (F5 la vuelve a guardar)");
-            }
+            if (Teclas.Pulsada(Accion.Guardar) && listo) { GuardarAhora(); }
+            if (Teclas.Pulsada(Accion.BorrarPartida))
+                Ventanas.Confirmar("Borrar la partida", "Se borra todo lo guardado: tu barco, la mochila, las islas descubiertas y la pintura. Al volver a entrar empiezas de cero.\n\nEsto no se puede deshacer.",
+                    "Borrar la partida", BorrarPartida, true);
         }
         if (!listo || borrada) return;
         t += Time.deltaTime;
@@ -77,6 +74,25 @@ public class Guardado : MonoBehaviour
     }
 
     void OnApplicationQuit() { if (listo && !borrada) Guardar(); }
+
+    // Guardar ya (F5, menú de pausa)
+    public void GuardarAhora()
+    {
+        if (!listo) return;
+        borrada = false; Guardar();
+        Notificaciones.Mostrar("Partida guardada", Notificaciones.Tipo.Exito, 3f, "check");
+    }
+
+    // Borra el archivo; la partida actual sigue en memoria hasta cerrar (si vuelves a guardar, se recupera)
+    public void BorrarPartida()
+    {
+        if (File.Exists(Ruta)) File.Delete(Ruta);
+        borrada = true;
+        Notificaciones.Mostrar("Partida borrada. Al volver a entrar empiezas de cero (" + Teclas.Nombre(Accion.Guardar) + " la vuelve a guardar)", Notificaciones.Tipo.Alerta, 6f);
+    }
+
+    public static bool HayPartida => File.Exists(Ruta);
+    public bool Listo => listo;
 
     // ---------- Guardar ----------
     void Guardar()

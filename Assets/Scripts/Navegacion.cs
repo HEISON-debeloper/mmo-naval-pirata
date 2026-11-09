@@ -39,7 +39,7 @@ public class Navegacion : MonoBehaviour
         Keyboard k = Keyboard.current;
         if (k != null)
         {
-            if (k.mKey.wasPressedThisFrame && !Fabricacion.Abierto)
+            if (Teclas.Pulsada(Accion.Mapa, MapaAbierto) && !Fabricacion.MenuAbierto && !Taller.Abierto)
             {
                 MapaAbierto = !MapaAbierto;
                 if (MapaAbierto) { radioVista = RadioInicial; desplazamiento = Vector3.zero; arrastrando = false; }
@@ -59,7 +59,7 @@ public class Navegacion : MonoBehaviour
             {
                 bool mercado = isla.GetComponentInChildren<Mercader>() != null;
                 descubiertas[isla.Id] = new Conocida { nombre = isla.name, centro = isla.transform.position, orilla = isla.orilla, mercado = mercado };
-                if (Time.timeSinceLevelLoad > 2f) p.Avisar("Descubriste: " + isla.name + (mercado ? " (tiene mercader)" : ""));   // la isla donde apareces no se anuncia
+                if (Time.timeSinceLevelLoad > 2f) Notificaciones.Mostrar("Descubriste " + isla.name + (mercado ? " · tiene mercader" : ""), Notificaciones.Tipo.Descubrimiento, 5f);   // la isla donde apareces no se anuncia
             }
         }
     }

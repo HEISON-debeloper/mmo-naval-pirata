@@ -134,8 +134,8 @@ public class Canones : MonoBehaviour
         if (!controlJugador || Fabricacion.Abierto) return;   // con el menú abierto, Q/E cambian de página
         Keyboard k = Keyboard.current;
         if (k == null) return;
-        if (k.qKey.wasPressedThisFrame) Disparar(LadoCanon.Babor);
-        if (k.eKey.wasPressedThisFrame) Disparar(LadoCanon.Estribor);
+        if (Teclas.Pulsada(Accion.DispararBabor)) Disparar(LadoCanon.Babor);
+        if (Teclas.Pulsada(Accion.DispararEstribor)) Disparar(LadoCanon.Estribor);
     }
 
     // ---------- Tiro ----------

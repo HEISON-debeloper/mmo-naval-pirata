@@ -57,17 +57,16 @@ public class CamaraBarco : MonoBehaviour
     {
         Keyboard k = Keyboard.current;
         Mouse m = Mouse.current;
-        // Al cerrar el mapa se vuelve a capturar el cursor
-        if (mapaAntes && !Navegacion.MapaAbierto && !Fabricacion.Abierto) Capturar(true);
-        mapaAntes = Navegacion.MapaAbierto;
-        // Liberar el cursor con Esc, al abrir el menú de fabricación o el mapa (para arrastrarlo con el mouse)
-        if ((k != null && k.escapeKey.wasPressedThisFrame) || Fabricacion.Abierto || Navegacion.MapaAbierto)
-        {
-            if (CursorCapturado) Capturar(false);
-        }
-        // Un clic en el juego (con el menú cerrado) lo vuelve a capturar
-        else if (!CursorCapturado && m != null && m.leftButton.wasPressedThisFrame)
+        // Con una ventana, el menú o el mapa abiertos el cursor queda libre; al cerrarse el último, vuelve al juego
+        bool abierto = Fabricacion.Abierto || Navegacion.MapaAbierto;
+        if (mapaAntes && !abierto) Capturar(true);
+        else if (abierto) { if (CursorCapturado) Capturar(false); }
+        // Esc sin nada abierto suelta el cursor
+        else if (k != null && k.escapeKey.wasPressedThisFrame) { if (CursorCapturado) Capturar(false); }
+        // Un clic en el juego (no sobre la interfaz) lo vuelve a capturar
+        else if (!CursorCapturado && m != null && m.leftButton.wasPressedThisFrame && !Lienzo.PunteroSobreUI)
             Capturar(true);
+        mapaAntes = abierto;
     }
 
     void OnApplicationFocus(bool foco) { if (foco && !Fabricacion.Abierto && !Navegacion.MapaAbierto) Capturar(true); }

@@ -1,0 +1,247 @@
+/* Estilos centralizados de la interfaz (estados hover/activo/foco y transiciones).
+   Los colores y texturas base los pone Estilo.cs por código; aquí van los estados que cambian con el puntero. */
+
+/* ---------- Botones ---------- */
+.boton {
+    -unity-background-image-tint-color: rgb(215, 205, 190);
+    border-color: rgb(140, 107, 59);
+    color: rgb(240, 230, 209);
+    transition-property: -unity-background-image-tint-color, border-color, scale, color, background-color;
+    transition-duration: 110ms;
+    transition-timing-function: ease-out;
+}
+.boton:hover {
+    -unity-background-image-tint-color: rgb(255, 248, 235);
+    border-color: rgb(228, 190, 112);
+    color: rgb(255, 240, 210);
+}
+.boton:active {
+    -unity-background-image-tint-color: rgb(175, 165, 150);
+    scale: 0.97 0.97;
+}
+.boton:focus {
+    border-color: rgb(255, 225, 140);
+}
+.boton:disabled {
+    -unity-background-image-tint-color: rgb(120, 112, 100);
+    border-color: rgb(90, 72, 45);
+    color: rgb(150, 140, 125);
+    opacity: 0.8;
+}
+
+.boton--primario {
+    -unity-background-image-tint-color: rgb(235, 215, 165);
+    border-color: rgb(236, 200, 120);
+    color: rgb(28, 18, 10);
+}
+.boton--primario:hover {
+    -unity-background-image-tint-color: rgb(255, 240, 195);
+    border-color: rgb(255, 230, 160);
+    color: rgb(20, 12, 6);
+}
+.boton--primario:active {
+    -unity-background-image-tint-color: rgb(200, 180, 130);
+}
+.boton--primario:disabled {
+    -unity-background-image-tint-color: rgb(140, 125, 95);
+    color: rgb(70, 60, 45);
+}
+
+.boton--peligro {
+    -unity-background-image-tint-color: rgb(180, 90, 80);
+    border-color: rgb(190, 90, 70);
+}
+.boton--peligro:hover {
+    -unity-background-image-tint-color: rgb(230, 120, 100);
+    border-color: rgb(240, 150, 120);
+}
+
+.boton--fantasma {
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(140, 107, 59, 0.6);
+}
+.boton--fantasma:hover {
+    background-color: rgba(255, 220, 150, 0.12);
+    border-color: rgb(228, 190, 112);
+}
+.boton--fantasma:active {
+    background-color: rgba(255, 220, 150, 0.22);
+}
+
+/* Botón de icono (cerrar, favorito, flechas) */
+.boton-icono {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    transition-property: background-color, scale;
+    transition-duration: 100ms;
+}
+.boton-icono:hover { background-color: rgba(255, 220, 150, 0.18); }
+.boton-icono:active { background-color: rgba(255, 220, 150, 0.3); scale: 0.92 0.92; }
+
+/* ---------- Pestañas ---------- */
+.pestana {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-color: rgba(140, 107, 59, 0.5);
+    color: rgb(184, 168, 143);
+    transition-property: background-color, color, border-color;
+    transition-duration: 120ms;
+}
+.pestana:hover { background-color: rgba(255, 220, 150, 0.12); color: rgb(240, 230, 209); }
+.pestana:active { background-color: rgba(255, 220, 150, 0.2); }
+.pestana--activa {
+    background-color: rgba(227, 196, 120, 0.22);
+    border-color: rgb(227, 196, 120);
+    color: rgb(255, 225, 150);
+}
+
+/* ---------- Casillas de objetos ---------- */
+.casilla {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(140, 107, 59, 0.55);
+    transition-property: background-color, border-color, scale;
+    transition-duration: 100ms;
+}
+.casilla:hover { background-color: rgba(255, 220, 150, 0.14); border-color: rgb(228, 190, 112); }
+.casilla:active { scale: 0.96 0.96; }
+.casilla--elegida { background-color: rgba(227, 196, 120, 0.25); border-color: rgb(255, 225, 150); }
+.casilla--vacia { opacity: 0.55; }
+.casilla--nueva { border-color: rgb(143, 209, 133); }
+
+/* ---------- Filas de listas (recetas, bitácora, mercado) ---------- */
+.fila-lista {
+    background-color: rgba(0, 0, 0, 0.22);
+    border-color: rgba(140, 107, 59, 0.35);
+    transition-property: background-color, border-color;
+    transition-duration: 100ms;
+}
+.fila-lista:hover { background-color: rgba(255, 220, 150, 0.1); border-color: rgba(228, 190, 112, 0.8); }
+.fila-lista--elegida { background-color: rgba(227, 196, 120, 0.2); border-color: rgb(227, 196, 120); }
+.fila-lista--imposible { opacity: 0.72; }
+
+/* ---------- Fichas (chips de filtro) ---------- */
+.ficha {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: rgba(140, 107, 59, 0.6);
+    color: rgb(184, 168, 143);
+    transition-property: background-color, color, border-color;
+    transition-duration: 100ms;
+}
+.ficha:hover { background-color: rgba(255, 220, 150, 0.12); color: rgb(240, 230, 209); }
+.ficha:active { background-color: rgba(255, 220, 150, 0.2); }
+.ficha--activa { background-color: rgba(227, 196, 120, 0.25); border-color: rgb(227, 196, 120); color: rgb(255, 225, 150); }
+
+/* ---------- Campos de texto ---------- */
+.campo > .unity-base-text-field__input, .campo .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.4);
+    border-color: rgba(140, 107, 59, 0.7);
+    border-width: 1px;
+    border-radius: 6px;
+    color: rgb(240, 230, 209);
+    padding: 4px 8px;
+    --unity-cursor-color: rgb(255, 225, 150);
+    --unity-selection-color: rgba(227, 196, 120, 0.4);
+}
+.campo:hover > .unity-base-text-field__input { border-color: rgb(228, 190, 112); }
+.campo:focus > .unity-base-text-field__input, .campo .unity-text-field__input:focus { border-color: rgb(255, 225, 150); }
+
+/* ---------- Deslizadores ---------- */
+.deslizador .unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(140, 107, 59, 0.6);
+    border-width: 1px;
+    border-radius: 4px;
+    height: 8px;
+    margin-top: -4px;
+}
+.deslizador .unity-base-slider__dragger {
+    background-color: rgb(201, 163, 92);
+    border-color: rgb(255, 225, 150);
+    border-width: 1px;
+    border-radius: 8px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+}
+.deslizador .unity-base-slider__dragger:hover { background-color: rgb(236, 200, 120); }
+.deslizador .unity-base-slider__dragger-border { display: none; }
+
+/* ---------- Interruptor (toggle como palanca) ---------- */
+.interruptor .unity-toggle__input { flex-direction: row; align-items: center; }
+.interruptor .unity-toggle__checkmark {
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(140, 107, 59, 0.8);
+    border-width: 1px;
+    background-image: none;
+    -unity-background-image-tint-color: rgba(0, 0, 0, 0);
+    transition-property: background-color, border-color;
+    transition-duration: 120ms;
+}
+.interruptor:checked .unity-toggle__checkmark {
+    background-color: rgb(201, 163, 92);
+    border-color: rgb(255, 225, 150);
+}
+.interruptor:hover .unity-toggle__checkmark { border-color: rgb(228, 190, 112); }
+
+/* ---------- Desplegables ---------- */
+.desplegable > .unity-base-popup-field__input {
+    background-color: rgba(0, 0, 0, 0.4);
+    border-color: rgba(140, 107, 59, 0.7);
+    border-width: 1px;
+    border-radius: 6px;
+    color: rgb(240, 230, 209);
+    padding: 4px 8px;
+}
+.desplegable:hover > .unity-base-popup-field__input { border-color: rgb(228, 190, 112); }
+.desplegable .unity-base-popup-field__arrow { -unity-background-image-tint-color: rgb(227, 196, 120); }
+
+/* ---------- Barras de desplazamiento ---------- */
+.unity-scroller--vertical { width: 10px; }
+.unity-scroller--vertical > .unity-scroller__low-button, .unity-scroller--vertical > .unity-scroller__high-button { display: none; }
+.unity-scroller--vertical > .unity-scroller__slider { margin: 0; width: 10px; }
+.unity-scroller .unity-base-slider__tracker { background-color: rgba(0, 0, 0, 0.35); border-width: 0; border-radius: 5px; }
+.unity-scroller .unity-base-slider__dragger { background-color: rgba(201, 163, 92, 0.7); border-width: 0; border-radius: 5px; width: 8px; left: 1px; }
+.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(236, 200, 120); }
+.unity-scroller--horizontal { height: 10px; }
+.unity-scroller--horizontal > .unity-scroller__low-button, .unity-scroller--horizontal > .unity-scroller__high-button { display: none; }
+.unity-scroller--horizontal > .unity-scroller__slider { margin: 0; height: 10px; }
+.unity-scroller--horizontal .unity-base-slider__dragger { height: 8px; width: auto; top: 1px; }
+
+/* ---------- Ventanas ---------- */
+.ventana { transition-property: opacity, scale; transition-duration: 140ms; transition-timing-function: ease-out; }
+.ventana--cerrada { opacity: 0; scale: 0.96 0.96; }
+
+/* ---------- Avisos ---------- */
+.aviso { transition-property: opacity, translate; transition-duration: 220ms; transition-timing-function: ease-out; }
+.aviso--oculto { opacity: 0; translate: 40px 0; }
+
+/* ---------- Teclas (dibujo de una tecla del teclado) ---------- */
+.tecla {
+    background-color: rgba(255, 245, 225, 0.12);
+    border-color: rgba(228, 190, 112, 0.7);
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 6px;
+    min-width: 20px;
+    color: rgb(255, 225, 150);
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Accesibilidad ---------- */
+.sin-animaciones .boton, .sin-animaciones .boton-icono, .sin-animaciones .pestana, .sin-animaciones .casilla,
+.sin-animaciones .fila-lista, .sin-animaciones .ficha, .sin-animaciones .ventana, .sin-animaciones .aviso,
+.sin-animaciones .interruptor .unity-toggle__checkmark {
+    transition-duration: 0s;
+}
+.alto-contraste .boton { border-color: rgb(255, 225, 150); color: rgb(255, 255, 255); }
+.alto-contraste .casilla, .alto-contraste .fila-lista, .alto-contraste .pestana, .alto-contraste .ficha { border-color: rgb(228, 190, 112); }
+.alto-contraste .tecla { background-color: rgba(255, 245, 225, 0.25); color: rgb(255, 255, 255); }
+
+/* En el teléfono todo lo que se toca es más grande */
+.movil .boton { min-height: 44px; }
+.movil .boton-icono { min-width: 44px; min-height: 44px; }
+.movil .casilla { min-width: 56px; min-height: 56px; }

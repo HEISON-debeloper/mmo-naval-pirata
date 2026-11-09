@@ -15,7 +15,7 @@ public class TeclasPrueba : MonoBehaviour
         if (k == null) return;
         if (!k.anyKey.wasPressedThisFrame) return;   // nada que hacer: no buscar enemigos cada frame
         Personaje p = Personaje.Instancia;
-        if (p == null || Fabricacion.Abierto) return;   // con el menú abierto, los números fabrican
+        if (p == null || Fabricacion.Abierto || Teclas.Capturando) return;   // con una ventana abierta, las teclas son de la ventana
         IABarco ia = IABarco.MasCercano(p.transform.position);
 
         if (ia != null && k.digit1Key.wasPressedThisFrame) ia.GetComponent<VidaBarco>().Dano(25f);
@@ -55,7 +55,7 @@ public class TeclasPrueba : MonoBehaviour
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);
         if (k.tKey.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }
-        if (k.bKey.wasPressedThisFrame && !p.IrAlTimonPropio()) p.Avisar("Prueba: aún no tienes barco propio");
+        if (k.yKey.wasPressedThisFrame && !p.IrAlTimonPropio()) p.Avisar("Prueba: aún no tienes barco propio");
     }
 
     // Lleva tu barco (contigo al timón) 800 m más lejos del inicio, para probar aguas más peligrosas

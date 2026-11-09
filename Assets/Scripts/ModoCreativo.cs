@@ -20,11 +20,11 @@ public class ModoCreativo : MonoBehaviour
     void Update()
     {
         Keyboard k = Keyboard.current;
-        if (k == null || !k.f2Key.wasPressedThisFrame) return;
+        if (k == null || !Teclas.Pulsada(Accion.Creativo)) return;
         Activo = !Activo;
         PlayerPrefs.SetInt("ModoCreativo", Activo ? 1 : 0);
         PlayerPrefs.Save();
         Personaje p = Personaje.Instancia;
-        if (p != null) p.Avisar(Activo ? "Modo creativo activado: todo gratis, sin daño ni hambre (F2 para quitarlo)" : "Modo creativo desactivado");
+        Notificaciones.Mostrar(Activo ? "Modo creativo activado: todo gratis, sin daño ni hambre (" + Teclas.Nombre(Accion.Creativo) + " para quitarlo)" : "Modo creativo desactivado", Notificaciones.Tipo.Info, 4f, "rayo");
     }
 }

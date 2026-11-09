@@ -6,6 +6,19 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.29.0 — Interfaz nueva  (2026-11-08)
+- Interfaz nueva hecha con UI Toolkit (base de toda la renovación): madera oscura, pergamino, cuero y bronce, con fuentes Cinzel (títulos) y Alegreya Sans (texto) y texturas hechas por código.
+- HUD nuevo por zonas, sin que nada se tape: vida, hambre y sed con barras animadas (lo perdido se ve un momento en claro y parpadean cuando queda poco), brújula con iconos de islas, mercaderes, tu barco y enemigos, tarjeta del enemigo con su tripulación, mochila rápida con casillas e iconos, y tarjeta de tu barco con velas, nudos, rumbo, bodega y una barra de recarga por cada lado de cañones.
+- Avisos nuevos: globos a la derecha que entran deslizándose, con color e icono según el tipo (descubrimiento, peligro, comercio, objetos…); los iguales se agrupan. Anuncios grandes en el centro para el abordaje y la derrota. Todo queda registrado para la bitácora.
+- Al recoger algo sale "+3 Madera" subiendo junto a la mochila y la casilla se marca en verde.
+- Ventanas nuevas: barra de título, se arrastran, recuerdan dónde las dejaste, se abren y cierran con animación y Esc cierra la de arriba. F1 abre la nueva guía de controles (con los nombres reales de tus teclas).
+- Atajos de teclado configurables (se guardan): todo el juego pregunta por acciones (usar, saltar, disparar babor…) en vez de teclas fijas. La pantalla para cambiarlos llega con Opciones.
+- Sonidos de interfaz hechos por código (clic, abrir, cerrar, monedas, alerta, descubrir…).
+- Borrar la partida (F8) ahora pide confirmación en una ventana.
+- Mientras hay una ventana abierta el juego no reacciona a las teclas y el cursor queda libre; un clic sobre la interfaz ya no recaptura el cursor ni cuenta como espadazo.
+- Tecla de prueba "ir a tu barco": de B a Y (B queda para la ventana del barco).
+- El menú de fabricación y la carta de navegación siguen como antes pero con la paleta y las fuentes nuevas; se renuevan en las siguientes versiones.
+
 ## 0.28.0 — Taller  (2026-11-08)
 - Taller (tecla P, a bordo de tu barco): pinta cada parte por separado con cualquier color (12 de paleta o libre con tono, color vivo y brillo): casco, cubierta, castillo de popa, mástiles y madera, velas, bandera, cañones y hierro, adornos dorados.
 - Dibujos en velas y bandera con un segundo color: franjas, rayas, cruz, diagonal, borde, calavera con huesos y sol.

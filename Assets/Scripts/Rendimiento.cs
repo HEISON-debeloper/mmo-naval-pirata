@@ -17,7 +17,7 @@ public class Rendimiento : MonoBehaviour
     public const int CapaMedio = 29;
 
     const float DistDetalle = 180f, DistMedio = 550f, DistBarcoDetalle = 400f;
-    const float DistanciaSombras = 120f;
+    public const float DistanciaSombras = 120f;
     const float Dormir = 650f, Despertar = 550f;   // margen para que no se prendan y apaguen en el borde
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

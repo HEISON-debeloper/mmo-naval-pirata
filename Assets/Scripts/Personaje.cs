@@ -128,7 +128,8 @@ public class Personaje : MonoBehaviour
         plana = Cubierta.EsPlana(b);
     }
 
-    public void Avisar(string texto) { aviso = texto; tAviso = 3.5f; }
+    // Aviso en pantalla: va al sistema de notificaciones (globo a la derecha + bitácora)
+    public void Avisar(string texto) { aviso = texto; tAviso = 3.5f; Notificaciones.Mostrar(texto, Notificaciones.Adivinar(texto)); }
 
     // Para pruebas: pone al personaje a pie en un punto
     public void Teletransportar(Vector3 p)
@@ -147,18 +148,18 @@ public class Personaje : MonoBehaviour
         float dt = Time.deltaTime;
         tAviso -= dt;
         tGolpe -= dt;
-        bool usar = k.fKey.wasPressedThisFrame;
-        bool saltar = k.spaceKey.wasPressedThisFrame;
-        bool correr = k.leftShiftKey.isPressed;
-        bool atacar = k.kKey.wasPressedThisFrame || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame);
+        bool usar = Teclas.Pulsada(Accion.Usar);
+        bool saltar = Teclas.Pulsada(Accion.Saltar);
+        bool correr = Teclas.Presionada(Accion.Correr);
+        bool atacar = Teclas.Pulsada(Accion.Espada) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !Ventanas.AlgunaAbierta && !Lienzo.PunteroSobreUI);
 
         Vector2 inp = Vector2.zero;
         if (estado != Estado.Timon)
         {
-            if (k.wKey.isPressed) inp.y += 1f;
-            if (k.sKey.isPressed) inp.y -= 1f;
-            if (k.dKey.isPressed) inp.x += 1f;
-            if (k.aKey.isPressed) inp.x -= 1f;
+            if (Teclas.Presionada(Accion.Adelante)) inp.y += 1f;
+            if (Teclas.Presionada(Accion.Atras)) inp.y -= 1f;
+            if (Teclas.Presionada(Accion.Derecha)) inp.x += 1f;
+            if (Teclas.Presionada(Accion.Izquierda)) inp.x -= 1f;
             inp = Vector2.ClampMagnitude(inp, 1f);
         }
         float camYaw = camara != null ? camara.transform.eulerAngles.y : 0f;
@@ -180,7 +181,7 @@ public class Personaje : MonoBehaviour
             Recurso r = RecursoCercano(false);
             if (r != null) { Recoger(r); recogio = true; }
         }
-        if (k.cKey.wasPressedThisFrame) Comer();
+        if (Teclas.Pulsada(Accion.Comer)) Comer();
 
         bool hundido = vidaBarco != null && vidaBarco.Hundido;
 
@@ -194,7 +195,7 @@ public class Personaje : MonoBehaviour
             case Estado.Cubierta:
                 if (hundido) { SalirDelBarco(0f); break; }
                 if (interior == null) interior = Interior.De(BarcoActual);   // se arma la primera vez que pisas este barco
-                if (k.rKey.wasPressedThisFrame && nivel == 0) BarcoActual.AlternarAncla();
+                if (Teclas.Pulsada(Accion.Ancla) && nivel == 0) BarcoActual.AlternarAncla();
                 // La puerta del camarote gana si estás justo frente a ella; si no, F cerca del castillo toma el timón
                 if (usar && nivel == 0 && CercaDelTimon() && (interior == null || !interior.FrenteAPuerta(local))) { IntentarTomarTimon(); break; }
                 // Escaleras, escotillas y la puerta del camarote
@@ -303,12 +304,12 @@ public class Personaje : MonoBehaviour
             {
                 Asignar(barco);
                 CambiarEstado(Estado.Timon);
-                Avisar("Te derrotaron. Reapareces al timón de tu barco");
+                Notificaciones.Anuncio("Te derrotaron", "Reapareces al timón de tu barco", 3.5f, Notificaciones.Tipo.Peligro);
             }
             else
             {
                 AparecerEnPlaya();
-                Avisar("Te derrotaron. Despiertas en una playa");
+                Notificaciones.Anuncio("Te derrotaron", "Despiertas en una playa", 3.5f, Notificaciones.Tipo.Peligro);
             }
         }
     }
@@ -375,7 +376,7 @@ public class Personaje : MonoBehaviour
     }
 
     // Come lo que más falta: coco si tienes más sed, fruta si tienes más hambre
-    void Comer()
+    public void Comer()
     {
         if (inv == null || sup == null) return;
         bool prefiereCoco = sup.Sed <= sup.Hambre;
@@ -443,7 +444,7 @@ public class Personaje : MonoBehaviour
         Asignar(cb);
         local = Cubierta.EvitarCamarote(l, w, L, plana);
         CambiarEstado(Estado.Cubierta);
-        if (EsEnemigo(cb)) Avisar("¡Abordaje!");
+        if (EsEnemigo(cb)) Notificaciones.Anuncio("¡Abordaje!", "Derrota a su tripulación con la espada", 3f, Notificaciones.Tipo.Peligro);
     }
 
     void SalirDelBarco(float impulsoVertical)

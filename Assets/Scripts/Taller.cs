@@ -30,12 +30,12 @@ public class Taller : MonoBehaviour
         if (k == null) return;
         if (!Abierto)
         {
-            if (k.pKey.wasPressedThisFrame && !Fabricacion.MenuAbierto && !Navegacion.MapaAbierto) IntentarAbrir();
+            if (Teclas.Pulsada(Accion.Taller) && !Fabricacion.MenuAbierto && !Navegacion.MapaAbierto) IntentarAbrir();
             return;
         }
         Personaje p = Personaje.Instancia;
         if (p == null || p.barco == null || pintura == null || p.BarcoActual != p.barco) { Cancelar(); return; }
-        if (k.escapeKey.wasPressedThisFrame || k.pKey.wasPressedThisFrame) Cancelar();
+        if (k.escapeKey.wasPressedThisFrame || Teclas.Pulsada(Accion.Taller, true)) Cancelar();
     }
 
     void IntentarAbrir()

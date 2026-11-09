@@ -67,11 +67,11 @@ public class ControlBarco : MonoBehaviour
         entradaTimon = 0f;
         if (controlActivo && k != null)
         {
-            if (!hundido && k.wKey.wasPressedThisFrame) NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela);
-            if (k.sKey.wasPressedThisFrame) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, hundido ? 0 : -1);
-            if (k.rKey.wasPressedThisFrame) AlternarAncla();
-            if (k.aKey.isPressed) entradaTimon -= 1f;
-            if (k.dKey.isPressed) entradaTimon += 1f;
+            if (!hundido && Teclas.Pulsada(Accion.Adelante)) NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela);
+            if (Teclas.Pulsada(Accion.Atras)) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, hundido ? 0 : -1);
+            if (Teclas.Pulsada(Accion.Ancla)) AlternarAncla();
+            if (Teclas.Presionada(Accion.Izquierda)) entradaTimon -= 1f;
+            if (Teclas.Presionada(Accion.Derecha)) entradaTimon += 1f;
         }
         else entradaTimon = Mathf.Clamp(timonExterno, -1f, 1f);
         if (hundido) NivelVelaActual = 0;
