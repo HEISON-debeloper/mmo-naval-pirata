@@ -10,7 +10,10 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Inventario), typeof(Personaje))]
 public class Fabricacion : MonoBehaviour
 {
-    public static bool Abierto { get; private set; }
+    // El menú Tab (MenuAbierto) o el Taller: mientras cualquiera esté abierto, el cursor queda libre
+    static bool menuAbierto;
+    public static bool MenuAbierto => menuAbierto;
+    public static bool Abierto => menuAbierto || Taller.Abierto;
 
     [Header("Materiales para lo que se construye en el mundo")]
     public Material piedra;
@@ -152,8 +155,7 @@ public class Fabricacion : MonoBehaviour
         };
     }
 
-    // ---------- Pintura de tu barco: casco, velas y bandera (5 de oro cada cambio) ----------
-    const int CostoPintura = 5;
+    // ---------- Pintura de tu barco: se hace en el Taller (tecla P) ----------
     Pintura PinturaActual(bool crear)
     {
         ControlBarco b = BarcoAbordo();
@@ -165,38 +167,18 @@ public class Fabricacion : MonoBehaviour
 
     List<Receta> PaginaPintura()
     {
-        var lista = new List<Receta>();
-        foreach (Pintura.Parte parte in new[] { Pintura.Parte.Casco, Pintura.Parte.Velas, Pintura.Parte.Bandera })
-        foreach (int paso in new[] { 1, -1 })
+        return new List<Receta>
         {
-            Pintura.Parte pa = parte; int ps = paso;
-            string nombreParte = pa == Pintura.Parte.Casco ? "Casco" : pa == Pintura.Parte.Velas ? "Velas" : "Bandera";
-            lista.Add(new Receta
+            new Receta { nombre = "Abrir el taller (P)", descripcion = "Pinta cada parte con el color que quieras, dibujos en velas y bandera, mascarón",
+                costo = () => Gratis, requisito = RequisitoPropio, mensaje = "",
+                hacer = () => { menuAbierto = false; Taller.Abrir(); return null; } },
+            new Receta
             {
-                nombre = nombreParte + (ps > 0 ? ": color siguiente ▶" : ": color anterior ◀"),
-                descripcion = "Pinta tu barco",
-                costo = () => C(Inventario.Oro, CostoPintura),
-                requisito = () => {
-                    string r = RequisitoPropio(); if (r != null) return r;
-                    return PinturaActual(true).Tiene(pa) ? null : "Tu barco no tiene " + nombreParte.ToLower();
-                },
-                detalle = () => {
-                    Pintura pt = PinturaActual(false);
-                    int i = pt != null ? pt.Indice(pa) : -1;
-                    int n = Pintura.Paleta.Length + 1, sig = (i + 1 + ps + n) % n - 1;
-                    return Pintura.NombreColor(i) + " → " + Hud.Col(Pintura.NombreColor(sig), Hud.Oro);
-                },
-                hacer = () => { Pintura pt = PinturaActual(true); pt.Cambiar(pa, ps); p.Avisar(nombreParte + ": " + Pintura.NombreColor(pt.Indice(pa))); return null; },
-                mensaje = ""
-            });
-        }
-        lista.Add(new Receta
-        {
-            nombre = "Colores originales", descripcion = "Quita toda la pintura (gratis)",
-            costo = () => Gratis, requisito = RequisitoPropio, mensaje = "Tu barco volvió a sus colores originales",
-            hacer = () => { Pintura pt = PinturaActual(true); pt.Poner(Pintura.Parte.Casco, -1); pt.Poner(Pintura.Parte.Velas, -1); pt.Poner(Pintura.Parte.Bandera, -1); return null; }
-        });
-        return lista;
+                nombre = "Colores originales", descripcion = "Quita toda la pintura (gratis)",
+                costo = () => Gratis, requisito = RequisitoPropio, mensaje = "Tu barco volvió a sus colores originales",
+                hacer = () => { Pintura pt = PinturaActual(true); string masc = pt.datos.mascaron; pt.datos = new Pintura.Datos { mascaron = masc }; pt.Aplicar(); return null; }
+            },
+        };
     }
 
     // ---------- Mercado: vender y comprar con un mercader cerca (precios distintos en cada isla) ----------
@@ -499,13 +481,13 @@ public class Fabricacion : MonoBehaviour
         Preparar();
         Keyboard k = Keyboard.current;
         if (k == null) return;
-        if (k.tabKey.wasPressedThisFrame)
+        if (k.tabKey.wasPressedThisFrame && !Taller.Abierto)
         {
-            Abierto = !Abierto;
-            if (Abierto && Mercader.Cercano(transform.position) != null) pagina = IndiceVender;   // junto a un mercader, directo al mercado
+            menuAbierto = !menuAbierto;
+            if (menuAbierto && Mercader.Cercano(transform.position) != null) pagina = IndiceVender;   // junto a un mercader, directo al mercado
         }
-        if (!Abierto) return;
-        if (k.escapeKey.wasPressedThisFrame) { Abierto = false; return; }   // Esc también cierra
+        if (!menuAbierto) return;
+        if (k.escapeKey.wasPressedThisFrame) { menuAbierto = false; return; }   // Esc también cierra
         if (pagina >= Paginas) pagina = 0;
         if (k.qKey.wasPressedThisFrame) pagina = (pagina + Paginas - 1) % Paginas;
         if (k.eKey.wasPressedThisFrame) pagina = (pagina + 1) % Paginas;
@@ -561,7 +543,7 @@ public class Fabricacion : MonoBehaviour
         return veces == int.MaxValue ? 0 : veces;
     }
 
-    void OnDisable() => Abierto = false;
+    void OnDisable() => menuAbierto = false;
 
     bool PuedePagar(Receta r)
     {

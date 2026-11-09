@@ -6,6 +6,13 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.28.0 — Taller  (2026-11-08)
+- Taller (tecla P, a bordo de tu barco): pinta cada parte por separado con cualquier color (12 de paleta o libre con tono, color vivo y brillo): casco, cubierta, castillo de popa, mástiles y madera, velas, bandera, cañones y hierro, adornos dorados.
+- Dibujos en velas y bandera con un segundo color: franjas, rayas, cruz, diagonal, borde, calavera con huesos y sol.
+- Elige el mascarón de proa: león, sirena, dragón, calavera o ninguno.
+- Los cambios se ven al momento y la cámara gira sola alrededor del barco. Se pagan al guardar (5 de oro por parte cambiada, 20 el mascarón; gratis en creativo). Cancelar o P/Esc deja todo como estaba.
+- La pintura se guarda con la partida; las partidas viejas conservan sus colores.
+
 ## 0.27.1 — Reversa  (2026-11-08)
 - Reversa: con las velas arriadas, S otra vez pone las velas en facha y el barco anda hacia atrás, despacio. W vuelve a avanzar.
 - En reversa el timón gira al revés, como en un barco de verdad. El panel del barco muestra "reversa".

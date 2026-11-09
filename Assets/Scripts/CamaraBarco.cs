@@ -36,6 +36,9 @@ public class CamaraBarco : MonoBehaviour
 
     static bool mapaAntes;
 
+    // Gira sola alrededor del barco (mientras el Taller está abierto)
+    public static bool Orbitar;
+
     public static bool CursorCapturado => Cursor.lockState == CursorLockMode.Locked;
 
     void Start()
@@ -205,6 +208,8 @@ public class CamaraBarco : MonoBehaviour
             float antes = Vector2.Distance(a - da, b - db), ahora = Vector2.Distance(a, b);
             if (antes > 1f) distancia = Mathf.Clamp(distancia * antes / ahora, distanciaMin, distanciaMax);
         }
+
+        if (Orbitar) anguloH += 14f * Time.deltaTime;
 
         // Pose normal: girando alrededor del timón
         Quaternion rot = Quaternion.Euler(anguloV, anguloH, 0f);

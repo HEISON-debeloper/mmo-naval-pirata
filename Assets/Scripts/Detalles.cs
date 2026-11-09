@@ -303,12 +303,33 @@ public static class Detalles
     static void Mascaron(Transform t, float L, float w, float h, Astillero.Materiales m, Material oro)
     {
         string nombre = Mascarones[Mathf.Abs(Mathf.RoundToInt(w * 10f)) % Mascarones.Length];
-        if (!Modelos.Existe(nombre) || h < 1.5f) return;
+        PonerMascaron(t, nombre, L, w, h, oro, Modelos.DeColor(m.canon, new Color(0.12f, 0.1f, 0.08f)));
+    }
+
+    static GameObject PonerMascaron(Transform t, string nombre, float L, float w, float h, Material oro, Material oscuro)
+    {
+        if (!Modelos.Existe(nombre) || h < 1.5f) return null;
         float e = Mathf.Clamp(h / 4.5f, 0.6f, 2.2f);
-        Material oscuro = Modelos.DeColor(m.canon, new Color(0.12f, 0.1f, 0.08f));
         GameObject g = Modelos.Crear(nombre, t, new Vector3(0f, h * 0.3f, CascoProcedural.ZProa(w, L) - 0.35f * e), Quaternion.identity, e,
             n => n == "Detalle" ? oscuro : oro);
-        g.name = "Mascarón";
         Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
+        return g;
+    }
+
+    // Cambia el mascarón de un barco ya armado ("ninguno" lo quita). Lo usa la pintura (Taller).
+    public static void CambiarMascaron(Transform t, string nombre)
+    {
+        Transform actual = null;
+        foreach (Transform hijo in t) if (hijo.name.StartsWith("mascaron_")) { actual = hijo; break; }
+        if (actual != null && actual.name == nombre) return;
+        if (actual == null && nombre == "ninguno") return;
+        BoxCollider bc = t.GetComponent<BoxCollider>();
+        if (bc == null || Cubierta.EsPlana(t.GetComponent<ControlBarco>())) return;
+        Cubierta.Medidas(bc, out float w, out float h, out float L);
+        Material baseMat = null;
+        foreach (Renderer r in t.GetComponentsInChildren<Renderer>()) if (r.name == "Casco") { baseMat = r.sharedMaterial; break; }
+        if (actual != null) Object.Destroy(actual.gameObject);
+        if (nombre == "ninguno" || baseMat == null) return;
+        PonerMascaron(t, nombre, L, w, h, Modelos.DeColor(baseMat, Oro), Modelos.DeColor(baseMat, new Color(0.12f, 0.1f, 0.08f)));
     }
 }
