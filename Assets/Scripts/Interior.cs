@@ -345,6 +345,7 @@ public class Interior : MonoBehaviour
         Luces(nv, padre);
         if (nv.nombre == "la bodega") Carga(nv, padre);
         else Balas(nv, portas, padre);
+        if (i == 1) Tripulacion(nv, padre);   // la primera cubierta bajo la de arriba: cocina y hamacas en la proa
     }
 
     // El revés de la cubierta de arriba (si no, desde abajo se vería el cielo), con el hueco de la escotilla
@@ -425,6 +426,77 @@ public class Interior : MonoBehaviour
                     Agregar(v, uv, esfera, b + o, Vector3.one * 0.2f, Quaternion.identity);
             }
         Malla("Balas", v, uv, m.canon, padre);
+    }
+
+    // Cocina (fogón de ladrillo con olla y chimenea que sube a la cubierta) y camarote de la tripulación (hamacas colgadas
+    // de las vigas a los costados), en la parte de proa del primer nivel bajo cubierta. Solo si el barco tiene sitio.
+    void Tripulacion(Nivel nv, Transform padre)
+    {
+        float largo = nv.zB - nv.zA;
+        if (largo < 7f) return;
+        bool Libre(float z, float margen) =>
+            (float.IsNaN(nv.zBajada) || Mathf.Abs(z - nv.zBajada) > LargoHueco / 2f + margen) &&
+            (float.IsNaN(nv.zSubida) || Mathf.Abs(z - nv.zSubida) > LargoHueco / 2f + margen);
+
+        var vl = new List<Vector3>(); var ul = new List<Vector2>();   // ladrillo
+        var vh = new List<Vector3>(); var uh = new List<Vector2>();   // hierro (olla, chimenea)
+        var vt = new List<Vector3>(); var ut = new List<Vector2>();   // tela (hamacas)
+        var vc = new List<Vector3>(); var uc = new List<Vector2>();   // cuerda y madera
+
+        // Fogón: lo más a proa posible donde quepa de lado a lado
+        float zf = float.NaN;
+        for (float z = nv.zB - 1.1f; z > nv.zA + largo * 0.45f; z -= 0.25f)
+            if (Borde(z, nv.piso) > 1.4f && Libre(z, 0.9f)) { zf = z; break; }
+        if (!float.IsNaN(zf))
+        {
+            float alto = Mathf.Min(0.95f, nv.techo - nv.piso - 0.6f);
+            CascoProcedural.Caja(vl, ul, new Vector3(0f, nv.piso + alto / 2f, zf), new Vector3(1.2f, alto, 0.95f), Quaternion.identity);
+            // Boca del fuego (oscura) y brasas
+            CascoProcedural.Caja(vh, uh, new Vector3(0f, nv.piso + alto * 0.35f, zf - 0.48f), new Vector3(0.55f, alto * 0.4f, 0.02f), Quaternion.identity);
+            // Olla de hierro encima y un cucharón
+            Mesh esfera = Primitiva(PrimitiveType.Sphere);
+            Agregar(vh, uh, esfera, new Vector3(-0.22f, nv.piso + alto + 0.17f, zf), new Vector3(0.45f, 0.36f, 0.45f), Quaternion.identity);
+            CascoProcedural.Caja(vh, uh, new Vector3(0.3f, nv.piso + alto + 0.05f, zf + 0.1f), new Vector3(0.32f, 0.1f, 0.32f), Quaternion.identity);
+            CascoProcedural.Caja(vc, uc, new Vector3(-0.05f, nv.piso + alto + 0.32f, zf), new Vector3(0.5f, 0.03f, 0.03f), Quaternion.Euler(0f, 0f, -25f));
+            // Chimenea hasta el techo
+            float yc0 = nv.piso + alto, yc1 = nv.techo + 0.05f;
+            CascoProcedural.Caja(vh, uh, new Vector3(0.35f, (yc0 + yc1) / 2f, zf + 0.25f), new Vector3(0.22f, yc1 - yc0, 0.22f), Quaternion.identity);
+            // Mesa y bancos de la tripulación detrás del fogón
+            float zm = zf - 1.7f;
+            if (Libre(zm, 0.7f) && Borde(zm, nv.piso) > 1.4f)
+            {
+                CascoProcedural.Caja(vc, uc, new Vector3(0f, nv.piso + 0.72f, zm), new Vector3(0.8f, 0.06f, 1.6f), Quaternion.identity);
+                foreach (float dz in new[] { -0.6f, 0.6f }) CascoProcedural.Caja(vc, uc, new Vector3(0f, nv.piso + 0.36f, zm + dz), new Vector3(0.1f, 0.72f, 0.1f), Quaternion.identity);
+                foreach (float sx in new[] { -1f, 1f }) CascoProcedural.Caja(vc, uc, new Vector3(sx * 0.65f, nv.piso + 0.42f, zm), new Vector3(0.3f, 0.06f, 1.5f), Quaternion.identity);
+            }
+        }
+
+        // Hamacas a los costados, colgadas de las vigas, en la mitad de proa
+        int hamacas = 0;
+        for (float z = nv.zB - 0.8f; z > nv.zA + largo * 0.4f && hamacas < 16; z -= 0.75f)
+            foreach (float s in new[] { -1f, 1f })
+            {
+                float borde = Borde(z, nv.techo - 0.3f);
+                if (borde < 1.6f) continue;
+                float xa = s * (borde - 0.25f), xb = s * Mathf.Max(0.55f, borde - 1.85f);
+                float yt = nv.techo - 0.2f, yb = nv.techo - 0.55f;
+                // La tela: dos tramos que bajan al centro (comba)
+                Vector3 a = new Vector3(xa, yt, z), b = new Vector3(xb, yt, z), c = (a + b) / 2f + Vector3.down * (yt - yb);
+                foreach (var (p0, p1) in new[] { (a, c), (c, b) })
+                {
+                    Vector3 d = p1 - p0;
+                    CascoProcedural.Caja(vt, ut, (p0 + p1) / 2f, new Vector3(0.55f, 0.04f, d.magnitude), Quaternion.LookRotation(d.normalized, Vector3.up));
+                }
+                // Cuerdas a la viga
+                CascoProcedural.Caja(vc, uc, a + Vector3.up * 0.1f, new Vector3(0.03f, 0.2f, 0.03f), Quaternion.identity);
+                CascoProcedural.Caja(vc, uc, b + Vector3.up * 0.1f, new Vector3(0.03f, 0.2f, 0.03f), Quaternion.identity);
+                hamacas++;
+            }
+
+        Malla("Fogón", vl, ul, Modelos.DeColor(m.vela, new Color(0.55f, 0.27f, 0.18f)), padre);
+        Malla("Olla y chimenea", vh, uh, m.canon, padre);
+        Malla("Hamacas", vt, ut, Modelos.DeColor(m.vela, new Color(0.78f, 0.72f, 0.58f)), padre);
+        Malla("Muebles tripulación", vc, uc, m.mastil, padre);
     }
 
     // Bodega: barriles, cajas y sacos contra los costados

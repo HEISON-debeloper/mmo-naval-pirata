@@ -6,6 +6,15 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.31.0 — Barco detallado II  (2026-11-09)
+- Tablones de cubierta: juntas oscuras a lo largo y cortes escalonados, siguiendo la forma real del casco (se cierran en la proa). Se adaptan a cualquier tamaño.
+- Bote salvavidas: bote de remos boca abajo sobre dos calzos, con quilla, regala y remos, a un costado de la cubierta entre mástiles; solo en barcos de 16 m o más. Es sólido (no se atraviesa).
+- Bitácora junto al timón: pedestal de madera con cúpula de bronce de la brújula y las dos esferas compensadoras.
+- Catalejo de latón apoyado en la baranda de la toldilla.
+- Cocina en la proa de la primera cubierta bajo la de arriba: fogón de ladrillo con boca de fuego, olla, cucharón y chimenea, y una mesa con bancos para la tripulación.
+- Camarote de la tripulación: hasta 16 hamacas colgadas de las vigas a los costados.
+- Pendiente: castillo de proa elevado (taparía los cañones de proa; necesita colisión propia).
+
 ## 0.30.0 — Ventanas nuevas  (2026-11-09)
 - Menú principal cinematográfico: la cámara gira despacio alrededor de tu barco; Continuar, Nueva partida (con confirmación), Opciones, Créditos y Salir, con la fecha de la partida guardada.
 - Mochila nueva (I): casillas con icono, categorías, búsqueda y orden; ficha de cada objeto con descripción, de dónde sale, en qué recetas se usa y botones (comer, vender, ver recetas). A bordo, la bodega aparece abajo para pasar cosas de un lado a otro (clic, Mayús+clic 10, doble clic todo).
