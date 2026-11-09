@@ -537,7 +537,7 @@ public class Personaje : MonoBehaviour
         {
             if (Punteria.Apuntando)
                 return "Apuntando a " + Hud.Col(Canones.Nombre(Punteria.LadoActual), Hud.Oro) + "   " + T("Clic") + " disparar   mouse arriba/abajo: alcance";
-            return T("W/S") + " velas   " + T("A/D") + " timón   " + T("Clic der.") + " apuntar   " + T("F") + " soltar";
+            return T("W/S") + " velas" + (BarcoActual != null && BarcoActual.EnReversa ? " (reversa)" : "") + "   " + T("A/D") + " timón   " + T("Clic der.") + " apuntar   " + T("F") + " soltar";
         }
         if (estado == Estado.Cubierta)
         {

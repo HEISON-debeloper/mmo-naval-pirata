@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Control del barco: W/S velas, A/D timón, R ancla.
+// Control del barco: W/S velas, A/D timón, R ancla. Con las velas arriadas, S otra vez = reversa
+// (velas en facha: el viento las empuja de frente y el barco anda hacia atrás, despacio).
 // Lo maneja el jugador cuando está al timón (controlActivo) o la IA por medio de timonExterno y FijarVelas.
 [RequireComponent(typeof(Rigidbody))]
 public class ControlBarco : MonoBehaviour
@@ -14,6 +15,8 @@ public class ControlBarco : MonoBehaviour
     public int nivelesVela = 3;
     [Tooltip("Aceleración por nivel de vela (m/s²).")]
     public float fuerzaPorNivel = 0.7f;
+    [Tooltip("Fuerza de la reversa, comparada con un nivel de vela.")]
+    public float fuerzaReversa = 0.55f;
     [Tooltip("La vela (objeto hijo) que se estira según el nivel.")]
     public Transform vela;
     [Tooltip("Velas de los otros mástiles (barcos grandes); suben y bajan junto con la principal.")]
@@ -36,7 +39,8 @@ public class ControlBarco : MonoBehaviour
     public bool mostrarPanel = true;
     [HideInInspector] public float timonExterno;
 
-    public int NivelVelaActual { get; private set; }
+    public int NivelVelaActual { get; private set; }   // -1 = reversa
+    public bool EnReversa => NivelVelaActual < 0;
     public bool Anclado { get; private set; }
 
     Rigidbody rb;
@@ -64,7 +68,7 @@ public class ControlBarco : MonoBehaviour
         if (controlActivo && k != null)
         {
             if (!hundido && k.wKey.wasPressedThisFrame) NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela);
-            if (k.sKey.wasPressedThisFrame) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, 0);
+            if (k.sKey.wasPressedThisFrame) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, hundido ? 0 : -1);
             if (k.rKey.wasPressedThisFrame) AlternarAncla();
             if (k.aKey.isPressed) entradaTimon -= 1f;
             if (k.dKey.isPressed) entradaTimon += 1f;
@@ -75,7 +79,8 @@ public class ControlBarco : MonoBehaviour
         if (vela != null)
         {
             if (altoVela < 0f) altoVela = vela.localScale.y; // por si la vela se asignó después de Awake
-            float objetivo = (NivelVelaActual == 0 || Anclado) ? 0.08f : (float)NivelVelaActual / nivelesVela;
+            // En reversa la vela queda medio desplegada (en facha)
+            float objetivo = (NivelVelaActual == 0 || Anclado) ? 0.08f : NivelVelaActual < 0 ? 0.5f : (float)NivelVelaActual / nivelesVela;
             Vector3 s = vela.localScale;
             s.y = Mathf.Lerp(s.y, altoVela * objetivo, Time.deltaTime * 3f);
             vela.localScale = s;
@@ -114,7 +119,10 @@ public class ControlBarco : MonoBehaviour
         Vector3 derecha = Vector3.Cross(Vector3.up, adelante);
 
         if (!Anclado)
-            rb.AddForce(adelante * NivelVelaActual * fuerzaPorNivel, ForceMode.Acceleration);
+        {
+            float empuje = NivelVelaActual >= 0 ? NivelVelaActual : -fuerzaReversa;
+            rb.AddForce(adelante * empuje * fuerzaPorNivel, ForceMode.Acceleration);
+        }
         else
         {
             // El ancla frena el barco casi por completo
@@ -124,7 +132,9 @@ public class ControlBarco : MonoBehaviour
 
         float velAdelante = Vector3.Dot(rb.linearVelocity, adelante);
         float factor = Mathf.Clamp01(Mathf.Abs(velAdelante) / velocidadParaGiroCompleto);
-        rb.AddTorque(Vector3.up * entradaTimon * fuerzaGiro * factor, ForceMode.Acceleration);
+        // Yendo hacia atrás el timón gira al revés (como en un barco de verdad)
+        float sentido = velAdelante < -0.2f ? -1f : 1f;
+        rb.AddTorque(Vector3.up * entradaTimon * fuerzaGiro * factor * sentido, ForceMode.Acceleration);
 
         float velLateral = Vector3.Dot(rb.linearVelocity, derecha);
         rb.AddForce(-derecha * velLateral * agarreLateral, ForceMode.Acceleration);

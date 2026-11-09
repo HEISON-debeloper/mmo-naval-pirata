@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.27.1 — Reversa  (2026-11-08)
+- Reversa: con las velas arriadas, S otra vez pone las velas en facha y el barco anda hacia atrás, despacio. W vuelve a avanzar.
+- En reversa el timón gira al revés, como en un barco de verdad. El panel del barco muestra "reversa".
+
 ## 0.27.0 — Colisiones y proporciones  (2026-11-08)
 - Colisión con la forma real del casco: antes el barco chocaba como una caja y en la proa había esquinas invisibles donde se podía pararse en el aire. La caja queda solo para medidas.
 - En cubierta solo se camina sobre el casco de verdad (la proa se cierra hasta la punta), y los mástiles, los cañones de cubierta y el cabrestante son sólidos.

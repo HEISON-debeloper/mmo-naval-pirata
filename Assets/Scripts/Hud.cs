@@ -279,6 +279,7 @@ public class Hud : MonoBehaviour
 
         string velas = "";
         for (int i = 1; i <= b.nivelesVela; i++) velas += i <= b.NivelVelaActual ? "■ " : "□ ";
+        if (b.EnReversa) velas = "reversa ◄ ";
         GUI.Label(new Rect(r.x + 10f, y, w, 17f), "Velas  " + Col(velas, Oro) + (b.Anclado ? Col("  ANCLADO", Ambar) : ""), Normal);
         y += 17f;
 
