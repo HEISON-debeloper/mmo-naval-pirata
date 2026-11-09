@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.31.1 — Cocina sólida y cámara táctil  (2026-11-09)
+- El fogón y la mesa de la cocina son sólidos: el pirata los rodea en vez de atravesarlos.
+- En primera persona (bajo cubierta) la espada ya no tapa media pantalla: solo aparece al golpear.
+- Pegado a las paredes del casco ya no se ve el mar ni el cielo a través de ellas (la cámara recorta más cerca en primera persona).
+- Teléfono: arrastrar el dedo en la mitad derecha de la pantalla gira la cámara.
+
 ## 0.31.0 — Barco detallado II  (2026-11-09)
 - Tablones de cubierta: juntas oscuras a lo largo y cortes escalonados, siguiendo la forma real del casco (se cierran en la proa). Se adaptan a cualquier tamaño.
 - Bote salvavidas: bote de remos boca abajo sobre dos calzos, con quilla, regala y remos, a un costado de la cubierta entre mástiles; solo en barcos de 16 m o más. Es sólido (no se atraviesa).

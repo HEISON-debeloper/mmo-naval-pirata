@@ -24,6 +24,7 @@ public class Interior : MonoBehaviour
         public float zBajada = float.NaN;    // hueco con escalera hacia el nivel de abajo
         public float zSubida = float.NaN;    // donde llega la escalera que viene de arriba
         public GameObject luces;
+        public readonly List<Rect> solidos = new List<Rect>();   // muebles que no se atraviesan (x, z)
     }
 
     readonly List<Nivel> niveles = new List<Nivel>();
@@ -74,7 +75,20 @@ public class Interior : MonoBehaviour
         p.x = Mathf.Clamp(p.x, -bx, bx);
         if (n > 0 && !float.IsNaN(nv.zBajada)) p = Fuera(p, nv.zBajada);   // no caerse por el hueco
         if (!float.IsNaN(nv.zSubida)) p = Fuera(p, nv.zSubida);            // la escalera ocupa su sitio
+        foreach (Rect r in nv.solidos) p = FueraDe(p, r);                  // fogón, mesa
         p.y = nv.piso;
+        return p;
+    }
+
+    // Saca el punto de un rectángulo (x, z) por el lado más cercano, dejando el ancho del cuerpo
+    static Vector3 FueraDe(Vector3 p, Rect r)
+    {
+        const float cuerpo = 0.3f;
+        float x0 = r.xMin - cuerpo, x1 = r.xMax + cuerpo, z0 = r.yMin - cuerpo, z1 = r.yMax + cuerpo;
+        if (p.x <= x0 || p.x >= x1 || p.z <= z0 || p.z >= z1) return p;
+        float dI = p.x - x0, dD = x1 - p.x, dA = p.z - z0, dB = z1 - p.z;
+        float m = Mathf.Min(Mathf.Min(dI, dD), Mathf.Min(dA, dB));
+        if (m == dI) p.x = x0; else if (m == dD) p.x = x1; else if (m == dA) p.z = z0; else p.z = z1;
         return p;
     }
 
@@ -451,6 +465,7 @@ public class Interior : MonoBehaviour
         {
             float alto = Mathf.Min(0.95f, nv.techo - nv.piso - 0.6f);
             CascoProcedural.Caja(vl, ul, new Vector3(0f, nv.piso + alto / 2f, zf), new Vector3(1.2f, alto, 0.95f), Quaternion.identity);
+            nv.solidos.Add(new Rect(-0.6f, zf - 0.48f, 1.2f, 1.0f));
             // Boca del fuego (oscura) y brasas
             CascoProcedural.Caja(vh, uh, new Vector3(0f, nv.piso + alto * 0.35f, zf - 0.48f), new Vector3(0.55f, alto * 0.4f, 0.02f), Quaternion.identity);
             // Olla de hierro encima y un cucharón
@@ -466,6 +481,7 @@ public class Interior : MonoBehaviour
             if (Libre(zm, 0.7f) && Borde(zm, nv.piso) > 1.4f)
             {
                 CascoProcedural.Caja(vc, uc, new Vector3(0f, nv.piso + 0.72f, zm), new Vector3(0.8f, 0.06f, 1.6f), Quaternion.identity);
+                nv.solidos.Add(new Rect(-0.8f, zm - 0.8f, 1.6f, 1.6f));
                 foreach (float dz in new[] { -0.6f, 0.6f }) CascoProcedural.Caja(vc, uc, new Vector3(0f, nv.piso + 0.36f, zm + dz), new Vector3(0.1f, 0.72f, 0.1f), Quaternion.identity);
                 foreach (float sx in new[] { -1f, 1f }) CascoProcedural.Caja(vc, uc, new Vector3(sx * 0.65f, nv.piso + 0.42f, zm), new Vector3(0.3f, 0.06f, 1.5f), Quaternion.identity);
             }

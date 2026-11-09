@@ -33,6 +33,21 @@ public class ControlesTactiles : MonoBehaviour
         raiz.style.position = Position.Absolute; raiz.style.left = raiz.style.right = raiz.style.top = raiz.style.bottom = 0f;
         Lienzo.CapaHud.Add(raiz);
 
+        // Mitad derecha de la pantalla: arrastrar con el dedo gira la cámara (va debajo de los botones)
+        var mirar = new VisualElement { name = "mirar" };
+        mirar.style.position = Position.Absolute; mirar.style.right = 0f; mirar.style.top = 0f; mirar.style.bottom = 0f;
+        mirar.style.width = Length.Percent(55f);
+        int dedoMirar = -1; Vector2 ultimo = Vector2.zero;
+        mirar.RegisterCallback<PointerDownEvent>(e => { dedoMirar = e.pointerId; ultimo = e.position; mirar.CapturePointer(e.pointerId); });
+        mirar.RegisterCallback<PointerMoveEvent>(e =>
+        {
+            if (e.pointerId != dedoMirar) return;
+            Vector2 d = (Vector2)e.position - ultimo; ultimo = e.position;
+            CamaraBarco.DeltaTactil += new Vector2(d.x, -d.y) * 1.6f;   // en el panel la y crece hacia abajo
+        });
+        mirar.RegisterCallback<PointerUpEvent>(e => { if (e.pointerId == dedoMirar) { dedoMirar = -1; mirar.ReleasePointer(e.pointerId); } });
+        raiz.Add(mirar);
+
         // Palanca
         palanca = new VisualElement();
         palanca.style.position = Position.Absolute; palanca.style.left = 40f; palanca.style.bottom = 170f;

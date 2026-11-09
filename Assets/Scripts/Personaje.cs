@@ -247,7 +247,7 @@ public class Personaje : MonoBehaviour
             tAnim = Mathf.Max(0f, tAnim - Time.deltaTime);
             float ang = tAnim > 0f ? Mathf.Lerp(80f, -60f, tAnim / 0.22f) : -20f;
             espada.localRotation = Quaternion.Euler(ang, 0f, 0f);
-            espada.gameObject.SetActive(estado != Estado.Timon && !Nadando);
+            espada.gameObject.SetActive(estado != Estado.Timon && !Nadando && (!Bajo || tAnim > 0f));   // adentro (primera persona) solo al golpear
         }
     }
 

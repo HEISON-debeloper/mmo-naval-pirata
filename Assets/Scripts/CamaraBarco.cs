@@ -38,6 +38,14 @@ public class CamaraBarco : MonoBehaviour
 
     // Gira sola alrededor del barco (mientras el Taller está abierto)
     public static bool Orbitar;
+    // Arrastre con el dedo (teléfono): lo escribe ControlesTactiles y se suma al movimiento del mouse
+    public static Vector2 DeltaTactil;
+    Vector2 TomarDelta(Mouse m)
+    {
+        Vector2 d = m != null && CursorCapturado ? m.delta.ReadValue() : Vector2.zero;
+        d += DeltaTactil; DeltaTactil = Vector2.zero;
+        return d;
+    }
 
     public static bool CursorCapturado => Cursor.lockState == CursorLockMode.Locked;
 
@@ -141,26 +149,30 @@ public class CamaraBarco : MonoBehaviour
     float yawLocal, pitchFP;
     bool primeraPersona;
 
+    Camera cam;
     bool PrimeraPersona()
     {
+        if (cam == null) cam = GetComponent<Camera>();
         Personaje p = Personaje.Instancia;
         bool dentro = p != null && p.Bajo;
         if (!dentro)
         {
             if (primeraPersona && p != null && p.BarcoActual != null) anguloH = p.BarcoActual.transform.eulerAngles.y + yawLocal;
+            if (primeraPersona && cam != null) cam.nearClipPlane = 0.3f;
             primeraPersona = false;
             return false;
         }
         Transform barco = p.BarcoActual.transform;
         if (!primeraPersona) { yawLocal = anguloH - barco.eulerAngles.y; pitchFP = 0f; primeraPersona = true; }
         Mouse m = Mouse.current;
-        if (m != null && CursorCapturado)
+        Vector2 d = TomarDelta(m);
+        if (d.sqrMagnitude > 0f)
         {
-            Vector2 d = m.delta.ReadValue();
             yawLocal += d.x * sensibilidad;
             pitchFP = Mathf.Clamp(pitchFP + (invertirVertical ? d.y : -d.y) * sensibilidad, -75f, 75f);
         }
         transform.position = p.Ojos;
+        if (cam != null) cam.nearClipPlane = 0.05f;   // pegado a la pared no se ve a través del casco
         transform.rotation = barco.rotation * Quaternion.Euler(pitchFP, yawLocal, 0f);
         return true;
     }
@@ -171,9 +183,8 @@ public class CamaraBarco : MonoBehaviour
         if (PrimeraPersona()) return;
 
         Mouse m = Mouse.current;
-        if (m != null)
+        Vector2 delta = TomarDelta(m);
         {
-            Vector2 delta = CursorCapturado ? m.delta.ReadValue() : Vector2.zero;
             if (delta.sqrMagnitude > 0.01f)
             {
                 anguloH += delta.x * sensibilidad;
@@ -189,7 +200,7 @@ public class CamaraBarco : MonoBehaviour
                 anguloH = Mathf.LerpAngle(anguloH, objetivo.eulerAngles.y, Time.deltaTime);
 
             // Zoom proporcional: cada paso de la rueda acerca o aleja un 12 %, así sirve igual de cerca que de lejos
-            float rueda = m.scroll.ReadValue().y;
+            float rueda = m != null ? m.scroll.ReadValue().y : 0f;
             if (Mathf.Abs(rueda) > 0.01f && !Navegacion.MapaAbierto)   // con el mapa abierto la rueda es del mapa
             {
                 // Según el sistema, un paso de rueda llega como 1 o como 120
