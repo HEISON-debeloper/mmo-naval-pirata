@@ -150,6 +150,7 @@ public class CamaraBarco : MonoBehaviour
     bool primeraPersona;
 
     Camera cam;
+    float lejosAntes = 1500f;
     bool PrimeraPersona()
     {
         if (cam == null) cam = GetComponent<Camera>();
@@ -158,7 +159,7 @@ public class CamaraBarco : MonoBehaviour
         if (!dentro)
         {
             if (primeraPersona && p != null && p.BarcoActual != null) anguloH = p.BarcoActual.transform.eulerAngles.y + yawLocal;
-            if (primeraPersona && cam != null) cam.nearClipPlane = 0.3f;
+            if (primeraPersona && cam != null) { cam.nearClipPlane = 0.3f; cam.farClipPlane = lejosAntes; }
             primeraPersona = false;
             return false;
         }
@@ -172,7 +173,14 @@ public class CamaraBarco : MonoBehaviour
             pitchFP = Mathf.Clamp(pitchFP + (invertirVertical ? d.y : -d.y) * sensibilidad, -75f, 75f);
         }
         transform.position = p.Ojos;
-        if (cam != null) cam.nearClipPlane = 0.05f;   // pegado a la pared no se ve a través del casco
+        if (cam != null && cam.nearClipPlane > 0.06f)
+        {
+            // Pegado a la pared no se ve a través del casco; y como el plano cercano baja tanto, el lejano también
+            // (si no, la precisión de profundidad no alcanza y las superficies titilan)
+            lejosAntes = cam.farClipPlane;
+            cam.nearClipPlane = 0.05f;
+            cam.farClipPlane = Mathf.Min(lejosAntes, 400f);
+        }
         transform.rotation = barco.rotation * Quaternion.Euler(pitchFP, yawLocal, 0f);
         return true;
     }

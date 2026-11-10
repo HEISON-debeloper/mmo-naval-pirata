@@ -35,6 +35,7 @@ public class Bodega : MonoBehaviour
 
     public int Cantidad(string tipo) => cosas.TryGetValue(tipo, out int n) ? n : 0;
 
+    public void Vaciar() => cosas.Clear();
     public int Total { get { int t = 0; foreach (var c in cosas) t += c.Value; return t; } }
 
     public int Libre => Mathf.Max(0, capacidad - Total);

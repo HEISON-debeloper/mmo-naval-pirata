@@ -10,11 +10,13 @@ public class CajaBotin : MonoBehaviour
 
     Dictionary<string, int> contenido;
     float vida, fase;
+    bool enTierra;
+    float edad;   // unos segundos sin recogerse (la que suelta el jugador al morir no vuelve sola a su mochila)
 
     void OnEnable() => Todas.Add(this);
     void OnDisable() => Todas.Remove(this);
 
-    public static void Crear(Vector3 pos, Dictionary<string, int> contenido, Material madera, Material banda)
+    public static void Crear(Vector3 pos, Dictionary<string, int> contenido, Material madera, Material banda, bool enTierra = false)
     {
         GameObject g = new GameObject("Caja de botín");
         g.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, Random.value * 360f, 0f));
@@ -23,6 +25,8 @@ public class CajaBotin : MonoBehaviour
         Astillero.Pieza(PrimitiveType.Cube, "Tapa", g.transform, new Vector3(0f, 0.42f, 0f), Quaternion.identity, new Vector3(1.0f, 0.06f, 0.7f), banda);
         CajaBotin c = g.AddComponent<CajaBotin>();
         c.contenido = contenido;
+        c.enTierra = enTierra;
+        if (enTierra) c.vida = -Duracion * 4f;   // en tierra no se hunde: dura unos 20 minutos
         c.fase = Random.value * 10f;
     }
 
@@ -31,12 +35,17 @@ public class CajaBotin : MonoBehaviour
         vida += Time.deltaTime;
         Vector3 p = transform.position;
         // Flota con las olas, mecida
-        float hundir = vida > Duracion - 5f ? (vida - (Duracion - 5f)) * 0.4f : 0f;
-        p.y = Olas.Altura(p) + 0.15f - hundir;
-        transform.position = p;
-        transform.rotation = Quaternion.Euler(Mathf.Sin(Time.time * 1.3f + fase) * 8f, transform.eulerAngles.y + Time.deltaTime * 6f, Mathf.Cos(Time.time * 1.1f + fase) * 8f);
+        if (!enTierra)
+        {
+            float hundir = vida > Duracion - 5f ? (vida - (Duracion - 5f)) * 0.4f : 0f;
+            p.y = Olas.Altura(p) + 0.15f - hundir;
+            transform.position = p;
+            transform.rotation = Quaternion.Euler(Mathf.Sin(Time.time * 1.3f + fase) * 8f, transform.eulerAngles.y + Time.deltaTime * 6f, Mathf.Cos(Time.time * 1.1f + fase) * 8f);
+        }
         if (vida > Duracion) { Destroy(gameObject); return; }
 
+        edad += Time.deltaTime;
+        if (edad < 4f) return;
         Personaje pj = Personaje.Instancia;
         if (pj == null) return;
         bool cerca = Plano(pj.transform.position - p) < AlcancePersona;

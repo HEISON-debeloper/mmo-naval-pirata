@@ -93,6 +93,11 @@ public class VentanaOpciones : Ventana
         dc.alCambiar = k => { Preferencias.Calidad = k; Aplicar(); };
         graficos.Add(dc);
         graficos.Add(Deslizador("Resolución de render", 0.5f, 1.5f, Preferencias.EscalaRender, Pct, v => { Preferencias.EscalaRender = v; Aplicar(); }, 0.05f, "Menos de 100 % va más fluido; más de 100 % se ve más nítido"));
+        var suav = new List<string> { "Desactivado", "2x", "4x", "8x" };
+        int[] muestras = { 1, 2, 4, 8 };
+        var ds = new Componentes.Desplegable("Suavizado de bordes", suav, Mathf.Max(0, System.Array.IndexOf(muestras, Preferencias.Suavizado)));
+        ds.alCambiar = k => { Preferencias.Suavizado = muestras[k]; Aplicar(); };
+        graficos.Add(ds);
         graficos.Add(Interruptor("Sombras", Preferencias.Sombras, v => { Preferencias.Sombras = v; Aplicar(); }));
         graficos.Add(Interruptor("Sincronización vertical (VSync)", Preferencias.VSync, v => { Preferencias.VSync = v; Aplicar(); }));
         var fps = new List<string> { "Sin límite", "30", "60", "90", "120", "144" };

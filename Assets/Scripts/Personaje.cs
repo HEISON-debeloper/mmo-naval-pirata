@@ -112,7 +112,32 @@ public class Personaje : MonoBehaviour
     }
 
     // El último barco que construyes pasa a ser el tuyo (donde reapareces)
-    public void AsignarBarcoPropio(ControlBarco b) => barco = b;
+    public void AsignarBarcoPropio(ControlBarco b)
+    {
+        barco = b;
+        Canones cn = b != null ? b.GetComponent<Canones>() : null;
+        if (cn != null) cn.recarga = 2.5f;   // tus barcos recargan igual que la balsa (los piratas tardan 3,6 s)
+    }
+
+    // Al morir se cae la mitad de lo que llevas (menos las herramientas) en una caja donde caíste: puedes volver por ella
+    void SoltarAlMorir()
+    {
+        Inventario inv = GetComponent<Inventario>();
+        if (inv == null || ModoCreativo.Activo) return;
+        var caidas = new System.Collections.Generic.Dictionary<string, int>();
+        var lista = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, int>>(inv.Todo);
+        foreach (var kv in lista)
+        {
+            if (kv.Key == Inventario.Hacha || kv.Key == Inventario.Pico) continue;
+            int n = kv.Value / 2;
+            if (n > 0 && inv.Quitar(kv.Key, n)) caidas[kv.Key] = n;
+        }
+        if (caidas.Count == 0) return;
+        bool tierra = estado == Estado.Libre && EnTierra;
+        Vector3 donde = transform.position;
+        CajaBotin.Crear(donde, caidas, materialMadera, materialMadera, tierra);
+        Notificaciones.Mostrar("Perdiste la mitad de lo que llevabas: quedó en una caja donde caíste (" + Botin.Resumen(caidas) + ")", Notificaciones.Tipo.Alerta, 8f);
+    }
     public void FijarVida(float v) => Vida = Mathf.Clamp(v, 1f, vidaMaxima);
 
     void Asignar(ControlBarco b)
@@ -299,7 +324,8 @@ public class Personaje : MonoBehaviour
         if (Vida <= 0f)
         {
             Vida = vidaMaxima;
-            if (sup != null) sup.Reiniciar();
+            if (sup != null) { sup.Reiniciar(); sup.Fijar(50f, 50f); }   // despiertas con hambre y sed a medias
+            SoltarAlMorir();
             VidaBarco vb = barco != null ? barco.GetComponent<VidaBarco>() : null;
             if (barco != null && (vb == null || !vb.Hundido))
             {
@@ -456,6 +482,13 @@ public class Personaje : MonoBehaviour
 
     void SalirDelBarco(float impulsoVertical)
     {
+        // Si estabas bajo cubierta (el barco se hunde), sales por arriba y no dentro del casco
+        if (nivel != 0 && BarcoActual != null)
+        {
+            Cubierta.Medidas(BarcoActual.GetComponent<BoxCollider>(), out _, out float hb, out _);
+            Vector3 c = local; c.y = Cubierta.Altura(hb) + 0.3f;
+            local = c;
+        }
         Vector3 p = barcoT.TransformPoint(local);
         CambiarEstado(Estado.Libre);
         cc.enabled = false;

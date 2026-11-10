@@ -81,7 +81,7 @@ public class Tripulante : MonoBehaviour
 
         Personaje p = Personaje.Instancia;
         Vector3 lp = transform.localPosition;
-        bool persigue = p != null && p.Vida > 0f && p.SobreBarco(barco);
+        bool persigue = p != null && p.Vida > 0f && p.SobreBarco(barco) && !p.Bajo;   // bajo cubierta no te alcanzan (ni tú a ellos)
         Vector3 objetivo;
         if (persigue) objetivo = p.LocalEnBarco;
         else

@@ -22,6 +22,7 @@ public static class Preferencias
         public bool sonidosInterfaz = true;
         public int calidad = -1;               // -1 = la del proyecto
         public float escalaRender = 1f;
+        public int suavizado = -1;             // MSAA: 1, 2, 4 u 8 muestras; -1 = según el aparato (4 en PC, 2 en teléfono)
         public bool sombras = true;
         public bool vsync = true;
         public int limiteFps = 0;              // 0 = sin límite
@@ -84,6 +85,7 @@ public static class Preferencias
 
     // ---------- Gráficos ----------
     public static int Calidad { get => D.calidad; set => D.calidad = value; }
+    public static int Suavizado { get => D.suavizado > 0 ? D.suavizado : (Application.isMobilePlatform ? 2 : 4); set => D.suavizado = value; }
     public static float EscalaRender { get => D.escalaRender; set { D.escalaRender = Mathf.Clamp(value, 0.5f, 1.5f); } }
     public static bool Sombras { get => D.sombras; set => D.sombras = value; }
     public static bool VSync { get => D.vsync; set => D.vsync = value; }
@@ -137,6 +139,12 @@ public static class Preferencias
         if (urp != null)
         {
             urp.renderScale = D.escalaRender;
+            // Suavizado de bordes (MSAA): sin él, la jarcia, las juntas de cubierta y los cantos del casco
+            // se ven como líneas que titilan a lo lejos
+            urp.msaaSampleCount = Suavizado;
+            // Sesgo de sombras más alto: evita las rayas de sombra ("acné") sobre el casco y las velas
+            urp.shadowDepthBias = Mathf.Max(urp.shadowDepthBias, 1f);
+            urp.shadowNormalBias = Mathf.Max(urp.shadowNormalBias, 1f);
             urp.shadowDistance = D.sombras ? Rendimiento.DistanciaSombras : 0f;   // la misma distancia que fija Rendimiento
         }
         if (!Application.isMobilePlatform && Screen.fullScreen != D.pantallaCompleta) Screen.fullScreen = D.pantallaCompleta;

@@ -50,8 +50,13 @@ public class VidaBarco : MonoBehaviour
     {
         if (!Hundido) return;
         tiempoHundido += Time.deltaTime;
-        rb.AddForce(Vector3.down * 2f, ForceMode.Acceleration);
         if (tiempoHundido >= tiempoReaparecer) Reaparecer();
+    }
+
+    // La fuerza que lo hunde va con la física (en Update dependía de los cuadros por segundo)
+    void FixedUpdate()
+    {
+        if (Hundido) rb.AddForce(Vector3.down * 2f, ForceMode.Acceleration);
     }
 
     public void Reaparecer()
@@ -64,6 +69,18 @@ public class VidaBarco : MonoBehaviour
         vida = vidaMaxima;
         Hundido = false;
         if (flot != null) flot.activa = true;
+        // Tu barco vuelve a flote, pero la carga de la bodega se fue al fondo, y los piratas que te abordaron no vuelven con él
+        Personaje p = Personaje.Instancia;
+        if (p != null && p.barco != null && p.barco.gameObject == gameObject)
+        {
+            foreach (Tripulante t in GetComponentsInChildren<Tripulante>(true)) Destroy(t.gameObject);
+            Bodega bd = GetComponent<Bodega>();
+            if (bd != null && bd.Total > 0)
+            {
+                bd.Vaciar();
+                Notificaciones.Mostrar("Tu barco volvió a flote, pero la carga de la bodega se perdió en el fondo", Notificaciones.Tipo.Alerta, 7f);
+            }
+        }
         alReaparecer?.Invoke();
     }
 

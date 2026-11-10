@@ -215,6 +215,10 @@ public class IABarco : MonoBehaviour
     {
         if (canones == null || dist > distanciaDisparo || dist < 1f) return;
         Vector3 n = hacia / dist;
+        // Ángulo balístico para esa distancia (como hace el jugador al apuntar), con un poco de error
+        float v = canones.velocidadBala, g = Mathf.Abs(Physics.gravity.y);
+        float seno = Mathf.Clamp(g * dist / (v * v), 0f, 1f);
+        canones.anguloApunte = 0.5f * Mathf.Asin(seno) * Mathf.Rad2Deg + Random.Range(-1.5f, 1.5f);
         Vector3 der = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
         if (Vector3.Dot(-der, n) > 0.96f) canones.Disparar(true);
         if (Vector3.Dot(der, n) > 0.96f) canones.Disparar(false);
@@ -225,7 +229,16 @@ public class IABarco : MonoBehaviour
     Rigidbody Objetivo()
     {
         Personaje p = Personaje.Instancia;
-        ControlBarco suyo = p != null && p.barco != null && p.barco != cb ? p.barco : null;
+        if (p == null) return null;
+        // El barco donde vas (el tuyo o uno capturado); si estás abordando a otro pirata, tu barco propio
+        ControlBarco suyo = null;
+        ControlBarco abordo = p.estado != Personaje.Estado.Libre ? p.BarcoActual : null;
+        if (abordo != null && abordo != cb)
+        {
+            IABarco otro = abordo.GetComponent<IABarco>();
+            if (otro == null || otro.Capturado) suyo = abordo;
+        }
+        if (suyo == null && p.barco != null && p.barco != cb) suyo = p.barco;
         if (suyo == null) return null;
         VidaBarco vs = suyo.GetComponent<VidaBarco>();
         if (vs != null && vs.Hundido) return null;

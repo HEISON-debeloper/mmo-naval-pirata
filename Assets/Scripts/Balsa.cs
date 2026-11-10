@@ -80,8 +80,8 @@ public static class Balsa
         fl.centroDeMasa = new Vector3(0f, abajo + 0.2f, 0f);
 
         VidaBarco v = raiz.AddComponent<VidaBarco>();
-        v.vidaMaxima = 40f;
-        v.vida = 40f;
+        v.vidaMaxima = 80f;   // aguanta un barril (55) o un espolonazo sin hundirse de un golpe
+        v.vida = 80f;
 
         Canones cn = raiz.AddComponent<Canones>();
         cn.babor = babor;

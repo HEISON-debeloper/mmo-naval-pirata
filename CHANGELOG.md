@@ -6,6 +6,21 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.34.0 — Combate justo e imagen limpia  (2026-11-09)
+- Imagen limpia: suavizado de bordes (MSAA) activado — 4x en PC y 2x en teléfono — y elegible en Opciones → Gráficos (desactivado, 2x, 4x, 8x). La jarcia, las juntas de cubierta y los cantos del casco ya no se ven como líneas que titilan a lo lejos.
+- Sin rayas de sombra sobre cascos y velas (sesgo de sombras más alto).
+- Las juntas de la cubierta se despegaron más de la tabla (titilaban con ella de lejos) y se dejan de dibujar a más de 180 m.
+- Bajo cubierta, la cámara en primera persona también acorta su distancia lejana: con el plano cercano tan corto, las superficies parpadeaban por falta de precisión.
+- Los piratas atacan el barco en el que vas, también si es uno capturado (antes navegar un barco capturado te hacía invisible para ellos).
+- Los piratas apuntan sus cañones según la distancia, como el jugador (antes disparaban casi planos y sus balas no llegaban a 100 m).
+- Morir cuesta: se cae la mitad de lo que llevas (menos el hacha y el pico) en una caja donde caíste, que puedes volver a buscar, y despiertas con hambre y sed a la mitad.
+- Si tu barco se hunde, vuelve a flote sin la carga de la bodega y sin los piratas que te habían abordado.
+- Si el barco se hunde estando bajo cubierta, sales por arriba (antes quedabas atrapado dentro del casco).
+- Bajo cubierta los piratas ya no te golpean a través del piso.
+- Todos tus barcos recargan los cañones en 2,5 s, como la balsa (los construidos recargaban en 3,6 s).
+- La balsa aguanta el doble (80): ya no se hunde de un solo barril o espolonazo.
+- El barco que se hunde baja igual a cualquier velocidad de cuadros (la fuerza va con la física).
+
 ## 0.33.0 — Partidas seguras  (2026-11-09)
 - "Nueva partida" funciona: antes recargaba el mundo y se perdían la interfaz, el HUD, el guardado y los controles táctiles. Ahora se vuelven a crear solos al recargar.
 - "Nueva partida" ya no borra tu partida: la aparta, y en el menú principal aparece "Recuperar la partida anterior" para volver a ella (se puede cambiar de una a otra).

@@ -71,7 +71,7 @@ public static class Detalles
     static void Tablones(Transform t, float L, float w, float h, Astillero.Materiales m)
     {
         var v = new List<Vector3>(); var uv = new List<Vector2>();
-        float y = h / 2f + 0.1f + 0.006f;
+        float y = h / 2f + 0.1f + 0.012f;   // bien despegadas de la cubierta: más cerca titilan con ella a lo lejos
         float borda = CascoProcedural.GrosorBorda(w) + 0.05f;
         float zA = CascoProcedural.ZPopa(L) + 0.15f, zB = CascoProcedural.ZProa(w, L) - 0.2f;
         const float paso = 0.32f, tramo = 0.5f;
@@ -101,7 +101,9 @@ public static class Detalles
         if (v.Count == 0) return;
         GameObject g = Astillero.Malla("Tablones", t, CascoProcedural.MallaDe("Tablones", v, uv), Modelos.DeColor(m.vela, new Color(0.16f, 0.11f, 0.07f)));
         g.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
+        g.GetComponent<MeshRenderer>().receiveShadows = false;
+        // Son líneas de 2,5 cm: lejos solo se ven como rayas que titilan, así que se dejan de dibujar a 180 m
+        Rendimiento.Capa(g, Rendimiento.CapaDetalle);
     }
 
     // ---------- Bote salvavidas ----------
