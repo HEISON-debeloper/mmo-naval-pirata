@@ -206,7 +206,12 @@ public class VentanaInventario : Ventana
         if (bd == null || inv == null || tipo == null) return;
         int movidos = aBodega ? bd.Guardar(inv, tipo, n) : bd.Sacar(inv, tipo, n);
         if (movidos > 0) Sonidos.Reproducir(Sonidos.Tipo.Transferir);
-        else { Sonidos.Reproducir(Sonidos.Tipo.Error); if (aBodega && bd.Libre == 0) Notificaciones.Alerta("La bodega está llena"); }
+        else
+        {
+            Sonidos.Reproducir(Sonidos.Tipo.Error);
+            if (aBodega && bd.Libre == 0) Notificaciones.Alerta("La bodega está llena");
+            if (!aBodega && inv.Llena) Notificaciones.Alerta("La mochila está llena");
+        }
         Refrescar();
     }
 

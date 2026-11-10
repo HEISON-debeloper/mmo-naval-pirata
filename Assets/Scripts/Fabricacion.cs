@@ -235,6 +235,7 @@ public class Fabricacion : MonoBehaviour
                 hacer = () => {
                     Mercader m = Mercader.Cercano(transform.position);
                     if (m == null) return "No hay mercader cerca";
+                    if (!Inventario.SinPeso(tipo) && inv.Espacio < n) return "No te cabe en la mochila (" + inv.Carga + " / " + Inventario.Capacidad + ")";
                     inv.Agregar(tipo, n);
                     m.Compraste(tipo);
                     return null; },

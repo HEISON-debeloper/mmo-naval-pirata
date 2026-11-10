@@ -21,6 +21,14 @@ public class AguaOlas : MonoBehaviour
     float celda, ox = float.NaN, oz = float.NaN;
     int lado;
 
+    // Olas en la tarjeta de video: el shader mueve los vértices y aquí solo se pasa el tiempo, la fuerza
+    // y la calma (en una textura que se rehace al mover el agua de casilla). Si no se puede, se hace aquí como antes.
+    bool enGPU;
+    Texture2D texCalma;
+    static readonly int idT = Shader.PropertyToID("_OlasT"), idInten = Shader.PropertyToID("_OlasInten"),
+                        idGPU = Shader.PropertyToID("_OlasGPU"), idRejilla = Shader.PropertyToID("_OlasRejilla"),
+                        idCalma = Shader.PropertyToID("_OlasCalma");
+
     void Awake()
     {
         celda = tamano / resolucion;
@@ -70,6 +78,22 @@ public class AguaOlas : MonoBehaviour
             if (viejo.HasProperty("_Smoothness")) nuevo.SetFloat("_Smoothness", viejo.GetFloat("_Smoothness"));
             r.sharedMaterial = nuevo;
         }
+        enGPU = r != null && r.sharedMaterial != null && r.sharedMaterial.shader == sh && sh != null
+                && SystemInfo.SupportsTextureFormat(TextureFormat.RFloat);
+        if (enGPU)
+        {
+            texCalma = new Texture2D(lado, lado, TextureFormat.RFloat, false, true)
+            { name = "Calma del agua", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            Shader.SetGlobalTexture(idCalma, texCalma);
+            Shader.SetGlobalVector(idRejilla, new Vector4(tamano / 2f, 1f / celda, 1f / lado, 0f));
+        }
+        Shader.SetGlobalFloat(idGPU, enGPU ? 1f : 0f);
+    }
+
+    void OnDestroy()
+    {
+        if (texCalma != null) Destroy(texCalma);
+        Shader.SetGlobalFloat(idGPU, 0f);
     }
 
     // ---------- Cascos: el agua no se dibuja dentro de los barcos cercanos ----------
@@ -128,10 +152,18 @@ public class AguaOlas : MonoBehaviour
             for (int z = 0; z < lado; z++)
             for (int x = 0; x < lado; x++)
                 calma[z * lado + x] = Olas.Calma(gx[x] + ox, gz[z] + oz);
+            if (enGPU) { texCalma.SetPixelData(calma, 0); texCalma.Apply(false); }
         }
 
         float t = Time.time;
         float inten = Olas.intensidad;
+        if (enGPU)
+        {
+            Shader.SetGlobalFloat(idT, t);
+            Shader.SetGlobalFloat(idInten, inten);
+            Cascos();
+            return;
+        }
         for (int z = 0; z < lado; z++)
         {
             float wz = gz[z] + oz;

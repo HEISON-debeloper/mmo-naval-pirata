@@ -42,6 +42,24 @@ public class Inventario : MonoBehaviour
     // Pone una cantidad sin avisar en pantalla (al cargar la partida)
     public void Fijar(string tipo, int n) => cosas[tipo] = Mathf.Max(0, n);
 
+    // ---------- Límite de la mochila ----------
+    // Caben 300 cosas (el oro y las herramientas no cuentan). Lo que no quepa se queda donde estaba:
+    // en el árbol, en la caja de botín o en la bodega. En modo creativo no hay límite.
+    public const int Capacidad = 300;
+    public static bool SinPeso(string tipo) => tipo == Oro || tipo == Hacha || tipo == Pico;
+    public int Carga { get { int n = 0; foreach (var kv in cosas) if (!SinPeso(kv.Key)) n += kv.Value; return n; } }
+    public int Espacio => ModoCreativo.Activo ? 1000000 : Mathf.Max(0, Capacidad - Carga);
+    public bool Llena => Espacio <= 0;
+
+    // Recibe lo que quepa (recolectar, botín, sacar de la bodega). Devuelve cuánto entró.
+    public int Recibir(string tipo, int n)
+    {
+        if (n <= 0) return 0;
+        if (!SinPeso(tipo)) n = Mathf.Min(n, Espacio);
+        if (n > 0) Agregar(tipo, n);
+        return n;
+    }
+
     public bool Quitar(string tipo, int n)
     {
         if (Cantidad(tipo) < n) return false;

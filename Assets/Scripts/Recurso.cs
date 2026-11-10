@@ -125,6 +125,7 @@ public class Recurso : MonoBehaviour
         if (h == Inventario.Pico && !(inv.Tiene(h) || ModoCreativo.Activo))
             return "Necesitas un pico para picar esto. Fabrícalo (Tab)";
 
+        if (inv.Llena) return "Mochila llena (" + Inventario.Capacidad + "). Guarda cosas en la bodega del barco";
         Golpes++;
         if (Golpes < golpesPorUso) return "Golpe " + Golpes + " / " + golpesPorUso;
         Golpes = 0;
@@ -136,36 +137,36 @@ public class Recurso : MonoBehaviour
         {
             case Tipo.Palma:
                 int cocos = Random.Range(0, 3);
-                inv.Agregar(Inventario.Madera, 4);
-                if (cocos > 0) inv.Agregar(Inventario.Coco, cocos);
+                inv.Recibir(Inventario.Madera, 4);
+                if (cocos > 0) inv.Recibir(Inventario.Coco, cocos);
                 texto = "¡Palma talada! +4 madera" + (cocos > 0 ? ", +" + cocos + " coco" + (cocos > 1 ? "s" : "") : "");
                 break;
             case Tipo.RocaGrande:
-                inv.Agregar(Inventario.Piedra, 2);
+                inv.Recibir(Inventario.Piedra, 2);
                 texto = "+2 piedra";
                 break;
             case Tipo.Fibra:
-                inv.Agregar(Inventario.Fibra, 1);
+                inv.Recibir(Inventario.Fibra, 1);
                 texto = "+1 fibra";
                 break;
             case Tipo.Arbusto:
-                inv.Agregar(Inventario.Fruta, 1);
+                inv.Recibir(Inventario.Fruta, 1);
                 texto = "+1 fruta";
                 break;
             case Tipo.Rama:
-                inv.Agregar(Inventario.Palo, 2);
+                inv.Recibir(Inventario.Palo, 2);
                 texto = "+2 palos";
                 break;
             case Tipo.Piedra:
-                inv.Agregar(Inventario.Piedra, 1);
+                inv.Recibir(Inventario.Piedra, 1);
                 texto = "+1 piedra";
                 break;
             case Tipo.Hierro:
-                inv.Agregar(Inventario.Mineral, 2);
+                inv.Recibir(Inventario.Mineral, 2);
                 texto = "+2 mineral de hierro";
                 break;
             default:
-                inv.Agregar(Inventario.Coco, 1);
+                inv.Recibir(Inventario.Coco, 1);
                 texto = "+1 coco";
                 break;
         }

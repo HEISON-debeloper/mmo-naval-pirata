@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.40.0";
-    public const string Nombre = "Combate más peligroso";
+    public const string Numero = "0.41.0";
+    public const string Nombre = "Agua por GPU y mochila con límite";
     public static string Texto => "v" + Numero;
 }

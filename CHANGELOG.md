@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.41.0 — Agua por GPU y mochila con límite  (2026-11-10)
+- Olas en la tarjeta de video: el agua ya no recalcula 60 000 vértices en el procesador cada cuadro; el shader mueve las olas con la misma fórmula que usan los barcos para flotar. Mismo aspecto facetado, mucho menos trabajo para el procesador (importante en el teléfono).
+- Cámara más liviana: ya no crea basura de memoria cada cuadro al revisar si algo la tapa, y no revisa barcos lejanos.
+- Límite de mochila: caben 300 cosas (el oro, el hacha y el pico no cuentan). Junto al oro se ve cuánto llevas (amarillo cerca del límite, rojo lleno). En modo creativo no hay límite.
+- Con la mochila llena no se puede recolectar; de las cajas de botín tomas lo que quepa y el resto se queda en la caja; al capturar un barco lo que no cabe queda en una caja junto a él; el mercader no te vende lo que no te cabe; de la bodega solo sacas lo que quepa.
+
 ## 0.40.0 — Combate más peligroso  (2026-11-09)
 - Las balas de cañón hieren a la gente: un tiro de lleno quita 45 de vida al jugador (y tumba a un marinero), y las astillas del impacto hieren a quien esté a menos de 2,4 m. No hieren a la gente del barco que disparó.
 - Los barcos enemigos grandes (8 cañones o más de costado) llevan también 2 cañones de proa y barriles en la popa: disparan de frente al perseguirte y te sueltan barriles si los sigues de cerca.

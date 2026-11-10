@@ -1,6 +1,8 @@
 // Agua del mar (URP): el mismo aspecto que el material Lit de antes (color, brillo, sombras, niebla),
 // y además NO se dibuja dentro del casco de los barcos cercanos. Sin esto, el mar se veía adentro
 // (por las portas, bajo cubierta, en la bodega) como si el barco se estuviera inundando.
+// Las olas se mueven en la tarjeta de video (vértice a vértice, con la misma fórmula que Olas.OlaBase) y las
+// caras planas salen de las derivadas de la posición: el procesador ya no recalcula 60 000 vértices por cuadro.
 Shader "Pirata/Agua"
 {
     Properties
@@ -25,6 +27,38 @@ Shader "Pirata/Agua"
         float4 _CascoForma[8];      // x = medio ancho, y = alto del casco, z = popa (z), w = punta de la proa (z)
         float4 _CascoForma2[8];     // x = donde empieza a cerrarse la proa (z), y = margen
         int _CascosN;
+
+        // Olas (las pone AguaOlas): tiempo, fuerza y la calma junto a las islas guardada en una textura
+        float _OlasT, _OlasInten, _OlasGPU;
+        float4 _OlasRejilla;   // x = medio tamaño, y = 1 / celda, z = 1 / lado
+        TEXTURE2D(_OlasCalma); SAMPLER(sampler_OlasCalma);
+
+        float OlaBase(float x, float z, float t)
+        {
+            return 0.6 * sin(0.08 * x + t * 0.8) + 0.4 * sin(0.11 * z + t * 1.1) + 0.25 * sin(0.06 * (x + z) + t * 0.6);
+        }
+
+        // Posición en el mundo del vértice ya movido por la ola
+        float3 PosConOla(float3 local)
+        {
+            float3 w = TransformObjectToWorld(local);
+            if (_OlasGPU > 0.5)
+            {
+                float2 celda = floor((local.xz + _OlasRejilla.x) * _OlasRejilla.y + 0.5);
+                float2 uv = (celda + 0.5) * _OlasRejilla.z;
+                float calma = SAMPLE_TEXTURE2D_LOD(_OlasCalma, sampler_OlasCalma, uv, 0).r;
+                w.y += OlaBase(w.x, w.z, _OlasT) * _OlasInten * calma;
+            }
+            return w;
+        }
+
+        // Normal de la cara (aspecto facetado), hacia arriba
+        float3 NormalCara(float3 posMundo, float3 deMalla)
+        {
+            if (_OlasGPU < 0.5) return normalize(deMalla);
+            float3 n = normalize(cross(ddy(posMundo), ddx(posMundo)));
+            return n.y < 0 ? -n : n;
+        }
 
         // Medio ancho del casco a la altura y en el punto z (la misma fórmula que CascoProcedural.Costado)
         float AnchoCasco(float y, float z, float4 f, float4 g)
@@ -76,7 +110,7 @@ Shader "Pirata/Agua"
             Salida vert(Entrada i)
             {
                 Salida o;
-                o.posMundo = TransformObjectToWorld(i.pos.xyz);
+                o.posMundo = PosConOla(i.pos.xyz);
                 o.pos = TransformWorldToHClip(o.posMundo);
                 o.normal = TransformObjectToWorldNormal(i.normal);
                 o.niebla = ComputeFogFactor(o.pos.z);
@@ -86,7 +120,7 @@ Shader "Pirata/Agua"
             half4 frag(Salida i) : SV_Target
             {
                 RecortarCascos(i.posMundo);
-                float3 n = normalize(i.normal);
+                float3 n = NormalCara(i.posMundo, i.normal);
                 InputData d = (InputData)0;
                 d.positionWS = i.posMundo;
                 d.positionCS = i.pos;
@@ -119,7 +153,7 @@ Shader "Pirata/Agua"
             #pragma fragment frag
             struct Entrada { float4 pos : POSITION; };
             struct Salida { float4 pos : SV_POSITION; float3 posMundo : TEXCOORD0; };
-            Salida vert(Entrada i) { Salida o; o.posMundo = TransformObjectToWorld(i.pos.xyz); o.pos = TransformWorldToHClip(o.posMundo); return o; }
+            Salida vert(Entrada i) { Salida o; o.posMundo = PosConOla(i.pos.xyz); o.pos = TransformWorldToHClip(o.posMundo); return o; }
             half frag(Salida i) : SV_Target { RecortarCascos(i.posMundo); return 0; }
             ENDHLSL
         }
@@ -133,8 +167,8 @@ Shader "Pirata/Agua"
             #pragma fragment frag
             struct Entrada { float4 pos : POSITION; float3 normal : NORMAL; };
             struct Salida { float4 pos : SV_POSITION; float3 posMundo : TEXCOORD0; float3 normal : TEXCOORD1; };
-            Salida vert(Entrada i) { Salida o; o.posMundo = TransformObjectToWorld(i.pos.xyz); o.pos = TransformWorldToHClip(o.posMundo); o.normal = TransformObjectToWorldNormal(i.normal); return o; }
-            half4 frag(Salida i) : SV_Target { RecortarCascos(i.posMundo); return half4(normalize(i.normal), 0); }
+            Salida vert(Entrada i) { Salida o; o.posMundo = PosConOla(i.pos.xyz); o.pos = TransformWorldToHClip(o.posMundo); o.normal = TransformObjectToWorldNormal(i.normal); return o; }
+            half4 frag(Salida i) : SV_Target { RecortarCascos(i.posMundo); return half4(NormalCara(i.posMundo, i.normal), 0); }
             ENDHLSL
         }
     }

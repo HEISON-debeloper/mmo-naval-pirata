@@ -83,6 +83,19 @@ public class CamaraBarco : MonoBehaviour
 
     // Recorre la línea del foco a la cámara y se detiene antes de lo sólido:
     // el casco (bajo la cubierta) y el castillo de popa del barco donde estás, y cualquier collider que no sea un barco.
+    readonly RaycastHit[] golpes = new RaycastHit[48];
+    readonly System.Collections.Generic.Dictionary<Collider, bool> deBarco = new System.Collections.Generic.Dictionary<Collider, bool>();
+
+    // ¿El collider es parte de un barco o de una persona? (se recuerda: un barco tiene cientos de piezas)
+    bool EsDeBarco(Collider c)
+    {
+        if (deBarco.TryGetValue(c, out bool si)) return si;
+        if (deBarco.Count > 4000) deBarco.Clear();
+        si = c.GetComponentInParent<ControlBarco>() != null || c.GetComponentInParent<Personaje>() != null;
+        deBarco[c] = si;
+        return si;
+    }
+
     Vector3 Despejar(Vector3 foco, Vector3 pos, out bool tapado)
     {
         tapado = false;
@@ -93,16 +106,20 @@ public class CamaraBarco : MonoBehaviour
         float libre = largo;
 
         // Islas y rocas (colliders que no son barcos ni personajes)
-        foreach (RaycastHit hit in Physics.SphereCastAll(foco, 0.3f, dir, largo, ~0, QueryTriggerInteraction.Ignore))
+        int nGolpes = Physics.SphereCastNonAlloc(foco, 0.3f, dir, golpes, largo, ~0, QueryTriggerInteraction.Ignore);   // sin crear basura cada cuadro
+        for (int g = 0; g < nGolpes; g++)
         {
-            if (hit.collider.GetComponentInParent<ControlBarco>() != null || hit.collider.GetComponentInParent<Personaje>() != null) continue;
-            if (hit.distance < libre) libre = hit.distance;
+            RaycastHit hit = golpes[g];
+            if (hit.distance >= libre || hit.collider is CharacterController) continue;
+            if (EsDeBarco(hit.collider)) continue;
+            libre = hit.distance;
         }
 
         // Los barcos cercanos (el tuyo y los demás): el casco y el castillo son sólidos para la cámara
         foreach (ControlBarco b in ControlBarco.Todos)
         {
             if (b == null) continue;
+            if ((b.transform.position - foco).sqrMagnitude > (largo + 120f) * (largo + 120f)) continue;   // lejos: ni mirarlo
             BoxCollider bc = b.GetComponent<BoxCollider>();
             if (bc == null) continue;
             Cubierta.Medidas(bc, out float w, out float h, out float L);

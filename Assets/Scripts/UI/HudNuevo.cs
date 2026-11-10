@@ -27,7 +27,7 @@ public class HudNuevo : MonoBehaviour
     // Enemigo
     VisualElement tarjetaEnemigo; Label enemigoNombre, enemigoDistancia, enemigoEstado; Componentes.BarraEstado enemigoCasco; VisualElement enemigoTrip;
     // Mochila
-    VisualElement tarjetaMochila, casillas, herramientas, flotantes; Label oro, mochilaVacia;
+    VisualElement tarjetaMochila, casillas, herramientas, flotantes; Label oro, mochilaVacia, peso;
     readonly Dictionary<string, Componentes.CasillaObjeto> casillaPor = new Dictionary<string, Componentes.CasillaObjeto>();
     readonly Dictionary<string, float> recibidoEn = new Dictionary<string, float>();
     Inventario invEscuchado;
@@ -154,6 +154,9 @@ public class HudNuevo : MonoBehaviour
         oro = Estilo.Etiqueta("0", Estilo.TamTexto, Estilo.Oro, Estilo.FuenteNegrita);
         oro.style.marginLeft = 6f; oro.style.flexGrow = 1f;
         fm.Add(oro);
+        peso = Estilo.Pequena("");   // cuánto llevas de lo que cabe
+        peso.style.marginRight = 8f;
+        fm.Add(peso);
         var abrir = Componentes.Indicacion(Teclas.Nombre(Accion.Inventario), "mochila", 0.85f);
         fm.Add(abrir);
         tarjetaMochila.Add(fm);
@@ -319,6 +322,9 @@ public class HudNuevo : MonoBehaviour
     {
         if (inv == null) return;
         oro.text = inv.Cantidad(Inventario.Oro).ToString("N0");
+        int carga = inv.Carga;
+        peso.text = ModoCreativo.Activo ? "" : carga + " / " + Inventario.Capacidad;
+        peso.style.color = carga >= Inventario.Capacidad ? new Color(0.95f, 0.45f, 0.35f) : carga >= Inventario.Capacidad * 0.85f ? Estilo.Oro : Estilo.TextoTenue;
         int visibles = 0;
         foreach (string t in OrdenMochila)
         {

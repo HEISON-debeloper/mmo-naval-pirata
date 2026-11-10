@@ -9,7 +9,7 @@ public class CajaBotin : MonoBehaviour
     const float AlcancePersona = 4f;
 
     Dictionary<string, int> contenido;
-    float vida, fase;
+    float vida, fase, avisoLlena = -10f;
     bool enTierra;
     float edad;   // unos segundos sin recogerse (la que suelta el jugador al morir no vuelve sola a su mochila)
 
@@ -82,8 +82,18 @@ public class CajaBotin : MonoBehaviour
     {
         Inventario inv = pj.GetComponent<Inventario>();
         if (inv == null) return;
-        foreach (var kv in contenido) inv.Agregar(kv.Key, kv.Value);
-        pj.Avisar("Recogiste botín: " + Botin.Resumen(contenido));
-        Destroy(gameObject);
+        var tomado = new Dictionary<string, int>();
+        var resto = new Dictionary<string, int>();
+        foreach (var kv in contenido)
+        {
+            int n = inv.Recibir(kv.Key, kv.Value);
+            if (n > 0) tomado[kv.Key] = n;
+            if (kv.Value - n > 0) resto[kv.Key] = kv.Value - n;
+        }
+        if (tomado.Count > 0) pj.Avisar("Recogiste botín: " + Botin.Resumen(tomado));
+        if (resto.Count == 0) { Destroy(gameObject); return; }
+        // Mochila llena: lo demás se queda en la caja
+        contenido = resto;
+        if (Time.time - avisoLlena > 4f) { avisoLlena = Time.time; pj.Avisar("Mochila llena: en la caja quedan " + Botin.Resumen(resto)); }
     }
 }

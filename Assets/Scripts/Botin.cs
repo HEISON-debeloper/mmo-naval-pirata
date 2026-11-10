@@ -60,8 +60,23 @@ public class Botin : MonoBehaviour
         Personaje p = Personaje.Instancia;
         Inventario inv = p != null ? p.GetComponent<Inventario>() : null;
         if (inv == null || carga.Count == 0) return;
-        foreach (var kv in carga) inv.Agregar(kv.Key, kv.Value);
-        p.Avisar("¡Botín capturado! " + Resumen(carga));
+        var tomado = new Dictionary<string, int>();
+        var resto = new Dictionary<string, int>();
+        foreach (var kv in carga)
+        {
+            int n = inv.Recibir(kv.Key, kv.Value);
+            if (n > 0) tomado[kv.Key] = n;
+            if (kv.Value - n > 0) resto[kv.Key] = kv.Value - n;
+        }
+        if (tomado.Count > 0) p.Avisar("¡Botín capturado! " + Resumen(tomado));
+        if (resto.Count > 0)
+        {
+            // Lo que no cabe en la mochila queda en una caja flotando junto al barco
+            BoxCollider bc = GetComponent<BoxCollider>();
+            Vector3 pos = transform.position + transform.right * ((bc != null ? bc.size.x : 8f) * 0.5f + 4f);
+            CajaBotin.Crear(pos, resto, MaterialDe("Mástil"), MaterialDe("Tubo"));
+            p.Avisar("Mochila llena: el resto quedó en una caja junto al barco");
+        }
         carga.Clear();
     }
 

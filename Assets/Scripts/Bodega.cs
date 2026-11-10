@@ -53,9 +53,9 @@ public class Bodega : MonoBehaviour
     // Mueve de la bodega al inventario todo lo de ese tipo. Devuelve cuántas unidades sacó.
     public int Sacar(Inventario inv, string tipo)
     {
-        int n = Cantidad(tipo);
+        int n = Mathf.Min(Cantidad(tipo), Inventario.SinPeso(tipo) ? int.MaxValue : inv.Espacio);   // lo que quepa en la mochila
         if (n <= 0) return 0;
-        cosas[tipo] = 0;
+        cosas[tipo] = Cantidad(tipo) - n;
         inv.Agregar(tipo, n);
         return n;
     }
@@ -74,6 +74,7 @@ public class Bodega : MonoBehaviour
     public int Sacar(Inventario inv, string tipo, int n)
     {
         n = Mathf.Min(n, Cantidad(tipo));
+        if (!Inventario.SinPeso(tipo)) n = Mathf.Min(n, inv.Espacio);   // lo que quepa en la mochila
         if (n <= 0) return 0;
         cosas[tipo] = Cantidad(tipo) - n;
         inv.Fijar(tipo, inv.Cantidad(tipo) + n);   // sin el aviso de "+n" (es un traslado, no algo nuevo)
