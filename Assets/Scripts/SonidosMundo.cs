@@ -78,8 +78,7 @@ public class SonidosMundo : MonoBehaviour
         }
         AudioClip[] c = Grupo(g);
         if (c.Length == 0) return;
-        AudioSource f = I.pool[I.sig];
-        I.sig = (I.sig + 1) % Fuentes;
+        AudioSource f = I.Libre();
         f.transform.position = pos;
         f.clip = c[Random.Range(0, c.Length)];
         f.spatialBlend = 1f;
@@ -90,14 +89,26 @@ public class SonidosMundo : MonoBehaviour
         f.Play();
     }
 
+    // Un canal que no esté sonando (si todos suenan, el más viejo)
+    AudioSource Libre()
+    {
+        for (int i = 0; i < Fuentes; i++)
+        {
+            AudioSource f = pool[(sig + i) % Fuentes];
+            if (!f.isPlaying) { sig = (sig + i + 1) % Fuentes; return f; }
+        }
+        AudioSource v = pool[sig];
+        sig = (sig + 1) % Fuentes;
+        return v;
+    }
+
     // Un sonido propio del jugador (comer, su espada): sin posición, siempre igual de cerca
     public static void Propio(string g, float vol = 1f, float tono = 1f)
     {
         if (I == null) return;
         AudioClip[] c = Grupo(g);
         if (c.Length == 0) return;
-        AudioSource f = I.pool[I.sig];
-        I.sig = (I.sig + 1) % Fuentes;
+        AudioSource f = I.Libre();
         f.clip = c[Random.Range(0, c.Length)];
         f.spatialBlend = 0f;
         f.volume = Mathf.Clamp01(vol) * Preferencias.VolumenEfectos;

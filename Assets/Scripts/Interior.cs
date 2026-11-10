@@ -81,6 +81,10 @@ public class Interior : MonoBehaviour
         if (n > 0 && !float.IsNaN(nv.zBajada)) p = Fuera(p, nv.zBajada);   // no caerse por el hueco
         if (!float.IsNaN(nv.zSubida)) p = Fuera(p, nv.zSubida);            // la escalera ocupa su sitio
         foreach (Rect r in nv.solidos) p = FueraDe(p, r);                  // fogón, mesa
+        // Lo de arriba puede empujar contra el costado: vuelve a quedar dentro del casco
+        bx = Mathf.Max(0.2f, Borde(p.z, nv.piso) - 0.35f);
+        p.x = Mathf.Clamp(p.x, -bx, bx);
+        p.z = Mathf.Clamp(p.z, nv.zA + 0.35f, nv.zB - 0.35f);
         p.y = nv.piso;
         return p;
     }
@@ -109,6 +113,8 @@ public class Interior : MonoBehaviour
 
     // ---------- Usar (F): escaleras y puerta del camarote ----------
     Vector3 PuntoBajar(int n) => new Vector3(0f, niveles[n].piso, niveles[n].zBajada + LargoHueco / 2f + 0.5f);
+    // Para la tecla de prueba: un punto donde pararse en el nivel n
+    public Vector3 PuntoPrueba(int n) => n <= 0 ? new Vector3(0f, niveles[0].piso, 0f) : PuntoSubir(n);
     Vector3 PuntoSubir(int n) => new Vector3(0f, niveles[n].piso, niveles[n].zSubida - LargoHueco / 2f - 0.5f);
     Vector3 PuertaFuera => new Vector3(0f, Cubierta.Altura(h), puertaZ + 0.6f);
     Vector3 PuertaDentro => new Vector3(0f, Cubierta.Altura(h), puertaZ - 0.6f);

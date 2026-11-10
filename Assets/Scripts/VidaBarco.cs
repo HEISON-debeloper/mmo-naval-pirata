@@ -95,7 +95,7 @@ public class VidaBarco : MonoBehaviour
         if (impacto > 3f) SonidosMundo.Uno("choque", c.contactCount > 0 ? c.GetContact(0).point : transform.position, Mathf.Clamp01(impacto / 10f), 1f, 150f, 0.8f);
         // Espolón: si embestí yo con la proa, mi barco casi no sufre; si me embistieron, sufro mucho más
         Espolon mio = GetComponent<Espolon>();
-        if (mio != null && mio.Golpea(c)) d *= 0.25f;
+        if (mio != null && c.rigidbody != null && c.rigidbody.GetComponent<VidaBarco>() != null && mio.Golpea(c)) d *= 0.25f;   // el espolón protege contra barcos, no contra rocas
         Espolon suyo = c.rigidbody != null ? c.rigidbody.GetComponent<Espolon>() : null;
         if (suyo != null && suyo != mio && suyo.Golpea(c))
         {

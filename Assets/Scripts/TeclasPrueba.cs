@@ -52,7 +52,8 @@ public class TeclasPrueba : MonoBehaviour
         if (k.digit0Key.wasPressedThisFrame) IrA(p, Recurso.Tipo.RocaGrande);
         if (k.hKey.wasPressedThisFrame) IrA(p, Recurso.Tipo.Hierro);
         if (k.jKey.wasPressedThisFrame) IrAIslaNueva(p);
-        if (k.uKey.wasPressedThisFrame) MasLejos(p);   // U (la K es la espada)
+        if (k.uKey.wasPressedThisFrame) MasLejos(p);
+        if (k.zKey.wasPressedThisFrame && !p.BajarPrueba()) p.Avisar("Prueba: sube a un barco con interior para bajar");   // Z: bajar un nivel   // U (la K es la espada)
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);
         if (k.tKey.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }

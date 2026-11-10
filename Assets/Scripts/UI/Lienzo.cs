@@ -117,10 +117,12 @@ public class Lienzo : MonoBehaviour
     // Píxeles de pantalla → unidades del panel
     public static float PorPixel => Raiz != null && Screen.width > 0 && Raiz.resolvedStyle.width > 0f ? Raiz.resolvedStyle.width / Screen.width : 1f;
 
+    Rect zonaAplicada;
     void AplicarZonaSegura()
     {
         if (Area == null) return;
         Rect s = Screen.safeArea;
+        zonaAplicada = s;
         float k = PorPixel;
         Area.style.paddingLeft = s.xMin * k;
         Area.style.paddingRight = (Screen.width - s.xMax) * k;
@@ -158,6 +160,7 @@ public class Lienzo : MonoBehaviour
 
     void Update()
     {
+        if (Screen.safeArea != zonaAplicada) AplicarZonaSegura();   // al girar el teléfono
         Ventanas.Actualizar();
         Pausa.ControlarTiempo();
         Notificaciones.Actualizar();

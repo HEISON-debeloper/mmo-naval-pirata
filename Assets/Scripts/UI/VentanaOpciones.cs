@@ -18,7 +18,8 @@ public class VentanaOpciones : Ventana
     VentanaOpciones() : base("opciones", "Opciones", "engranaje", 780f, 600f)
     {
         pestanas = new Componentes.Pestanas();
-        controles = Lista(pestanas.Agregar("Controles", "teclado"));
+        // En el teléfono no hay teclado que configurar (y la captura de tecla dejaba la pantalla bloqueada)
+        controles = Lienzo.EsMovil ? new VisualElement() : Lista(pestanas.Agregar("Controles", "teclado"));
         audio = Lista(pestanas.Agregar("Audio", "altavoz"));
         graficos = Lista(pestanas.Agregar("Gráficos", "ojo"));
         accesibilidad = Lista(pestanas.Agregar("Accesibilidad", "persona"));

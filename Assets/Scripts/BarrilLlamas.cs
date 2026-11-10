@@ -107,6 +107,7 @@ public class BarrilLlamas : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider c) => Tocar(c);
+    void OnTriggerStay(Collider c) => Tocar(c);   // un barco que ya lo tocaba cuando se armó también lo hace estallar
     void OnCollisionEnter(Collision c) => Tocar(c.collider);
 
     void Tocar(Collider c)

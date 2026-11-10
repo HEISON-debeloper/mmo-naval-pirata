@@ -24,8 +24,6 @@ public class Taller : MonoBehaviour
 
     void Update()
     {
-        Keyboard k = Keyboard.current;
-        if (k == null) return;
         if (!Abierto)
         {
             if (Teclas.Pulsada(Accion.Taller) && !Fabricacion.MenuAbierto && !Navegacion.MapaAbierto) IntentarAbrir();
@@ -44,6 +42,8 @@ public class Taller : MonoBehaviour
         pintura = p.barco.GetComponent<Pintura>();
         if (pintura == null) pintura = p.barco.gameObject.AddComponent<Pintura>();
         antes = pintura.datos.Copia();
+        mascaronAlAbrir = "ninguno";
+        foreach (Transform hijo in pintura.transform) if (hijo.name.StartsWith("mascaron_")) { mascaronAlAbrir = hijo.name; break; }
         Abierto = true;
         CamaraBarco.Orbitar = true;
         Ventanas.Abrir(VentanaTaller.I);
@@ -56,9 +56,17 @@ public class Taller : MonoBehaviour
     public static int CostoActual => instancia != null ? instancia.Costo() : 0;
     public const int PrecioParte = CostoParte, PrecioMascaron = CostoMascaron;
 
+    string mascaronAlAbrir;
+
     void Cancelar()
     {
-        if (pintura != null && antes != null) { pintura.datos = antes.Copia(); pintura.Aplicar(); }
+        if (pintura != null && antes != null)
+        {
+            pintura.datos = antes.Copia();
+            pintura.Aplicar();
+            // El mascarón que tenía al abrir (aunque fuera el de fábrica, que no queda anotado en la pintura)
+            if (!string.IsNullOrEmpty(mascaronAlAbrir)) Detalles.CambiarMascaron(pintura.transform, mascaronAlAbrir);
+        }
         Cerrar();
     }
 

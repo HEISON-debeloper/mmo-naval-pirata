@@ -163,6 +163,12 @@ public static class Teclas
         }
         string s = k.ToString();
         if (s.StartsWith("Digit")) return s.Substring(5);
+        // El nombre que tiene esa tecla en el teclado de verdad (Ñ, ´, + … según la distribución), no el del teclado de EE. UU.
+        Keyboard kb = Keyboard.current;
+        if (kb != null && !s.StartsWith("Numpad") && k != Key.None)
+        {
+            try { string real = kb[k].displayName; if (!string.IsNullOrEmpty(real)) return real.Length == 1 ? real.ToUpperInvariant() : real; } catch { }
+        }
         if (s.StartsWith("Numpad")) return "Num " + s.Substring(6);
         return s;
     }

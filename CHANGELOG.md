@@ -6,6 +6,22 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.37.0 — Arreglos de la auditoría  (2026-11-09)
+- El mar no entra en el barco (comprobado bajando por las 4 cubiertas de cañones y la bodega del navío de 4 puentes).
+- Tecla de prueba Z: baja un nivel dentro del barco donde estás (solo en el editor).
+- Taller: Cancelar ya no te regala el mascarón que probaste; en el teléfono el taller ya no se queda abierto si pierdes el barco.
+- Después de repintar, las velas que se transparentan para no tapar la vista salen con el color nuevo.
+- El HUD ya no rehace las herramientas 8 veces por segundo (menos trabajo en el teléfono).
+- Los nombres de las teclas salen como en tu teclado (Ñ, ´, +…) y no con los del teclado de EE. UU.
+- Teléfono: la zona segura (el notch) se recalcula al girar el teléfono, y Opciones ya no muestra la pestaña Controles (no hay teclado y se quedaba bloqueada).
+- Escribir en un buscador ya no deja el teclado del juego bloqueado al cerrar la ventana; Esc suelta el buscador.
+- Un sonido nuevo ya no corta a otro que sigue sonando: busca un canal libre.
+- Un recurso pequeño agotado (invisible) ya no tapa al de al lado.
+- Un barril de llamas estalla también si el barco ya lo estaba tocando cuando se armó.
+- El espolón solo te protege al embestir barcos, no al chocar contra rocas.
+- Los piratas que saltaron a tu barco desaparecen con su barco (ya no quedan huérfanos).
+- Bajo cubierta, los muebles y la escalera ya no te empujan dentro de la pared.
+
 ## 0.36.0 — Mundo que recuerda  (2026-11-09)
 - El mundo recuerda: si hundes o capturas al pirata de una zona, al volver no aparece otro (se acabó el farmeo infinito). Se guarda con la partida.
 - Los piratas hundidos del mundo se van al fondo en vez de reaparecer en el mismo sitio.

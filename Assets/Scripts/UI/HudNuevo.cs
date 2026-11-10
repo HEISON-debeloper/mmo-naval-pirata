@@ -14,6 +14,7 @@ public class HudNuevo : MonoBehaviour
 
     public static HudNuevo I { get; private set; }
     public static bool Visible = true;
+    string firmaHerramientas;
 
     VisualElement raiz;
     // Estado del jugador
@@ -330,6 +331,11 @@ public class HudNuevo : MonoBehaviour
         mochilaVacia.style.display = visibles == 0 ? DisplayStyle.Flex : DisplayStyle.None;
         casillas.style.display = visibles == 0 ? DisplayStyle.None : DisplayStyle.Flex;
 
+        // Solo se rehace si cambió algo (antes se rehacía ~8 veces por segundo)
+        string firma = (ModoCreativo.Activo ? "C" : "") + (inv.Tiene(Inventario.Hacha) ? "H" : "") + (inv.Tiene(Inventario.Pico) ? "P" : "")
+                       + (inv.Tiene(Inventario.Coco) || inv.Tiene(Inventario.Fruta) ? "K" : "") + Teclas.Nombre(Accion.Comer);
+        if (firma == firmaHerramientas) return;
+        firmaHerramientas = firma;
         herramientas.Clear();
         var et = Estilo.Pequena("Herramientas:"); et.style.marginRight = 4f;
         herramientas.Add(et);

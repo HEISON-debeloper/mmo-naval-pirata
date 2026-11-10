@@ -112,6 +112,20 @@ public class Personaje : MonoBehaviour
     }
 
     // El último barco que construyes pasa a ser el tuyo (donde reapareces)
+    // Tecla de prueba: baja un nivel dentro del barco donde estás (al llegar al fondo vuelve a la cubierta)
+    public bool BajarPrueba()
+    {
+        if (BarcoActual == null || estado == Estado.Libre) return false;
+        Interior it = Interior.De(BarcoActual);
+        if (it == null || it.Niveles < 2) return false;
+        if (estado == Estado.Timon) CambiarEstado(Estado.Cubierta);
+        interior = it;
+        nivel = (nivel + 1) % it.Niveles;
+        local = it.PuntoPrueba(nivel);
+        Avisar("Prueba: " + it.Nombre(nivel));
+        return true;
+    }
+
     public void AsignarBarcoPropio(ControlBarco b)
     {
         barco = b;
@@ -355,6 +369,7 @@ public class Personaje : MonoBehaviour
             Vector3 dr = r.transform.position - yo;
             if (dr.x * dr.x + dr.z * dr.z > filtro) continue;
             if (conHerramienta.HasValue && r.ConHerramienta != conHerramienta.Value) continue;
+            if (r.Agotado && !r.ConHerramienta) continue;   // uno pequeño agotado es invisible: no debe tapar al de al lado
             float d = r.Distancia(yo);
             if (d < dMejor) { dMejor = d; mejor = r; }
         }

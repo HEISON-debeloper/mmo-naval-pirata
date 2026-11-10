@@ -24,6 +24,8 @@ public class VelasSinEstorbo : MonoBehaviour
         if (instancia == null) return;
         instancia.Restaurar();
         instancia.barcoVelas = null;
+        foreach (var kv in instancia.transparentes) if (kv.Value != null) Destroy(kv.Value);   // copias con el color viejo
+        instancia.transparentes.Clear();
     }
 
     void LateUpdate()

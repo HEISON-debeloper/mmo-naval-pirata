@@ -343,6 +343,8 @@ public static class Componentes
             // Mientras se escribe, el juego no debe reaccionar a las letras
             campo.RegisterCallback<FocusInEvent>(_ => Teclas.Capturando = true);
             campo.RegisterCallback<FocusOutEvent>(_ => Teclas.Capturando = false);
+            campo.RegisterCallback<DetachFromPanelEvent>(_ => Teclas.Capturando = false);   // al cerrar la ventana con el foco puesto
+            campo.RegisterCallback<KeyDownEvent>(e => { if (e.keyCode == KeyCode.Escape) { campo.Blur(); Teclas.Capturando = false; } });
         }
 
         public void Enfocar() => campo.Q(className: "unity-base-text-field__input")?.Focus();

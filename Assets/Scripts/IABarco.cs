@@ -62,7 +62,13 @@ public class IABarco : MonoBehaviour
         if (GetComponent<Botin>() == null) gameObject.AddComponent<Botin>();   // lo que lleva en la bodega
     }
 
-    void OnDestroy() { Registrados.Remove(this); if (vida != null) vida.alReaparecer -= Reiniciar; }
+    void OnDestroy()
+    {
+        Registrados.Remove(this);
+        if (vida != null) vida.alReaparecer -= Reiniciar;
+        // Los piratas que saltaron a otro barco no se quedan huérfanos para siempre
+        foreach (Tripulante t in tripulantes) if (t != null) Destroy(t.gameObject);
+    }
 
     void Reiniciar()
     {

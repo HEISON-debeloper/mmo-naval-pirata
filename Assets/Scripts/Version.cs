@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.36.0";
-    public const string Nombre = "Mundo que recuerda";
+    public const string Numero = "0.37.0";
+    public const string Nombre = "Arreglos de la auditoría";
     public static string Texto => "v" + Numero;
 }

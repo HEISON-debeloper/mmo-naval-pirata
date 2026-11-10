@@ -49,7 +49,7 @@ public class VentanaAyuda : Ventana
         Grupo("Partida", "pergamino", "Se guarda sola cada 30 s y al salir · " + T(Accion.Guardar) + " guardar ya · " + T(Accion.BorrarPartida) + " borrar la partida (pide confirmación).");
         if (!Application.isEditor && !Debug.isDebugBuild) return;   // creativo y teclas de prueba solo existen al desarrollar
         Grupo("Creativo", "rayo", T(Accion.Creativo) + " activar o quitar: todo gratis, todas las herramientas, sin daño ni hambre. En Fabricar aparece la categoría Creativo: llenar de cañones, reparar, saltar de molde, traer o reiniciar el enemigo, mar en calma, +100 de todo.");
-        Grupo("Teclas de prueba", "teclado", K("1") + " dañar al pirata más cercano · " + K("2") + "/" + K("3") + " traerlo · " + K("4") + " materiales · " + K("5") + "–" + K("0") + " y " + K("H") + " ir a un recurso · " + K("Y") + " a tu barco · " + K("T") + " puntería fija · " + K("J") + " isla nueva · " + K("U") + " tu barco 800 m más lejos · " + K("L") + " caja de botín · " + K("N") + " mercader · " + K("V") + " un pirata viene a abordarte");
+        Grupo("Teclas de prueba", "teclado", K("1") + " dañar al pirata más cercano · " + K("2") + "/" + K("3") + " traerlo · " + K("4") + " materiales · " + K("5") + "–" + K("0") + " y " + K("H") + " ir a un recurso · " + K("Y") + " a tu barco · " + K("T") + " puntería fija · " + K("J") + " isla nueva · " + K("U") + " tu barco 800 m más lejos · " + K("Z") + " bajar un nivel dentro del barco · " + K("L") + " caja de botín · " + K("N") + " mercader · " + K("V") + " un pirata viene a abordarte");
     }
 
     void Grupo(string titulo, string icono, string texto)
