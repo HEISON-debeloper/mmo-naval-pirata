@@ -6,6 +6,15 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.32.0 — Portas abiertas y sonido real  (2026-11-09)
+- Portas de cañón con huecos de verdad en el casco: el casco se arma con las aberturas cortadas, con jambas de madera del grosor del costado. Desde afuera se ve el cañón dentro de un hueco oscuro; desde la cubierta de cañones se ve el mar por la porta.
+- Sonidos reales (grabaciones CC0 de OpenGameArt, créditos en Resources/Audio/CREDITOS.txt): cañonazos, impactos en el casco, balas que caen al agua, choques y espolonazos, barcos que se hunden.
+- Espada al aire y choque de espadas (tuya y de la tripulación enemiga), hacha en las palmas, pico en las rocas, palma que cae, comer.
+- Pasos en madera y en arena, chapuzón al caer al agua, brazadas al nadar, cadena del ancla, crujido de la jarcia al soltar velas.
+- Ambiente: viento (más fuerte navegando rápido, casi nada bajo cubierta), agua contra el casco, olas en la orilla, gaviotas cerca de las islas, crujidos de la madera a bordo y el fuego de la cocina bajo cubierta.
+- Interfaz: fabricar suena a martillo, comprar/vender a monedas y la madera a madera real.
+- Opciones → Audio: nuevos volúmenes de Efectos y de Ambiente.
+
 ## 0.31.1 — Cocina sólida y cámara táctil  (2026-11-09)
 - El fogón y la mesa de la cocina son sólidos: el pirata los rodea en vez de atravesarlos.
 - En primera persona (bajo cubierta) la espada ya no tapa media pantalla: solo aparece al golpear.

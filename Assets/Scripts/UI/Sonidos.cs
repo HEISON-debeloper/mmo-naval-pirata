@@ -38,7 +38,12 @@ public class Sonidos : MonoBehaviour
         float ahora = Time.unscaledTime;
         if (t == instancia.ultimoTipo && ahora - instancia.ultimo < 0.05f) return;
         instancia.ultimo = ahora; instancia.ultimoTipo = t;
-        if (!instancia.clips.TryGetValue(t, out AudioClip c)) { c = instancia.Crear(t); instancia.clips[t] = c; }
+        // Fabricar, monedas y madera usan grabaciones reales si están (Resources/Audio)
+        string real = t == Tipo.Fabricar ? "martillo" : t == Tipo.Moneda ? "monedas" : t == Tipo.Madera ? "madera" : null;
+        AudioClip[] reales = real != null ? SonidosMundo.Grupo(real) : null;
+        AudioClip c;
+        if (reales != null && reales.Length > 0) c = reales[Random.Range(0, reales.Length)];
+        else if (!instancia.clips.TryGetValue(t, out c)) { c = instancia.Crear(t); instancia.clips[t] = c; }
         AudioSource f = instancia.fuentes[instancia.siguiente];
         instancia.siguiente = (instancia.siguiente + 1) % instancia.fuentes.Length;
         f.pitch = t == Tipo.Pasar ? Random.Range(0.97f, 1.03f) : 1f;

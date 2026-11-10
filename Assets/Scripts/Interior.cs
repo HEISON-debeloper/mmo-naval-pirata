@@ -36,6 +36,9 @@ public class Interior : MonoBehaviour
     Astillero.Materiales m;
     Material oscuro;
 
+    Renderer fondoPortas; bool fondoBuscado;
+    public bool HayFogon { get; private set; }
+    public Vector3 FogonLocal { get; private set; }   // para el sonido del fuego
     public int Niveles => niveles.Count;
     public string Nombre(int n) => n == Camarote ? "el camarote del capitán" : n >= 0 && n < niveles.Count ? niveles[n].nombre : "";
 
@@ -150,6 +153,9 @@ public class Interior : MonoBehaviour
         if (raiz != null && raiz.activeSelf != (abajo || enCamarote)) raiz.SetActive(abajo || enCamarote);
         if (bajoCubierta != null && bajoCubierta.activeSelf != abajo) bajoCubierta.SetActive(abajo);
         if (camarote != null && camarote.activeSelf != enCamarote) camarote.SetActive(enCamarote);
+        // El fondo oscuro de las portas tapa la vista de afuera; abajo se quita para ver el mar por los huecos
+        if (!fondoBuscado) { fondoBuscado = true; Transform fp = transform.Find("Portas"); fondoPortas = fp != null ? fp.GetComponent<Renderer>() : null; }
+        if (fondoPortas != null && fondoPortas.enabled == abajo) fondoPortas.enabled = !abajo;
         for (int i = 1; i < niveles.Count; i++)
             if (niveles[i].luces != null) niveles[i].luces.SetActive(aBordo && Mathf.Abs(n - i) <= 1 && n != 0 && n != Camarote);
         if (lucesCamarote != null) lucesCamarote.SetActive(aBordo && n == Camarote);
@@ -466,6 +472,7 @@ public class Interior : MonoBehaviour
             float alto = Mathf.Min(0.95f, nv.techo - nv.piso - 0.6f);
             CascoProcedural.Caja(vl, ul, new Vector3(0f, nv.piso + alto / 2f, zf), new Vector3(1.2f, alto, 0.95f), Quaternion.identity);
             nv.solidos.Add(new Rect(-0.6f, zf - 0.48f, 1.2f, 1.0f));
+            HayFogon = true; FogonLocal = new Vector3(0f, nv.piso + 0.6f, zf);
             // Boca del fuego (oscura) y brasas
             CascoProcedural.Caja(vh, uh, new Vector3(0f, nv.piso + alto * 0.35f, zf - 0.48f), new Vector3(0.55f, alto * 0.4f, 0.02f), Quaternion.identity);
             // Olla de hierro encima y un cucharón

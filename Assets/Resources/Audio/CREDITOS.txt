@@ -1,0 +1,18 @@
+Sonidos del juego: grabaciones con licencia CC0 (dominio público) de OpenGameArt.org.
+Convertidas a mono, recortadas y normalizadas para el juego.
+
+canon_disparo, canon_impacto, canon_agua, hundimiento, choque  -> "Battle at Sea"  https://opengameart.org/content/battle-at-sea
+olas            -> "Beach Ocean Waves" https://opengameart.org/content/beach-ocean-waves  y  "Water Waves" https://opengameart.org/content/water-waves
+pasos           -> "Footsteps"  https://opengameart.org/content/footsteps-0
+espada_aire, espada_golpe -> "20 Sword Sound Effects" https://opengameart.org/content/20-sword-sound-effects-attacks-and-clashes
+hacha, crujido (a, b), martillo -> "100 CC0 metal and wood SFX" https://opengameart.org/content/100-cc0-metal-and-wood-sfx
+crujido (c)     -> "Tree Creaking" https://opengameart.org/content/tree-creaking
+pico            -> "Breaking Rock" https://opengameart.org/content/breaking-rock  y  "80 CC0 RPG SFX" https://opengameart.org/content/80-cc0-rpg-sfx
+monedas, madera, ancla (b) -> "80 CC0 RPG SFX" https://opengameart.org/content/80-cc0-rpg-sfx
+arbol_cae       -> "Tree Chop Fall Thud" https://opengameart.org/content/tree-chop-fall-thud
+comer           -> "7 Eating Crunches" https://opengameart.org/content/7-eating-crunches
+chapuzon, brazada, agua_casco -> "40 CC0 water / splash / slime SFX" https://opengameart.org/content/40-cc0-water-splash-slime-sfx
+gaviotas        -> "Solo Seagull Sound Effects" https://opengameart.org/content/solo-seagull-sound-effects
+viento          -> "Wind" https://opengameart.org/content/wind1
+ancla (a)       -> "Chain / Winch Sounds" https://opengameart.org/content/chain-winch-sounds
+fuego           -> "Fire Crackling" https://opengameart.org/content/fire-crackling

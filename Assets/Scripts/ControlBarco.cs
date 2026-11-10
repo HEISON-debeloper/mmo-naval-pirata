@@ -67,7 +67,7 @@ public class ControlBarco : MonoBehaviour
         entradaTimon = 0f;
         if (controlActivo && k != null)
         {
-            if (!hundido && Teclas.Pulsada(Accion.Adelante)) NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela);
+            if (!hundido && Teclas.Pulsada(Accion.Adelante)) { NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela); SonidosMundo.Uno("crujido", transform.position + Vector3.up * 4f, 0.5f, 0.8f, 20f); }
             if (Teclas.Pulsada(Accion.Atras)) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, hundido ? 0 : -1);
             if (Teclas.Pulsada(Accion.Ancla)) AlternarAncla();
             if (Teclas.Presionada(Accion.Izquierda)) entradaTimon -= 1f;
@@ -110,7 +110,7 @@ public class ControlBarco : MonoBehaviour
         }
     }
 
-    public void AlternarAncla() => Anclado = !Anclado;
+    public void AlternarAncla() { Anclado = !Anclado; SonidosMundo.Uno("ancla", transform.position, 0.9f, Anclado ? 1f : 0.9f, 25f); }
     public void FijarVelas(int nivel) => NivelVelaActual = Mathf.Clamp(nivel, 0, nivelesVela);
 
     void FixedUpdate()

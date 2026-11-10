@@ -42,7 +42,7 @@ public static class Astillero
 
         Transform t = raiz.transform;
         // Casco con forma de barco (proa en punta, fondo curvo), cubierta y borda: hechos por código para cualquier tamaño
-        Malla("Casco", t, CascoProcedural.Casco(w, h, L), m.casco);
+        GameObject casco = Malla("Casco", t, CascoProcedural.Casco(w, h, L), m.casco);
         Malla("Borda", t, CascoProcedural.Borda(w, h, L), m.casco);
         Malla("Cubierta", t, CascoProcedural.CubiertaMalla(w, h, L), m.cubierta);
         // Castillo de popa: el timón va encima, atrás del todo, como en los barcos de verdad
@@ -163,7 +163,10 @@ public static class Astillero
         if (conPorta.Count > 0)
         {
             CascoProcedural.Portas(conPorta, w, h, L, out Mesh huecos, out Mesh marcos, out Mesh tapas);
-            Rendimiento.Capa(Malla("Portas", t, huecos, Modelos.DeColor(m.canon, new Color(0.04f, 0.03f, 0.025f))), Rendimiento.CapaBarcoDetalle);
+            // El casco con los huecos de las portas abiertos de verdad
+            casco.GetComponent<MeshFilter>().sharedMesh = CascoProcedural.Casco(w, h, L, conPorta);
+            // El fondo oscuro de los huecos no se apaga de lejos (si no, se vería a través del barco)
+            Malla("Portas", t, huecos, Modelos.DeColor(m.canon, new Color(0.04f, 0.03f, 0.025f)));
             Rendimiento.Capa(Malla("Marcos", t, marcos, m.mastil), Rendimiento.CapaBarcoDetalle);
             Rendimiento.Capa(Malla("Tapas", t, tapas, m.casco), Rendimiento.CapaBarcoDetalle);
         }

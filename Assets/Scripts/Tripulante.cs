@@ -113,6 +113,7 @@ public class Tripulante : MonoBehaviour
             tAtaque = recarga;
             tAnim = 0.25f;
             p.RecibirDano(dano);
+            SonidosMundo.Uno("espada_golpe", transform.position + Vector3.up, 0.8f, 0.95f, 20f, 0.05f);
         }
     }
 

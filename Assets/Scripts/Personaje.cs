@@ -256,6 +256,7 @@ public class Personaje : MonoBehaviour
     {
         tEspada = recargaEspada;
         tAnim = 0.22f;
+        SonidosMundo.Uno("espada_aire", transform.position + Vector3.up, 0.6f, 1f, 15f);
 
         // Apunta solo hacia el enemigo más cercano a su alcance
         Tripulante cercano = null;
@@ -277,7 +278,7 @@ public class Personaje : MonoBehaviour
             Vector3 d = t.transform.position - transform.position;
             if (Mathf.Abs(d.y) > 1.5f) continue;
             d.y = 0f;
-            if (d.magnitude <= alcanceEspada && Vector3.Dot(frente, d.normalized) > 0.2f) t.Dano(danoEspada);
+            if (d.magnitude <= alcanceEspada && Vector3.Dot(frente, d.normalized) > 0.2f) { t.Dano(danoEspada); SonidosMundo.Uno("espada_golpe", t.transform.position + Vector3.up, 0.9f, 1f, 20f, 0.05f); }
         }
     }
 
@@ -354,10 +355,15 @@ public class Personaje : MonoBehaviour
         if (r == null)
         {
             if (RecursoCercano(false) != null) Avisar("Eso se recoge con la mano: presiona F");
+            SonidosMundo.Uno("espada_aire", transform.position + Vector3.up, 0.4f, 0.8f, 10f);
             return;   // golpe al aire
         }
         MirarA(r);
+        int usosAntes = r.Usos;
         Avisar(r.Golpear(inv));
+        string son = r.tipo == Recurso.Tipo.Palma ? "hacha" : "pico";
+        if (r.HerramientaNecesaria == null || inv.Tiene(r.HerramientaNecesaria) || ModoCreativo.Activo) SonidosMundo.Uno(son, r.transform.position + Vector3.up, 0.85f, 1f, 25f);
+        if (r.tipo == Recurso.Tipo.Palma && r.Usos < usosAntes && r.Agotado) SonidosMundo.Uno("arbol_cae", r.transform.position + Vector3.up * 3f, 0.9f, 1f, 40f);
     }
 
     // F: agarrar con la mano
@@ -392,6 +398,7 @@ public class Personaje : MonoBehaviour
             if (comido != null) desde = " (de la bodega)";
         }
         if (comido == null) { Avisar("No llevas comida. Agarra frutas y cocos en la isla"); return; }
+        SonidosMundo.Propio("comer", 0.7f);
         if (comido == Inventario.Coco) { sup.Comer(15f, 30f); Avisar("Coco" + desde + ": +15 hambre, +30 sed"); }
         else { sup.Comer(25f, 8f); Avisar("Fruta" + desde + ": +25 hambre, +8 sed"); }
     }

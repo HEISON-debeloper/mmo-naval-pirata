@@ -79,6 +79,8 @@ public class VentanaOpciones : Ventana
         audio.Clear();
         audio.Add(Cabecera("Volumen"));
         audio.Add(Deslizador("Volumen general", 0f, 1f, Preferencias.Volumen, Pct, v => Preferencias.Volumen = v));
+        audio.Add(Deslizador("Efectos (cañones, espada, pasos…)", 0f, 1f, Preferencias.VolumenEfectos, Pct, v => { Preferencias.VolumenEfectos = v; SonidosMundo.Propio("espada_aire", 0.6f); }));
+        audio.Add(Deslizador("Ambiente (mar, viento, gaviotas)", 0f, 1f, Preferencias.VolumenAmbiente, Pct, v => Preferencias.VolumenAmbiente = v));
         audio.Add(Deslizador("Sonidos de la interfaz", 0f, 1f, Preferencias.VolumenInterfaz, Pct, v => { Preferencias.VolumenInterfaz = v; Sonidos.Reproducir(Sonidos.Tipo.Clic); }));
         audio.Add(Interruptor("Sonidos al tocar botones y ventanas", Preferencias.SonidosInterfaz, v => Preferencias.SonidosInterfaz = v));
 

@@ -17,6 +17,8 @@ public static class Preferencias
         public float transparencia = 1f;       // 1 = paneles opacos como están diseñados, 0.5 = más transparentes
         public float volumen = 1f;
         public float volumenInterfaz = 0.8f;
+        public float volumenEfectos = 0.9f;
+        public float volumenAmbiente = 0.7f;
         public bool sonidosInterfaz = true;
         public int calidad = -1;               // -1 = la del proyecto
         public float escalaRender = 1f;
@@ -75,6 +77,8 @@ public static class Preferencias
 
     // ---------- Audio ----------
     public static float Volumen { get => D.volumen; set { D.volumen = Mathf.Clamp01(value); AudioListener.volume = D.volumen; } }
+    public static float VolumenEfectos { get => D.volumenEfectos; set { D.volumenEfectos = Mathf.Clamp01(value); } }
+    public static float VolumenAmbiente { get => D.volumenAmbiente; set { D.volumenAmbiente = Mathf.Clamp01(value); } }
     public static float VolumenInterfaz { get => D.volumenInterfaz; set { D.volumenInterfaz = Mathf.Clamp01(value); } }
     public static bool SonidosInterfaz { get => D.sonidosInterfaz; set => D.sonidosInterfaz = value; }
 

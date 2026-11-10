@@ -86,10 +86,33 @@ public static class CascoProcedural
                 float y = p.x, z = p.y;
                 float x = Mathf.Max(Costado(z, y - b, w, h, L), Costado(z, y + b, w, h, L)) + 0.03f;
                 Vector3 c = new Vector3(lado * x, y, z);
-                // Hueco: un cuadro oscuro hundido un poco
                 Vector3 n = new Vector3(lado, 0f, 0f);
-                Vector3 A = c + new Vector3(0, -b, -a), B = c + new Vector3(0, -b, a), C = c + new Vector3(0, b, a), D = c + new Vector3(0, b, -a);
-                CaraH(vh, uh, A, B, C, D, n);
+                if (y < h / 2f - 0.01f)
+                {
+                    // Porta del casco: hueco de verdad. Las jambas (el grosor del casco) van del costado de afuera a la pared
+                    // de adentro, y detrás un fondo oscuro que solo se ve desde afuera (se esconde al bajar al interior).
+                    float Xo(float zz, float yy) => lado * Costado(zz, yy, w, h, L);
+                    float Xi(float zz) => lado * Mathf.Min(Costado(zz, y - 0.43f, w, h, L) - 0.08f, Costado(zz, y, w, h, L) - 0.12f);
+                    float z0 = z - a, z1 = z + a, y0 = y - b, y1 = y + b;
+                    CaraH(vm, um, new Vector3(Xo(z0, y1), y1, z0), new Vector3(Xo(z1, y1), y1, z1), new Vector3(Xi(z1), y1, z1), new Vector3(Xi(z0), y1, z0), Vector3.down);
+                    CaraH(vm, um, new Vector3(Xo(z0, y0), y0, z0), new Vector3(Xo(z1, y0), y0, z1), new Vector3(Xi(z1), y0, z1), new Vector3(Xi(z0), y0, z0), Vector3.up);
+                    CaraH(vm, um, new Vector3(Xo(z0, y0), y0, z0), new Vector3(Xo(z0, y1), y1, z0), new Vector3(Xi(z0), y1, z0), new Vector3(Xi(z0), y0, z0), Vector3.forward);
+                    CaraH(vm, um, new Vector3(Xo(z1, y0), y0, z1), new Vector3(Xo(z1, y1), y1, z1), new Vector3(Xi(z1), y1, z1), new Vector3(Xi(z1), y0, z1), Vector3.back);
+                    // Fondo oscuro: una caja abierta hacia el hueco
+                    float fi = Mathf.Min(Mathf.Abs(Xi(z0)), Mathf.Abs(Xi(z1)));
+                    float xf = lado * Mathf.Max(0.2f, fi - 1.6f), xb = lado * fi;
+                    CaraH(vh, uh, new Vector3(xf, y0, z0), new Vector3(xf, y0, z1), new Vector3(xf, y1, z1), new Vector3(xf, y1, z0), n);
+                    CaraH(vh, uh, new Vector3(xb, y1, z0), new Vector3(xb, y1, z1), new Vector3(xf, y1, z1), new Vector3(xf, y1, z0), Vector3.down);
+                    CaraH(vh, uh, new Vector3(xb, y0, z0), new Vector3(xb, y0, z1), new Vector3(xf, y0, z1), new Vector3(xf, y0, z0), Vector3.up);
+                    CaraH(vh, uh, new Vector3(xb, y0, z0), new Vector3(xb, y1, z0), new Vector3(xf, y1, z0), new Vector3(xf, y0, z0), Vector3.forward);
+                    CaraH(vh, uh, new Vector3(xb, y0, z1), new Vector3(xb, y1, z1), new Vector3(xf, y1, z1), new Vector3(xf, y0, z1), Vector3.back);
+                }
+                else
+                {
+                    // Porta en la borda: un cuadro oscuro hundido un poco
+                    Vector3 A = c + new Vector3(0, -b, -a), B = c + new Vector3(0, -b, a), C = c + new Vector3(0, b, a), D = c + new Vector3(0, b, -a);
+                    CaraH(vh, uh, A, B, C, D, n);
+                }
                 // Marco: cuatro listones alrededor
                 Caja(vm, um, c + new Vector3(lado * 0.04f, b + g / 2f, 0f), new Vector3(0.12f, g, AnchoPorta + 2f * g), Quaternion.identity);
                 Caja(vm, um, c + new Vector3(lado * 0.04f, -b - g / 2f, 0f), new Vector3(0.12f, g, AnchoPorta + 2f * g), Quaternion.identity);
@@ -163,8 +186,14 @@ public static class CascoProcedural
     }
 
     // ---------- Casco ----------
-    public static Mesh Casco(float w, float h, float L)
+    public static Mesh Casco(float w, float h, float L, List<Vector2> portas = null)
     {
+        if (portas != null)
+        {
+            var delCasco = new List<Vector2>();
+            foreach (Vector2 p in portas) if (p.x < h / 2f - 0.01f) delCasco.Add(p);
+            if (delCasco.Count > 0) return CascoConPortas(w, h, L, delCasco);
+        }
         string clave = "casco" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00");
         if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
         var v = new List<Vector3>(); var uv = new List<Vector2>();
@@ -187,6 +216,73 @@ public static class CascoProcedural
         m = Armar("Casco", v, uv);
         cache[clave] = m;
         return m;
+    }
+
+    static float QuillaZ(float z, float w, float h, float L) => Quilla(Mathf.Clamp01((z - ZPopa(L)) / (ZProa(w, L) - ZPopa(L))), w, h, L);
+
+    // Casco con huecos de verdad en las portas: los costados se arman en una rejilla (largo × alto) que incluye los bordes
+    // de cada porta y se salta las celdas de adentro. Abajo de la franja de las portas sigue la curva hasta la quilla.
+    static Mesh CascoConPortas(float w, float h, float L, List<Vector2> portas)
+    {
+        var sb = new System.Text.StringBuilder("cascoP" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00"));
+        foreach (Vector2 p in portas) sb.Append('_').Append(p.x.ToString("0.00")).Append(',').Append(p.y.ToString("0.00"));
+        string clave = sb.ToString();
+        if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+
+        float a = AnchoPorta / 2f, b = AltoPorta / 2f, arriba = h / 2f;
+        var huecos = new List<Rect>();
+        float yMin = arriba;
+        foreach (Vector2 p in portas) { huecos.Add(new Rect(p.y - a, p.x - b, AnchoPorta, AltoPorta)); yMin = Mathf.Min(yMin, p.x - b); }
+        float yB = yMin - 0.3f;   // donde termina la franja de las portas
+
+        var zs = new List<float>();
+        for (int e = 0; e <= Estaciones * 2; e++) zs.Add(Mathf.Lerp(ZPopa(L), ZProa(w, L), (float)e / (Estaciones * 2)));
+        foreach (Rect r in huecos) { zs.Add(r.xMin); zs.Add(r.xMax); }
+        Ordenar(zs);
+        var ys = new List<float> { yB, arriba };
+        for (float y = yB + 0.6f; y < arriba - 0.05f; y += 0.6f) ys.Add(y);
+        foreach (Rect r in huecos) { ys.Add(r.yMin); ys.Add(r.yMax); }
+        Ordenar(ys);
+
+        var v = new List<Vector3>(); var uv = new List<Vector2>();
+        Vector3 P(float lado, float z, float y) => new Vector3(lado * Costado(z, y, w, h, L), y, z);
+        // Altura de la fila j (0 = franja, n = quilla) en el punto z: más filas cerca del fondo, donde se curva
+        const int nL = 8;
+        float Ybajo(float z, int j) { float ab = Mathf.Min(QuillaZ(z, w, h, L), yB); return yB - (yB - ab) * Mathf.Sin((float)j / nL * Mathf.PI / 2f); }
+        void Q(float lado, Vector3 pa, Vector3 pb, Vector3 pc, Vector3 pd) { if (lado > 0) Quad(v, uv, pa, pb, pc, pd, w, h, L); else Quad(v, uv, pa, pd, pc, pb, w, h, L); }
+        foreach (float lado in new[] { 1f, -1f })
+            for (int i = 0; i < zs.Count - 1; i++)
+            {
+                float z0 = zs[i], z1 = zs[i + 1], zm = (z0 + z1) / 2f;
+                // Franja de las portas (de arriba hacia abajo, como el resto del casco)
+                for (int k = ys.Count - 1; k > 0; k--)
+                {
+                    float yA = ys[k], yC = ys[k - 1], ym = (yA + yC) / 2f;
+                    bool enHueco = false;
+                    foreach (Rect r in huecos) if (zm > r.xMin && zm < r.xMax && ym > r.yMin && ym < r.yMax) { enHueco = true; break; }
+                    if (enHueco) continue;
+                    Q(lado, P(lado, z0, yA), P(lado, z1, yA), P(lado, z1, yC), P(lado, z0, yC));
+                }
+                // De la franja a la quilla
+                for (int j = 0; j < nL; j++)
+                    Q(lado, P(lado, z0, Ybajo(z0, j)), P(lado, z1, Ybajo(z1, j)), P(lado, z1, Ybajo(z1, j + 1)), P(lado, z0, Ybajo(z0, j + 1)));
+            }
+        // Espejo de popa con los mismos puntos del borde
+        float zp = zs[0];
+        var bordes = new List<float>();
+        for (int k = ys.Count - 1; k >= 0; k--) bordes.Add(ys[k]);
+        for (int j = 1; j <= nL; j++) bordes.Add(Ybajo(zp, j));
+        for (int k = 0; k < bordes.Count - 1; k++)
+            Quad(v, uv, P(-1f, zp, bordes[k]), P(1f, zp, bordes[k]), P(1f, zp, bordes[k + 1]), P(-1f, zp, bordes[k + 1]), w, h, L);
+        m = Armar("Casco", v, uv);
+        cache[clave] = m;
+        return m;
+    }
+
+    static void Ordenar(List<float> l)
+    {
+        l.Sort();
+        for (int k = l.Count - 1; k > 0; k--) if (l[k] - l[k - 1] < 0.02f) l.RemoveAt(k);
     }
 
     // ---------- Cubierta (la superficie donde se camina) ----------

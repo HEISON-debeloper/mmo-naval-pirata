@@ -177,6 +177,7 @@ public class Canones : MonoBehaviour
     {
         GameObject b = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         b.name = "Bala";
+        SonidosMundo.Uno("canon_disparo", c.position, 1f, Random.Range(0.9f, 1.05f), 60f, 0.07f);
         b.transform.position = Salida(c);
         b.transform.localScale = Vector3.one * 0.4f;
         Renderer rc = c.GetComponentInChildren<Renderer>();
