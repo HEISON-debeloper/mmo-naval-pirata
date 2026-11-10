@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.44.0 — Pecios permanentes  (2026-11-10)
+- Pecios permanentes: todo barco que se hunde cerca de ti (hasta 700 m) queda en el mar para siempre. Se ve el palo mayor roto asomando del agua, con una verga caída y jirones de vela, y queda marcado en la carta con una cruz. Se guardan con la partida (hasta 300). Las balsas no dejan pecio.
+- El nombre de una isla es para siempre: solo se le puede poner una vez. La carta avisa si la isla ya tiene tu nombre.
+
 ## 0.43.0 — Nombrar islas y texto al momento  (2026-11-10)
 - Nombrar islas: en la carta (M) hay un campo y el botón "Nombrar isla" para ponerle nombre a la isla descubierta más cercana (a menos de 300 m de la orilla). El nombre se guarda con la partida y lo usan la carta, la brújula, los avisos y el mercader de esa isla, aunque la isla se vuelva a armar al regresar.
 - Tamaño del texto y alto contraste se aplican al momento, sin cerrar y abrir las ventanas (con alto contraste, los textos tenues se aclaran).

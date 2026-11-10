@@ -66,6 +66,7 @@ public class VentanaMapa : Ventana
         ley.Add(Leyenda("isla", new Color(0.3f, 0.5f, 0.25f), "isla descubierta"));
         ley.Add(Leyenda("moneda", new Color(0.7f, 0.5f, 0.1f), "mercader"));
         ley.Add(Leyenda("marcador", new Color(0.65f, 0.15f, 0.12f), "tu marca"));
+        ley.Add(Leyenda("cerrar", new Color(0.32f, 0.24f, 0.18f), "pecio"));
         ley.Add(Estilo.Hueco(0f, 0f, true));
         ley.Add(Estilo.Pequena("Rueda: zoom · Arrastrar: mover · Doble clic: marcar · Clic der. en una marca: quitarla"));
         Contenido.Add(ley);
@@ -91,8 +92,11 @@ public class VentanaMapa : Ventana
         info.text = nav != null ? "Islas descubiertas: " + nav.CantidadDescubiertas + "   ·   Marcas: " + nav.Marcas.Count : "";
         Personaje pj = Personaje.Instancia;
         string idCerca = nav != null && pj != null ? nav.IslaParaNombrar(pj.transform.position, out Navegacion.Conocida cc) : null;
-        islaCerca.text = idCerca != null ? "Estás junto a " + Estilo.Col(nav.Descubierta(idCerca), Estilo.Oro) : "Acércate a una isla descubierta para ponerle nombre";
-        botonNombrar.SetEnabled(idCerca != null);
+        bool yaTiene = idCerca != null && nav.YaNombrada(idCerca);
+        islaCerca.text = idCerca == null ? "Acércate a una isla descubierta para ponerle nombre (es para siempre)"
+            : yaTiene ? "Estás junto a " + Estilo.Col(nav.Descubierta(idCerca), Estilo.Oro) + " (ya le pusiste nombre)"
+            : "Estás junto a " + Estilo.Col(nav.Descubierta(idCerca), Estilo.Oro) + ": ponle nombre (es para siempre)";
+        botonNombrar.SetEnabled(idCerca != null && !yaTiene);
         carta.MarkDirtyRepaint();
         Nombres();
     }
@@ -329,6 +333,15 @@ public class VentanaMapa : Ventana
                         p.strokeColor = tinta; p.lineWidth = 1f; p.Stroke();
                     }
                 }
+
+            // Pecios: una cruz de palos con el mástil roto
+            foreach (Pecios.Pecio pe in Pecios.Todos)
+            {
+                Vector2 c = APantalla(pe.pos);
+                if (!r.Contains(c)) continue;
+                p.strokeColor = new Color(0.32f, 0.24f, 0.18f); p.lineWidth = 2f;
+                p.BeginPath(); p.MoveTo(c + new Vector2(-5f, -5f)); p.LineTo(c + new Vector2(5f, 5f)); p.MoveTo(c + new Vector2(5f, -5f)); p.LineTo(c + new Vector2(-5f, 5f)); p.Stroke();
+            }
 
             // Marcas
             if (nav != null)

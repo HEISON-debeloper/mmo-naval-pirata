@@ -42,6 +42,8 @@ public class VidaBarco : MonoBehaviour
             Hundido = true;
             tiempoHundido = 0f;
             SonidosMundo.Uno("hundimiento", transform.position, 1f, 1f, 200f);
+            BoxCollider bc = GetComponent<BoxCollider>();
+            if (!Cubierta.EsPlana(GetComponent<ControlBarco>())) Pecios.Registrar(gameObject, bc != null ? bc.size.z : 20f);   // queda en el mar para siempre (las balsas no)
             if (flot != null) flot.activa = false;
             Debug.Log(name + " se hundió");
         }

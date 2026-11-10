@@ -23,7 +23,7 @@ public class Guardado : MonoBehaviour
     static string avisoAlCargar;   // si la partida estaba dañada
 
     [System.Serializable] class Cosa { public string tipo; public int n; }
-    [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; public bool mercado; }
+    [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; public bool mercado, propio; }
     [System.Serializable] class HornoGuardado { public Vector3 pos; public float rumbo; }
     [System.Serializable] class MercadoGuardado { public int semilla; public List<string> k = new List<string>(); public List<float> v = new List<float>(); }
 
@@ -52,7 +52,8 @@ public class Guardado : MonoBehaviour
         public List<HornoGuardado> hornos = new List<HornoGuardado>();
         public List<IslaConocida> islas = new List<IslaConocida>();
         public List<Navegacion.Marca> marcas = new List<Navegacion.Marca>();   // marcas puestas en la carta
-        public List<Vector2Int> celdasLimpias = new List<Vector2Int>();         // zonas sin pirata (ya lo hundiste o capturaste)
+        public List<Vector2Int> celdasLimpias = new List<Vector2Int>();
+        public List<Pecios.Pecio> pecios = new List<Pecios.Pecio>();         // barcos hundidos que quedan en el mar         // zonas sin pirata (ya lo hundiste o capturaste)
         public List<MercadoGuardado> mercados = new List<MercadoGuardado>();    // cómo quedó la oferta en cada mercado
     }
 
@@ -185,9 +186,10 @@ public class Guardado : MonoBehaviour
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (var kv in nav.Descubiertas)
-                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado });
+                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado, propio = kv.Value.propio });
         if (nav != null) d.marcas.AddRange(nav.Marcas);
         d.celdasLimpias.AddRange(MundoInfinito.Limpias);
+        d.pecios.AddRange(Pecios.Todos);
         foreach (var kv in Mercader.Recordados)
         {
             var mg = new MercadoGuardado { semilla = kv.Key };
@@ -241,6 +243,7 @@ public class Guardado : MonoBehaviour
     static void RecordarMundo(Datos d)
     {
         if (d.celdasLimpias != null) foreach (Vector2Int c in d.celdasLimpias) MundoInfinito.Limpias.Add(c);
+        Pecios.Fijar(d.pecios);
         if (d.mercados != null)
             foreach (MercadoGuardado mg in d.mercados)
             {
@@ -270,7 +273,7 @@ public class Guardado : MonoBehaviour
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (IslaConocida i in d.islas)
-                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla, mercado = i.mercado });
+                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla, mercado = i.mercado, propio = i.propio });
         if (nav != null && d.marcas != null) { nav.Marcas.Clear(); nav.Marcas.AddRange(d.marcas); }
         Inventario inv = p.GetComponent<Inventario>();
         if (inv != null) foreach (Cosa c in d.inventario) inv.Fijar(c.tipo, c.n);

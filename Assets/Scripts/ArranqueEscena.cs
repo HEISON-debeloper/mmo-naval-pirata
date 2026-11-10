@@ -50,6 +50,7 @@ public static class ArranqueEscena
             if (Falta<TeclasPrueba>()) TeclasPrueba.Crear();
             CicloDia.Crear();
             Clima.Crear();
+            Pecios.Crear();
         }
         static bool Falta<T>() where T : Object => Object.FindFirstObjectByType<T>() == null;
     }

@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.43.0";
-    public const string Nombre = "Nombrar islas y texto al momento";
+    public const string Numero = "0.44.0";
+    public const string Nombre = "Pecios permanentes";
     public static string Texto => "v" + Numero;
 }

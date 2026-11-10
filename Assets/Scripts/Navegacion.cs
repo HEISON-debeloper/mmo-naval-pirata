@@ -23,7 +23,7 @@ public class Navegacion : MonoBehaviour
     const float GradosVisibles = 180f;       // la brújula muestra media vuelta
 
     // Lo que se sabe de cada isla descubierta (sigue en el mapa aunque la isla se descargue al alejarte)
-    public struct Conocida { public string nombre; public Vector3 centro; public float orilla; public bool mercado; }
+    public struct Conocida { public string nombre; public Vector3 centro; public float orilla; public bool mercado, propio; }   // propio: ya le pusiste nombre
     readonly Dictionary<string, Conocida> descubiertas = new Dictionary<string, Conocida>();
     const float DistanciaBrujula = 2500f;   // la brújula muestra islas conocidas hasta esta distancia
     static Texture2D circulo, flecha;
@@ -116,13 +116,14 @@ public class Navegacion : MonoBehaviour
     public void Recordar(string id, Conocida c) => descubiertas[id] = c;   // al cargar la partida
 
     // ---------- Nombrar islas ----------
-    // El que descubre una isla le puede poner nombre (en la carta, junto a la isla). El nombre se guarda con la partida
-    // y lo usan la carta, la brújula, los avisos y el mercader de esa isla.
+    // El que descubre una isla le puede poner nombre (en la carta, junto a la isla). El nombre es para siempre: una vez
+    // puesto no se cambia. Se guarda con la partida y lo usan la carta, la brújula, los avisos y el mercader de esa isla.
     public const int LargoNombre = 28;
     const float DistanciaNombrar = 300f;   // metros desde la orilla
 
     // La isla descubierta más cercana a un punto (null si no hay ninguna a menos de 300 m de la orilla)
     public string Descubierta(string id) => descubiertas.TryGetValue(id, out Conocida c) ? c.nombre : "";
+    public bool YaNombrada(string id) => descubiertas.TryGetValue(id, out Conocida c) && c.propio;
 
     public string IslaParaNombrar(Vector3 pos, out Conocida c)
     {
@@ -142,8 +143,10 @@ public class Navegacion : MonoBehaviour
         if (nuevo.Length > LargoNombre) nuevo = nuevo.Substring(0, LargoNombre);
         string id = IslaParaNombrar(pos, out Conocida c);
         if (id == null) return "Acércate a una isla que hayas descubierto (a menos de " + DistanciaNombrar + " m)";
+        if (c.propio) return "Esta isla ya se llama " + c.nombre + ": el nombre es para siempre";
         string viejo = c.nombre;
         c.nombre = nuevo;
+        c.propio = true;
         descubiertas[id] = c;
         foreach (Isla isla in Isla.Todas) if (isla != null && isla.Id == id) Nombrar(isla, nuevo);
         Notificaciones.Mostrar(viejo + " ahora se llama " + nuevo, Notificaciones.Tipo.Descubrimiento, 5f);
