@@ -23,6 +23,7 @@ public class HudNuevo : MonoBehaviour
     Label modo;
     // Brújula
     Brujula brujula;
+    Label hora;
     // Enemigo
     VisualElement tarjetaEnemigo; Label enemigoNombre, enemigoDistancia, enemigoEstado; Componentes.BarraEstado enemigoCasco; VisualElement enemigoTrip;
     // Mochila
@@ -111,6 +112,13 @@ public class HudNuevo : MonoBehaviour
         brujula.style.position = Position.Absolute; brujula.style.top = 12f;
         brujula.style.left = Length.Percent(50f); brujula.style.translate = new Translate(Length.Percent(-50f), 0f);
         raiz.Add(brujula);
+        hora = Estilo.Pequena("");
+        hora.style.position = Position.Absolute; hora.style.top = 76f;
+        hora.style.left = Length.Percent(50f); hora.style.translate = new Translate(Length.Percent(-50f), 0f);
+        hora.style.unityTextAlign = TextAnchor.MiddleCenter;
+        hora.style.textShadow = new TextShadow { color = new Color(0f, 0f, 0f, 0.9f), offset = new Vector2(0f, 1f), blurRadius = 3f };
+        hora.pickingMode = PickingMode.Ignore;
+        raiz.Add(hora);
 
         // ---------- Arriba derecha: enemigo ----------
         tarjetaEnemigo = Componentes.Tarjeta(null, null, 0.88f);
@@ -280,6 +288,8 @@ public class HudNuevo : MonoBehaviour
 
         // Brújula
         if (Preferencias.HudBrujula) brujula.Actualizar(p, enemigos);
+        hora.style.display = Preferencias.HudBrujula && Preferencias.CicloDia ? DisplayStyle.Flex : DisplayStyle.None;
+        if (Preferencias.CicloDia) hora.text = (CicloDia.EsDeNoche ? "Noche · " : "Día · ") + CicloDia.Texto;
 
         tBuscar -= dt;
         if (tBuscar <= 0f) { enemigos = IABarco.Todos.ToArray(); tBuscar = 0.5f; }

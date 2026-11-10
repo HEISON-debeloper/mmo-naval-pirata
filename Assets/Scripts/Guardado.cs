@@ -34,6 +34,7 @@ public class Guardado : MonoBehaviour
         public Vector3 posJugador;
         public bool aBordo;
         public float vida = 100f, hambre = 100f, sed = 100f;
+        public float hora = -1f;   // hora del día (-1 = partidas viejas)
         public List<Cosa> inventario = new List<Cosa>();
 
         public bool tieneBarco;
@@ -62,7 +63,8 @@ public class Guardado : MonoBehaviour
     IEnumerator Start()
     {
         Datos d = Leer();
-        if (d != null) RecordarMundo(d);   // antes de que el mundo genere las primeras zonas
+        if (d != null) RecordarMundo(d);
+        CicloDia.Hora = d != null && d.hora >= 0f ? d.hora : 9f;   // partida nueva: de mañana   // antes de que el mundo genere las primeras zonas
         yield return null;
         yield return null;   // que el personaje y el mundo arranquen primero
         if (d != null) yield return Aplicar(d);
@@ -147,6 +149,7 @@ public class Guardado : MonoBehaviour
         Datos d = new Datos();
         d.posJugador = p.transform.position;
         d.vida = p.Vida;
+        d.hora = CicloDia.Hora;
         Supervivencia sup = p.GetComponent<Supervivencia>();
         if (sup != null) { d.hambre = sup.Hambre; d.sed = sup.Sed; }
         Inventario inv = p.GetComponent<Inventario>();

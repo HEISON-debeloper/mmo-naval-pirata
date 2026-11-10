@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.38.0 — Día y noche  (2026-11-09)
+- Día y noche: un día del juego dura una hora real. El sol sale y se pone, el cielo y la niebla cambian de color (naranja al amanecer y al atardecer, azul oscuro de noche) y de noche alumbra una luna azulada; nunca queda negro del todo.
+- Avisos de "Amanece" y "Cae la noche", y la hora debajo de la brújula (Día · 09:00 / Noche · 21:00).
+- La hora se guarda con la partida; una partida nueva empieza a las 9 de la mañana. Con el menú principal abierto el tiempo no avanza.
+- Opciones → Gráficos → "Día y noche": se puede apagar (queda siempre de día).
+- Tecla de prueba O: adelantar 3 horas (solo en el editor).
+- Mapa en el teléfono: pellizcar con dos dedos acerca o aleja la carta.
+
 ## 0.37.0 — Arreglos de la auditoría  (2026-11-09)
 - El mar no entra en el barco (comprobado bajando por las 4 cubiertas de cañones y la bodega del navío de 4 puentes).
 - Tecla de prueba Z: baja un nivel dentro del barco donde estás (solo en el editor).

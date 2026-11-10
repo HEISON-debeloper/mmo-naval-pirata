@@ -142,6 +142,9 @@ public class VentanaMapa : Ventana
         bool arrastrando; Vector2 ultimo; int puntero = -1; float bajada; Vector2 dondeBajada;
         static readonly float[] Pasos = { 25f, 50f, 100f, 250f, 500f, 1000f, 2500f, 5000f, 10000f };
         float paso;
+        // Dedos en la pantalla (teléfono): con dos se pellizca para acercar o alejar
+        readonly System.Collections.Generic.Dictionary<int, Vector2> dedos = new System.Collections.Generic.Dictionary<int, Vector2>();
+        float distanciaPellizco;
 
         public Carta(VentanaMapa v)
         {
@@ -192,6 +195,17 @@ public class VentanaMapa : Ventana
                 return;
             }
             if (e.button != 0) return;
+            if (e.pointerType == UnityEngine.UIElements.PointerType.touch)
+            {
+                dedos[e.pointerId] = e.localPosition;
+                this.CapturePointer(e.pointerId);
+                if (dedos.Count == 2)
+                {
+                    arrastrando = false;
+                    distanciaPellizco = Separacion();
+                    return;
+                }
+            }
             // Doble clic (medido aquí: el arrastre captura el puntero y el contador de clics del sistema no siempre llega)
             if (e.clickCount >= 2 || (Time.unscaledTime - bajada < 0.35f && ((Vector2)e.localPosition - dondeBajada).magnitude < 8f))
             { bajada = -1f; ventana.PedirNombreMarca(AMundo(e.localPosition)); return; }
@@ -199,8 +213,36 @@ public class VentanaMapa : Ventana
             this.CapturePointer(e.pointerId);
         }
 
+        float Separacion()
+        {
+            Vector2 a = Vector2.zero, b = Vector2.zero; int i = 0;
+            foreach (var kv in dedos) { if (i == 0) a = kv.Value; else if (i == 1) b = kv.Value; i++; }
+            return (a - b).magnitude;
+        }
+
+        Vector2 Medio()
+        {
+            Vector2 s = Vector2.zero; int n = 0;
+            foreach (var kv in dedos) { s += kv.Value; n++; if (n == 2) break; }
+            return n > 0 ? s / n : contentRect.center;
+        }
+
         void AlMover(PointerMoveEvent e)
         {
+            if (dedos.ContainsKey(e.pointerId))
+            {
+                dedos[e.pointerId] = e.localPosition;
+                if (dedos.Count >= 2)
+                {
+                    float sep = Separacion();
+                    if (distanciaPellizco > 10f && sep > 10f)
+                    {
+                        float f = sep / distanciaPellizco;   // >1 = abrir los dedos = acercar
+                        if (Mathf.Abs(f - 1f) > 0.01f) { Zoom(Mathf.Log(1f / f) / Mathf.Log(0.8f), Medio()); distanciaPellizco = sep; }
+                    }
+                    return;
+                }
+            }
             if (!arrastrando || e.pointerId != puntero) return;
             Vector2 d = (Vector2)e.localPosition - ultimo;
             ultimo = e.localPosition;
@@ -210,6 +252,7 @@ public class VentanaMapa : Ventana
 
         void AlSubir(PointerUpEvent e)
         {
+            if (dedos.Remove(e.pointerId)) this.ReleasePointer(e.pointerId);
             if (e.pointerId != puntero) return;
             arrastrando = false;
             this.ReleasePointer(e.pointerId);

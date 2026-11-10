@@ -24,6 +24,7 @@ public static class Preferencias
         public float escalaRender = 1f;
         public int suavizado = -1;             // MSAA: 1, 2, 4 u 8 muestras; -1 = según el aparato (4 en PC, 2 en teléfono)
         public bool sombras = true;
+        public bool cicloDia = true;
         public bool vsync = true;
         public int limiteFps = 0;              // 0 = sin límite
         public bool pantallaCompleta = true;
@@ -87,6 +88,7 @@ public static class Preferencias
     public static int Calidad { get => D.calidad; set => D.calidad = value; }
     public static int Suavizado { get => D.suavizado > 0 ? D.suavizado : (Application.isMobilePlatform ? 2 : 4); set => D.suavizado = value; }
     public static float EscalaRender { get => D.escalaRender; set { D.escalaRender = Mathf.Clamp(value, 0.5f, 1.5f); } }
+    public static bool CicloDia { get => D.cicloDia; set => D.cicloDia = value; }
     public static bool Sombras { get => D.sombras; set => D.sombras = value; }
     public static bool VSync { get => D.vsync; set => D.vsync = value; }
     public static int LimiteFps { get => D.limiteFps; set => D.limiteFps = value; }

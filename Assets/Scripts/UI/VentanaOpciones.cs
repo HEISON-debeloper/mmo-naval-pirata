@@ -100,6 +100,7 @@ public class VentanaOpciones : Ventana
         ds.alCambiar = k => { Preferencias.Suavizado = muestras[k]; Aplicar(); };
         graficos.Add(ds);
         graficos.Add(Interruptor("Sombras", Preferencias.Sombras, v => { Preferencias.Sombras = v; Aplicar(); }));
+        graficos.Add(Interruptor("Día y noche (1 hora real = 1 día)", Preferencias.CicloDia, v => { Preferencias.CicloDia = v; Aplicar(); }));
         graficos.Add(Interruptor("Sincronización vertical (VSync)", Preferencias.VSync, v => { Preferencias.VSync = v; Aplicar(); }));
         var fps = new List<string> { "Sin límite", "30", "60", "90", "120", "144" };
         int[] valores = { 0, 30, 60, 90, 120, 144 };

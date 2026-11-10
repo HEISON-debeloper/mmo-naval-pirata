@@ -53,6 +53,7 @@ public class TeclasPrueba : MonoBehaviour
         if (k.hKey.wasPressedThisFrame) IrA(p, Recurso.Tipo.Hierro);
         if (k.jKey.wasPressedThisFrame) IrAIslaNueva(p);
         if (k.uKey.wasPressedThisFrame) MasLejos(p);
+        if (k.oKey.wasPressedThisFrame) { CicloDia.Hora = Mathf.Repeat(CicloDia.Hora + 3f, 24f); p.Avisar("Prueba: son las " + CicloDia.Texto); }   // O: +3 horas
         if (k.zKey.wasPressedThisFrame && !p.BajarPrueba()) p.Avisar("Prueba: sube a un barco con interior para bajar");   // Z: bajar un nivel   // U (la K es la espada)
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);

@@ -48,6 +48,7 @@ public static class ArranqueEscena
             if (GameObject.Find("Recursos que crecen") == null) Recurso.CrearActualizador();
             if (Falta<ModoCreativo>()) ModoCreativo.Crear();
             if (Falta<TeclasPrueba>()) TeclasPrueba.Crear();
+            CicloDia.Crear();
         }
         static bool Falta<T>() where T : Object => Object.FindFirstObjectByType<T>() == null;
     }
