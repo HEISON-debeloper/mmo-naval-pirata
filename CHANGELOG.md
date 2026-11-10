@@ -6,6 +6,11 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.32.1 — Cañonazos con fuerza  (2026-11-09)
+- Cañonazos mucho más fuertes y graves: el sonido se reforzó con una capa grave y ahora se oye a todo volumen hasta unos 35 m (antes se apagaba a los 7 m y sonaba como un barco lejano). Impactos, balas al agua, explosiones, choques y hundimientos también se oyen más lejos.
+- Todos los efectos normalizados al mismo nivel (los pasos sonaban casi mudos).
+- Más canales de sonido a la vez (48) para que una andanada completa no corte los demás sonidos.
+
 ## 0.32.0 — Portas abiertas y sonido real  (2026-11-09)
 - Portas de cañón con huecos de verdad en el casco: el casco se arma con las aberturas cortadas, con jambas de madera del grosor del costado. Desde afuera se ve el cañón dentro de un hueco oscuro; desde la cubierta de cañones se ve el mar por la porta.
 - Sonidos reales (grabaciones CC0 de OpenGameArt, créditos en Resources/Audio/CREDITOS.txt): cañonazos, impactos en el casco, balas que caen al agua, choques y espolonazos, barcos que se hunden.

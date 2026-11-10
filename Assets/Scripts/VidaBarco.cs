@@ -40,7 +40,7 @@ public class VidaBarco : MonoBehaviour
             vida = 0f;
             Hundido = true;
             tiempoHundido = 0f;
-            SonidosMundo.Uno("hundimiento", transform.position, 1f, 1f, 70f);
+            SonidosMundo.Uno("hundimiento", transform.position, 1f, 1f, 200f);
             if (flot != null) flot.activa = false;
             Debug.Log(name + " se hundió");
         }
@@ -74,7 +74,7 @@ public class VidaBarco : MonoBehaviour
         float impacto = c.relativeVelocity.magnitude;
         if (impacto <= 1.5f) return;
         float d = (impacto - 1.5f) * danoPorChoque;
-        if (impacto > 3f) SonidosMundo.Uno("choque", c.contactCount > 0 ? c.GetContact(0).point : transform.position, Mathf.Clamp01(impacto / 10f), 1f, 50f, 0.8f);
+        if (impacto > 3f) SonidosMundo.Uno("choque", c.contactCount > 0 ? c.GetContact(0).point : transform.position, Mathf.Clamp01(impacto / 10f), 1f, 150f, 0.8f);
         // Espolón: si embestí yo con la proa, mi barco casi no sufre; si me embistieron, sufro mucho más
         Espolon mio = GetComponent<Espolon>();
         if (mio != null && mio.Golpea(c)) d *= 0.25f;

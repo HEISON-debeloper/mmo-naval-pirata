@@ -122,7 +122,7 @@ public class BarrilLlamas : MonoBehaviour
         if (explotado) return;
         explotado = true;
         Vector3 centro = transform.position;
-        SonidosMundo.Uno("canon_impacto", centro, 1f, 0.75f, 60f);
+        SonidosMundo.Uno("canon_impacto", centro, 1f, 0.75f, 220f);
         var tocados = new System.Collections.Generic.HashSet<VidaBarco>();
         foreach (Collider c in Physics.OverlapSphere(centro, Radio, ~0, QueryTriggerInteraction.Ignore))
         {

@@ -177,7 +177,7 @@ public class Canones : MonoBehaviour
     {
         GameObject b = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         b.name = "Bala";
-        SonidosMundo.Uno("canon_disparo", c.position, 1f, Random.Range(0.9f, 1.05f), 60f, 0.07f);
+        SonidosMundo.Uno("canon_disparo", c.position, 1f, Random.Range(0.9f, 1.05f), 280f, 0.07f);   // un cañonazo se oye fuerte hasta ~35 m y de lejos aún retumba
         b.transform.position = Salida(c);
         b.transform.localScale = Vector3.one * 0.4f;
         Renderer rc = c.GetComponentInChildren<Renderer>();

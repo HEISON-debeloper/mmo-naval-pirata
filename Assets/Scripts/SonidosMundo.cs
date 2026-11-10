@@ -18,7 +18,7 @@ public class SonidosMundo : MonoBehaviour
     static SonidosMundo I;
     static readonly Dictionary<string, AudioClip[]> grupos = new Dictionary<string, AudioClip[]>();
     static readonly Dictionary<string, float> ultimoDe = new Dictionary<string, float>();
-    const int Fuentes = 32;
+    const int Fuentes = 48;
     AudioSource[] pool;
     int sig;
     AudioSource viento, agua, fuego;
