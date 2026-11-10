@@ -6,6 +6,9 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.32.2 — Velas con sonido  (2026-11-09)
+- Sonido de las velas: al soltarlas se oye la lona desplegándose y llenándose de viento; al recogerlas, el roce de la tela con el crujir de la jarcia. Suena en tu barco y en los demás (de lejos más bajo). Grabaciones CC0 de OpenGameArt.
+
 ## 0.32.1 — Cañonazos con fuerza  (2026-11-09)
 - Cañonazos mucho más fuertes y graves: el sonido se reforzó con una capa grave y ahora se oye a todo volumen hasta unos 35 m (antes se apagaba a los 7 m y sonaba como un barco lejano). Impactos, balas al agua, explosiones, choques y hundimientos también se oyen más lejos.
 - Todos los efectos normalizados al mismo nivel (los pasos sonaban casi mudos).

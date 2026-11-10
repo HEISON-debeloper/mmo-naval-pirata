@@ -16,3 +16,4 @@ gaviotas        -> "Solo Seagull Sound Effects" https://opengameart.org/content/
 viento          -> "Wind" https://opengameart.org/content/wind1
 ancla (a)       -> "Chain / Winch Sounds" https://opengameart.org/content/chain-winch-sounds
 fuego           -> "Fire Crackling" https://opengameart.org/content/fire-crackling
+vela_soltar, vela_recoger -> "Fabric Rustling" https://opengameart.org/content/fabric-rustling , "Large Wings Flap" https://opengameart.org/content/large-wings-flap , "Dragon Flap" https://opengameart.org/content/dragon-flap-0 (más crujidos de madera de arriba)

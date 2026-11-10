@@ -67,7 +67,7 @@ public class ControlBarco : MonoBehaviour
         entradaTimon = 0f;
         if (controlActivo && k != null)
         {
-            if (!hundido && Teclas.Pulsada(Accion.Adelante)) { NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela); SonidosMundo.Uno("crujido", transform.position + Vector3.up * 4f, 0.5f, 0.8f, 20f); }
+            if (!hundido && Teclas.Pulsada(Accion.Adelante)) NivelVelaActual = Mathf.Min(NivelVelaActual + 1, nivelesVela);
             if (Teclas.Pulsada(Accion.Atras)) NivelVelaActual = Mathf.Max(NivelVelaActual - 1, hundido ? 0 : -1);
             if (Teclas.Pulsada(Accion.Ancla)) AlternarAncla();
             if (Teclas.Presionada(Accion.Izquierda)) entradaTimon -= 1f;
@@ -75,6 +75,14 @@ public class ControlBarco : MonoBehaviour
         }
         else entradaTimon = Mathf.Clamp(timonExterno, -1f, 1f);
         if (hundido) NivelVelaActual = 0;
+        // Sonido de las velas: lona que se suelta y se llena de viento, o que se recoge con crujir de jarcia
+        if (nivelSonado == int.MinValue) nivelSonado = NivelVelaActual;
+        if (NivelVelaActual != nivelSonado)
+        {
+            bool soltar = NivelVelaActual > nivelSonado && NivelVelaActual > 0;
+            nivelSonado = NivelVelaActual;
+            if (!hundido) SonidosMundo.Uno(soltar ? "vela_soltar" : "vela_recoger", transform.position + Vector3.up * 6f, 0.9f, 1f, 30f, 0.15f);
+        }
 
         if (vela != null)
         {
@@ -110,6 +118,7 @@ public class ControlBarco : MonoBehaviour
         }
     }
 
+    int nivelSonado = int.MinValue;   // al empezar (o cargar) no suena
     public void AlternarAncla() { Anclado = !Anclado; SonidosMundo.Uno("ancla", transform.position, 0.9f, Anclado ? 1f : 0.9f, 25f); }
     public void FijarVelas(int nivel) => NivelVelaActual = Mathf.Clamp(nivel, 0, nivelesVela);
 
