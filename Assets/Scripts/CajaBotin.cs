@@ -18,6 +18,7 @@ public class CajaBotin : MonoBehaviour
 
     public static void Crear(Vector3 pos, Dictionary<string, int> contenido, Material madera, Material banda, bool enTierra = false)
     {
+        if (!enTierra) pos = FueraDeIslas(pos);
         GameObject g = new GameObject("Caja de botín");
         g.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, Random.value * 360f, 0f));
         Astillero.Pieza(PrimitiveType.Cube, "Caja", g.transform, Vector3.zero, Quaternion.identity, new Vector3(1.1f, 0.8f, 0.8f), madera);
@@ -28,6 +29,22 @@ public class CajaBotin : MonoBehaviour
         c.enTierra = enTierra;
         if (enTierra) c.vida = -Duracion * 4f;   // en tierra no se hunde: dura unos 20 minutos
         c.fase = Random.value * 10f;
+    }
+
+    // Una caja que flota no puede quedar dentro de una isla: se empuja hasta el agua de la orilla
+    static Vector3 FueraDeIslas(Vector3 pos)
+    {
+        foreach (Isla i in Isla.Todas)
+        {
+            if (i == null) continue;
+            Vector3 d = pos - i.transform.position; d.y = 0f;
+            float borde = i.radio * 1.25f;
+            if (d.magnitude >= borde) continue;
+            if (d.sqrMagnitude < 0.01f) d = Vector3.forward;
+            Vector3 c = i.transform.position;
+            pos = new Vector3(c.x, pos.y, c.z) + d.normalized * (borde + 1f);
+        }
+        return pos;
     }
 
     void Update()

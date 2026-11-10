@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.40.0 — Combate más peligroso  (2026-11-09)
+- Las balas de cañón hieren a la gente: un tiro de lleno quita 45 de vida al jugador (y tumba a un marinero), y las astillas del impacto hieren a quien esté a menos de 2,4 m. No hieren a la gente del barco que disparó.
+- Los barcos enemigos grandes (8 cañones o más de costado) llevan también 2 cañones de proa y barriles en la popa: disparan de frente al perseguirte y te sueltan barriles si los sigues de cerca.
+- Las cajas de botín de un barco hundido ya no aparecen dentro de una isla: se empujan al agua de la orilla.
+- Lluvia más fina y transparente (antes se veían barras gruesas).
+
 ## 0.39.0 — Clima por zonas  (2026-11-09)
 - Clima por zonas: el mar se divide en zonas de 1,5 km y cada una cambia de tiempo cada 10 minutos: despejado, nublado, lluvia o tormenta. Cerca del inicio casi siempre está despejado; mar adentro hay más tormentas.
 - Nubes: cielo gris, menos sol y niebla más cerca. Lluvia: gotas finas y transparentes alrededor de la cámara y sonido de lluvia (bajo cubierta se oye amortiguado y no caen gotas).

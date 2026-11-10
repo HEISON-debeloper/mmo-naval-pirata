@@ -60,6 +60,16 @@ public class IABarco : MonoBehaviour
         puntoRuta = NuevoPunto();
         CrearTripulacion();
         if (GetComponent<Botin>() == null) gameObject.AddComponent<Botin>();   // lo que lleva en la bodega
+        Invoke(nameof(ArmarExtremos), 0.2f);   // después de que Canones reparta los de costado
+    }
+
+    // Los barcos grandes también llevan cañones de proa y barriles en la popa
+    void ArmarExtremos()
+    {
+        if (canones == null || canones.enBabor + canones.enEstribor < 8) return;
+        canones.Fijar(canones.enBabor, canones.enEstribor,
+            Mathf.Max(canones.enProa, Mathf.Min(2, canones.RanurasLado(LadoCanon.Proa))),
+            Mathf.Max(canones.enPopa, Mathf.Min(1, canones.RanurasLado(LadoCanon.Popa))));
     }
 
     void OnDestroy()
@@ -228,6 +238,10 @@ public class IABarco : MonoBehaviour
         Vector3 der = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
         if (Vector3.Dot(-der, n) > 0.96f) canones.Disparar(true);
         if (Vector3.Dot(der, n) > 0.96f) canones.Disparar(false);
+        // También usa los cañones de proa (de frente, al perseguir) y suelta barriles por la popa si lo siguen de cerca
+        Vector3 adelante = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        if (Vector3.Dot(adelante, n) > 0.97f) canones.Disparar(LadoCanon.Proa);
+        if (Vector3.Dot(-adelante, n) > 0.9f && dist < 45f) canones.Disparar(LadoCanon.Popa);
     }
 
     // A quién atacar: el barco del jugador (el que construyó o capturó) solo si el jugador está a bordo o cerca.
