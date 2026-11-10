@@ -58,6 +58,59 @@ public class AguaOlas : MonoBehaviour
         // Límites fijos (las olas no pasan de ±3 m): así no hay que recalcularlos cada frame
         malla.bounds = new Bounds(Vector3.zero, new Vector3(tamano, 6f, tamano));
         GetComponent<MeshFilter>().sharedMesh = malla;
+
+        // Material del agua que no se dibuja dentro de los cascos (si el shader no está, se queda el de antes)
+        Shader sh = Shader.Find("Pirata/Agua");
+        MeshRenderer r = GetComponent<MeshRenderer>();
+        if (sh != null && r != null && r.sharedMaterial != null && r.sharedMaterial.shader != sh)
+        {
+            Material viejo = r.sharedMaterial;
+            Material nuevo = new Material(sh) { name = "Agua (sin entrar a los barcos)" };
+            if (viejo.HasProperty("_BaseColor")) nuevo.SetColor("_BaseColor", viejo.GetColor("_BaseColor"));
+            if (viejo.HasProperty("_Smoothness")) nuevo.SetFloat("_Smoothness", viejo.GetFloat("_Smoothness"));
+            r.sharedMaterial = nuevo;
+        }
+    }
+
+    // ---------- Cascos: el agua no se dibuja dentro de los barcos cercanos ----------
+    const int MaxCascos = 8;
+    static readonly int idALocal = Shader.PropertyToID("_CascoALocal"), idForma = Shader.PropertyToID("_CascoForma"),
+                        idForma2 = Shader.PropertyToID("_CascoForma2"), idN = Shader.PropertyToID("_CascosN");
+    readonly Matrix4x4[] matrices = new Matrix4x4[MaxCascos];
+    readonly Vector4[] formas = new Vector4[MaxCascos], formas2 = new Vector4[MaxCascos];
+    readonly System.Collections.Generic.List<(float d, ControlBarco b)> cercanos = new System.Collections.Generic.List<(float, ControlBarco)>();
+
+    void Cascos()
+    {
+        Camera cam = Camera.main;
+        Vector3 c = cam != null ? cam.transform.position : transform.position;
+        cercanos.Clear();
+        foreach (ControlBarco b in ControlBarco.Todos)
+        {
+            if (b == null) continue;
+            float d = (b.transform.position - c).sqrMagnitude;
+            if (d < 400f * 400f) cercanos.Add((d, b));
+        }
+        cercanos.Sort((a, b) => a.d.CompareTo(b.d));
+        int n = 0;
+        foreach (var (_, b) in cercanos)
+        {
+            if (n >= MaxCascos) break;
+            if (Cubierta.EsPlana(b)) continue;   // la balsa no tiene casco cerrado
+            VidaBarco v = b.GetComponent<VidaBarco>();
+            if (v != null && v.Hundido) continue;   // el que se hunde sí se llena de agua
+            BoxCollider col = b.GetComponent<BoxCollider>();
+            if (col == null) continue;
+            Cubierta.Medidas(col, out float w, out float h, out float L);
+            matrices[n] = b.transform.worldToLocalMatrix;
+            formas[n] = new Vector4(w / 2f, h, CascoProcedural.ZPopa(L), CascoProcedural.ZProa(w, L));
+            formas2[n] = new Vector4(0.3f * L - 0.6f * w, 0.06f, 0f, 0f);
+            n++;
+        }
+        Shader.SetGlobalMatrixArray(idALocal, matrices);
+        Shader.SetGlobalVectorArray(idForma, formas);
+        Shader.SetGlobalVectorArray(idForma2, formas2);
+        Shader.SetGlobalInt(idN, n);
     }
 
     void LateUpdate()
@@ -108,5 +161,6 @@ public class AguaOlas : MonoBehaviour
         }
         malla.SetVertices(verts);
         malla.SetNormals(normales);
+        Cascos();
     }
 }

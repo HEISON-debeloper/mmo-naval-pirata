@@ -36,6 +36,7 @@ public static class Astillero
         forma.convex = true;
         ObstaculosCubierta obstaculos = raiz.AddComponent<ObstaculosCubierta>();
 
+        raiz.AddComponent<MallasPropias>();
         Rigidbody rb = raiz.AddComponent<Rigidbody>();
         rb.mass = 20000f * (L * w * h) / (18f * 4.5f * 3.06f);
         rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -245,7 +246,7 @@ public static class Astillero
         bool enCubierta = h < AltoMinPortas;
         int nf = enCubierta ? 1 : Mathf.Max(1, filas);
         // Las filas van de arriba (1,2 m bajo la cubierta) hasta un poco sobre la línea de agua
-        float yMin = -h / 2f + Calado * h + 0.8f;
+        float yMin = -h / 2f + Calado * h + 1.0f;   // la porta más baja queda ~0,6 m sobre el agua en calma
         float sepFilas = nf > 1 ? Mathf.Min(FormaBarco.AltoPiso, (h / 2f - PrimeraFila - yMin) / (nf - 1)) : FormaBarco.AltoPiso;
         if (nf > 1 && sepFilas < 1.6f) { nf = Mathf.Max(1, Mathf.FloorToInt((h / 2f - PrimeraFila - yMin) / 1.6f) + 1); sepFilas = nf > 1 ? (h / 2f - PrimeraFila - yMin) / (nf - 1) : FormaBarco.AltoPiso; }
         float b = CascoProcedural.AltoPorta / 2f;

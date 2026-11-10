@@ -37,6 +37,8 @@ public class Interior : MonoBehaviour
     Material oscuro;
 
     Renderer fondoPortas; bool fondoBuscado;
+    readonly List<GameObject> cureñas = new List<GameObject>();
+    bool cureñasVisibles;
     public bool HayFogon { get; private set; }
     public Vector3 FogonLocal { get; private set; }   // para el sonido del fuego
     public int Niveles => niveles.Count;
@@ -156,6 +158,7 @@ public class Interior : MonoBehaviour
         // El fondo oscuro de las portas tapa la vista de afuera; abajo se quita para ver el mar por los huecos
         if (!fondoBuscado) { fondoBuscado = true; Transform fp = transform.Find("Portas"); fondoPortas = fp != null ? fp.GetComponent<Renderer>() : null; }
         if (fondoPortas != null && fondoPortas.enabled == abajo) fondoPortas.enabled = !abajo;
+        if (cureñasVisibles != abajo) { cureñasVisibles = abajo; foreach (GameObject c in cureñas) if (c != null) c.SetActive(abajo); }
         for (int i = 1; i < niveles.Count; i++)
             if (niveles[i].luces != null) niveles[i].luces.SetActive(aBordo && Mathf.Abs(n - i) <= 1 && n != 0 && n != Camarote);
         if (lucesCamarote != null) lucesCamarote.SetActive(aBordo && n == Camarote);
@@ -288,6 +291,8 @@ public class Interior : MonoBehaviour
         GameObject c = Modelos.Crear("canon", pivote, new Vector3(0f, 0f, 0.25f), Quaternion.identity, 1f, _ => m.mastil, "Cureña", "Ruedas");
         c.name = "Cureña interior";
         Rendimiento.Capa(c, Rendimiento.CapaBarcoDetalle);
+        c.SetActive(false);   // solo se ve bajo cubierta (desde afuera no se ve y eran cientos de piezas dibujándose)
+        cureñas.Add(c);
     }
 
     // Piso, paredes con las portas abiertas, mamparos de proa y popa, luces y carga de un nivel
@@ -420,11 +425,14 @@ public class Interior : MonoBehaviour
             if (Modelos.Existe("farol"))
                 Modelos.Crear("farol", padre, p + Vector3.down * 0.25f, Quaternion.identity, 0.8f,
                     nm => nm == "Vidrio" ? Modelos.DeColor(m.vela, new Color(1f, 0.78f, 0.35f), true) : m.canon);
+            // Hasta 2 luces de verdad por cubierta (en el teléfono muchas luces parpadean y cuestan); los faroles se ven igual
+            bool conLuz = n <= 2 || k % 2 == 0;
+            if (!conLuz) continue;
             GameObject gl = new GameObject("Luz");
             gl.transform.SetParent(nv.luces.transform, false);
             gl.transform.localPosition = p;
             Light l = gl.AddComponent<Light>();
-            l.type = LightType.Point; l.color = new Color(1f, 0.72f, 0.42f); l.range = 9f; l.intensity = 2.2f;
+            l.type = LightType.Point; l.color = new Color(1f, 0.72f, 0.42f); l.range = n > 2 ? 13f : 9f; l.intensity = 2.2f;
             l.shadows = LightShadows.None;
         }
         nv.luces.SetActive(false);

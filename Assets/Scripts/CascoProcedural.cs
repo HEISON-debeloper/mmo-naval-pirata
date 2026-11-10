@@ -123,13 +123,15 @@ public static class CascoProcedural
                 Vector3 bisagra = c + new Vector3(lado * 0.1f, b + g, 0f);
                 Caja(vt, ut, bisagra + giro * new Vector3(0f, -(AltoPorta + g) / 2f, 0f), new Vector3(0.07f, AltoPorta + g, AnchoPorta + g), giro);
             }
-        huecos = Armar("Portas", vh, uh);
-        marcos = Armar("Marcos", vm, um);
-        tapas = Armar("Tapas", vt, ut);
+        huecos = Armar("Portas", vh, uh); Propias.Add(huecos);
+        marcos = Armar("Marcos", vm, um); Propias.Add(marcos);
+        tapas = Armar("Tapas", vt, ut); Propias.Add(tapas);
     }
 
     public static void Cara(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal) => CaraH(v, uv, a, b, c, d, normal);
-    public static Mesh MallaDe(string nombre, List<Vector3> v, List<Vector2> uv) => Armar(nombre, v, uv);
+    // Mallas hechas para un solo barco (no compartidas): se destruyen con él (ver MallasPropias)
+    public static readonly HashSet<Mesh> Propias = new HashSet<Mesh>();
+    public static Mesh MallaDe(string nombre, List<Vector3> v, List<Vector2> uv) { Mesh m = Armar(nombre, v, uv); Propias.Add(m); return m; }
 
     // Una cara de 4 puntos que mira hacia "normal"
     static void CaraH(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)

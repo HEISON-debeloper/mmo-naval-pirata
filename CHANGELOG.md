@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.35.0 — Barcos livianos y secos  (2026-11-09)
+- El mar ya no entra en los barcos: el agua tiene su propio shader que no se dibuja dentro del casco de los barcos cercanos (hasta 8). Antes se veía el agua por las portas, bajo cubierta y en la bodega, como si el barco se estuviera inundando. Un barco que se hunde sí se llena.
+- La fila de portas más baja sube 20 cm: queda unos 60 cm sobre el agua en calma.
+- Barcos livianos: el tubo del cañón pasa de 2.046 a 148 vértices (un navío de 4 puentes llevaba más de 300 mil vértices solo en tubos).
+- Las cureñas de los cañones de adentro solo se dibujan cuando estás bajo cubierta (antes cientos de piezas ocultas se dibujaban siempre).
+- Máximo 2 luces de verdad por cubierta (con alcance mayor); los faroles se siguen viendo todos.
+- Las mallas hechas para cada barco (jarcia, detalles, tablones, portas, interior) se destruyen cuando el barco desaparece: en viajes largos la memoria ya no crece sin parar.
+
 ## 0.34.0 — Combate justo e imagen limpia  (2026-11-09)
 - Imagen limpia: suavizado de bordes (MSAA) activado — 4x en PC y 2x en teléfono — y elegible en Opciones → Gráficos (desactivado, 2x, 4x, 8x). La jarcia, las juntas de cubierta y los cantos del casco ya no se ven como líneas que titilan a lo lejos.
 - Sin rayas de sombra sobre cascos y velas (sesgo de sombras más alto).
