@@ -111,6 +111,7 @@ public class Lienzo : MonoBehaviour
         Raiz.EnableInClassList("sin-animaciones", Preferencias.ReducirMovimiento || Preferencias.Animaciones <= 0.01f);
         Raiz.EnableInClassList("alto-contraste", Preferencias.AltoContraste);
         Raiz.EnableInClassList("movil", EsMovil);
+        Estilo.ReaplicarTexto(Raiz);   // tamaño del texto y alto contraste, al momento
         AplicarZonaSegura();
     }
 

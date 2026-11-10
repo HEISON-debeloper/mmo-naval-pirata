@@ -11,7 +11,9 @@ public class VentanaMapa : Ventana
     public static VentanaMapa I => i ??= new VentanaMapa();
 
     readonly Carta carta;
-    readonly Label info, escala;
+    readonly Label info, escala, islaCerca;
+    readonly Componentes.CampoBusqueda nombreIsla;
+    readonly Button botonNombrar;
     readonly VisualElement etiquetas;
     readonly List<Label> poolNombres = new List<Label>();
 
@@ -25,6 +27,25 @@ public class VentanaMapa : Ventana
         var bz2 = Componentes.BotonIcono("menos", () => carta.Zoom(-1f, null), "Alejar (rueda, −)", 16f, Estilo.Texto);
         barra.Add(bz1); barra.Add(bz2);
         Contenido.Add(barra);
+
+        // Nombrar la isla descubierta más cercana
+        var fn = Estilo.Fila(8f); fn.style.marginBottom = 8f;
+        nombreIsla = new Componentes.CampoBusqueda("Nombre nuevo…", 240f);
+        fn.Add(nombreIsla);
+        botonNombrar = Componentes.Boton("Nombrar isla", () =>
+        {
+            Navegacion nav = Navegacion.Instancia; Personaje p = Personaje.Instancia;
+            if (nav == null || p == null) return;
+            string error = nav.Renombrar(p.transform.position, nombreIsla.Texto);
+            if (error != null) { Notificaciones.Alerta(error); Sonidos.Reproducir(Sonidos.Tipo.Error); return; }
+            Sonidos.Reproducir(Sonidos.Tipo.Descubrir, 0.7f);
+            nombreIsla.Limpiar();
+            Actualizar();
+        }, "pergamino", Componentes.Variante.Fantasma, 30f);
+        fn.Add(botonNombrar);
+        islaCerca = Estilo.Pequena(""); islaCerca.style.flexGrow = 1f;
+        fn.Add(islaCerca);
+        Contenido.Add(fn);
 
         carta = new Carta(this);
         carta.style.flexGrow = 1f;
@@ -68,6 +89,10 @@ public class VentanaMapa : Ventana
     {
         Navegacion nav = Navegacion.Instancia;
         info.text = nav != null ? "Islas descubiertas: " + nav.CantidadDescubiertas + "   ·   Marcas: " + nav.Marcas.Count : "";
+        Personaje pj = Personaje.Instancia;
+        string idCerca = nav != null && pj != null ? nav.IslaParaNombrar(pj.transform.position, out Navegacion.Conocida cc) : null;
+        islaCerca.text = idCerca != null ? "Estás junto a " + Estilo.Col(nav.Descubierta(idCerca), Estilo.Oro) : "Acércate a una isla descubierta para ponerle nombre";
+        botonNombrar.SetEnabled(idCerca != null);
         carta.MarkDirtyRepaint();
         Nombres();
     }

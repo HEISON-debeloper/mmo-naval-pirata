@@ -40,6 +40,7 @@ public class MundoInfinito : MonoBehaviour
     // Piratas que siguieron fuera de su celda (te persiguen); se quitan si quedan muy lejos
     readonly List<GameObject> sueltos = new List<GameObject>();
     readonly List<Vector2Int> pendientes = new List<Vector2Int>();
+    readonly List<(Vector2Int celda, List<(Vector3 pos, float orilla)> islas)> enemigosPendientes = new List<(Vector2Int, List<(Vector3, float)>)>();
     Vector2Int celdaActual = new Vector2Int(int.MinValue, int.MinValue);
 
     public int IslasCreadas { get; private set; }
@@ -143,12 +144,24 @@ public class MundoInfinito : MonoBehaviour
                 }
         }
 
-        // Una celda por frame, para que no se trabe
+        // Una sola cosa pesada por cuadro, para que no se trabe: una celda (sus islas) o un barco enemigo.
+        // Un barco grande tiene miles de piezas; si se armaba junto con las islas, el juego daba un tirón.
         if (pendientes.Count > 0)
         {
             Vector2Int k = pendientes[0];
             pendientes.RemoveAt(0);
             if (!celdas.ContainsKey(k)) Generar(k);
+        }
+        else if (enemigosPendientes.Count > 0)
+        {
+            var (k, islasDeCelda) = enemigosPendientes[0];
+            enemigosPendientes.RemoveAt(0);
+            if (celdas.TryGetValue(k, out List<GameObject> lista) && !Limpias.Contains(k))   // la celda sigue cargada
+            {
+                Vector2 cc = new Vector2((k.x + 0.5f) * tamanoCelda, (k.y + 0.5f) * tamanoCelda);
+                GameObject e = CrearEnemigo(k, new System.Random(Hash(k, 977)), cc.magnitude, islasDeCelda);
+                if (e != null) { lista.Add(e); celdaDe[e] = k; }
+            }
         }
     }
 
@@ -204,11 +217,7 @@ public class MundoInfinito : MonoBehaviour
         if (dist > zonaSegura && !Limpias.Contains(c))
         {
             float prob = Mathf.Clamp(0.12f + dist / 8000f, 0.12f, 0.45f);   // menos barcos = menos carga
-            if (rnd.NextDouble() < prob)
-            {
-                GameObject e = CrearEnemigo(c, rnd, dist, hechas);
-                if (e != null) { lista.Add(e); celdaDe[e] = c; }
-            }
+            if (rnd.NextDouble() < prob) enemigosPendientes.Add((c, hechas));   // se arma en otro cuadro
         }
     }
 

@@ -112,7 +112,7 @@ public class VentanaOpciones : Ventana
         // ---------- Accesibilidad ----------
         accesibilidad.Clear();
         accesibilidad.Add(Cabecera("Lectura"));
-        accesibilidad.Add(Deslizador("Tamaño del texto", 0.8f, 1.4f, Preferencias.TamanoTexto, Pct, v => Preferencias.TamanoTexto = v, 0.05f, "Se nota al volver a abrir las ventanas"));
+        accesibilidad.Add(Deslizador("Tamaño del texto", 0.8f, 1.4f, Preferencias.TamanoTexto, Pct, v => { Preferencias.TamanoTexto = v; Estilo.ReaplicarTexto(Lienzo.Raiz); }, 0.05f));
         accesibilidad.Add(Interruptor("Alto contraste", Preferencias.AltoContraste, v => { Preferencias.AltoContraste = v; Preferencias.Guardar(); }, "Bordes y textos más marcados"));
         accesibilidad.Add(Cabecera("Movimiento"));
         accesibilidad.Add(Interruptor("Reducir movimiento", Preferencias.ReducirMovimiento, v => { Preferencias.ReducirMovimiento = v; Preferencias.Guardar(); }, "Sin animaciones ni parpadeos en la interfaz"));

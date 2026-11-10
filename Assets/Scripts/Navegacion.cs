@@ -46,7 +46,12 @@ public class Navegacion : MonoBehaviour
         Vector3 pos = p.transform.position;
         foreach (Isla isla in Isla.Todas)
         {
-            if (isla == null || descubiertas.ContainsKey(isla.Id)) continue;
+            if (isla == null) continue;
+            if (descubiertas.TryGetValue(isla.Id, out Conocida ya))
+            {
+                if (isla.name != ya.nombre) Nombrar(isla, ya.nombre);   // la isla se volvió a armar: lleva el nombre que le pusiste
+                continue;
+            }
             float d = Plano(isla.transform.position - pos).magnitude - isla.orilla;
             if (d < DistanciaDescubrir)
             {
@@ -109,6 +114,48 @@ public class Navegacion : MonoBehaviour
 
     public IEnumerable<KeyValuePair<string, Conocida>> Descubiertas => descubiertas;
     public void Recordar(string id, Conocida c) => descubiertas[id] = c;   // al cargar la partida
+
+    // ---------- Nombrar islas ----------
+    // El que descubre una isla le puede poner nombre (en la carta, junto a la isla). El nombre se guarda con la partida
+    // y lo usan la carta, la brújula, los avisos y el mercader de esa isla.
+    public const int LargoNombre = 28;
+    const float DistanciaNombrar = 300f;   // metros desde la orilla
+
+    // La isla descubierta más cercana a un punto (null si no hay ninguna a menos de 300 m de la orilla)
+    public string Descubierta(string id) => descubiertas.TryGetValue(id, out Conocida c) ? c.nombre : "";
+
+    public string IslaParaNombrar(Vector3 pos, out Conocida c)
+    {
+        string mejor = null; float dMejor = DistanciaNombrar; c = default;
+        foreach (var kv in descubiertas)
+        {
+            float d = Plano(kv.Value.centro - pos).magnitude - kv.Value.orilla;
+            if (d < dMejor) { dMejor = d; mejor = kv.Key; c = kv.Value; }
+        }
+        return mejor;
+    }
+
+    public string Renombrar(Vector3 pos, string nuevo)
+    {
+        nuevo = (nuevo ?? "").Trim();
+        if (nuevo.Length == 0) return "Escribe un nombre";
+        if (nuevo.Length > LargoNombre) nuevo = nuevo.Substring(0, LargoNombre);
+        string id = IslaParaNombrar(pos, out Conocida c);
+        if (id == null) return "Acércate a una isla que hayas descubierto (a menos de " + DistanciaNombrar + " m)";
+        string viejo = c.nombre;
+        c.nombre = nuevo;
+        descubiertas[id] = c;
+        foreach (Isla isla in Isla.Todas) if (isla != null && isla.Id == id) Nombrar(isla, nuevo);
+        Notificaciones.Mostrar(viejo + " ahora se llama " + nuevo, Notificaciones.Tipo.Descubrimiento, 5f);
+        return null;
+    }
+
+    static void Nombrar(Isla isla, string nombre)
+    {
+        if (string.IsNullOrEmpty(isla.id)) isla.id = isla.name;   // que el id no cambie con el nombre
+        isla.name = nombre;
+        foreach (Mercader m in isla.GetComponentsInChildren<Mercader>(true)) m.isla = nombre;
+    }
     public bool Descubierta(Isla i) => i != null && descubiertas.ContainsKey(i.Id);
     public int CantidadDescubiertas => descubiertas.Count;
 

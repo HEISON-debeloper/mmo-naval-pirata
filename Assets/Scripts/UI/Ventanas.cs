@@ -258,6 +258,7 @@ public static class Ventanas
             Oscurecer(true);
         }
         else abiertas.Add(v);
+        Estilo.ReaplicarTexto(v);   // por si cambió el tamaño del texto mientras estaba cerrada
         v.AbrirInterno();
         alCambiar?.Invoke();
     }

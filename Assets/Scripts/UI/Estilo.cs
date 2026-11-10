@@ -194,11 +194,35 @@ public static class Estilo
         Borde(e, new Color(0.45f, 0.33f, 0.18f), 1.5f);
     }
 
+    // Tamaño y color con que se creó cada texto: así el tamaño del texto y el alto contraste se aplican al momento,
+    // sin tener que cerrar y abrir las ventanas
+    class BaseTexto { public float tam; public Color color; }
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<TextElement, BaseTexto> bases =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<TextElement, BaseTexto>();
+
+    public static void ReaplicarTexto(VisualElement raiz)
+    {
+        if (raiz == null) return;
+        float k = Preferencias.TamanoTexto;
+        bool ac = Preferencias.AltoContraste;
+        raiz.Query<TextElement>().ForEach(t =>
+        {
+            if (!bases.TryGetValue(t, out BaseTexto b)) return;
+            t.style.fontSize = b.tam * k;
+            if (b.color == TextoTenue) t.style.color = ac ? Texto : TextoTenue;   // con alto contraste, los textos tenues se aclaran
+        });
+    }
+
     public static Label Etiqueta(string texto, float tam = -1f, Color? color = null, Font fuente = null)
     {
         var l = new Label(texto);
-        l.style.fontSize = tam > 0f ? tam : TamTexto;
-        l.style.color = color ?? Texto;
+        float t = tam > 0f ? tam : TamTexto;
+        Color c = color ?? Texto;
+        l.style.fontSize = t;
+        l.style.color = c;
+        bases.Remove(l);
+        bases.Add(l, new BaseTexto { tam = t / Mathf.Max(0.1f, Preferencias.TamanoTexto), color = c });
+        if (Preferencias.AltoContraste && c == TextoTenue) l.style.color = Texto;
         l.style.whiteSpace = WhiteSpace.Normal;
         l.enableRichText = true;
         Fuente(l, fuente ?? FuenteTexto);

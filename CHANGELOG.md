@@ -6,6 +6,11 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.43.0 — Nombrar islas y texto al momento  (2026-11-10)
+- Nombrar islas: en la carta (M) hay un campo y el botón "Nombrar isla" para ponerle nombre a la isla descubierta más cercana (a menos de 300 m de la orilla). El nombre se guarda con la partida y lo usan la carta, la brújula, los avisos y el mercader de esa isla, aunque la isla se vuelva a armar al regresar.
+- Tamaño del texto y alto contraste se aplican al momento, sin cerrar y abrir las ventanas (con alto contraste, los textos tenues se aclaran).
+- Menos tirones al navegar: las islas de una zona nueva y su barco enemigo se arman en cuadros distintos (antes, un barco grande con miles de piezas se armaba junto con las islas en el mismo cuadro).
+
 ## 0.42.1 — Sin parpadeo en la popa y modelos sólidos  (2026-11-10)
 - Arreglado el parpadeo detrás del castillo de popa: la pared de atrás del camarote quedaba en el mismo plano que el tablón de popa de la borda y las dos caras se peleaban por dibujarse. Ahora la pared sale 6 cm.
 - Los modelos (barriles, cañones, timón, ancla, faroles, cabrestante, campana, mascarones) venían con las caras al revés: de afuera se veía el interior, por eso los barriles parecían huecos. Ahora se corrigen solos al cargarlos.
