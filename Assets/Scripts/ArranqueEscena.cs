@@ -49,6 +49,7 @@ public static class ArranqueEscena
             if (Falta<ModoCreativo>()) ModoCreativo.Crear();
             if (Falta<TeclasPrueba>()) TeclasPrueba.Crear();
             CicloDia.Crear();
+            Clima.Crear();
         }
         static bool Falta<T>() where T : Object => Object.FindFirstObjectByType<T>() == null;
     }

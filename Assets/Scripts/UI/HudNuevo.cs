@@ -289,7 +289,7 @@ public class HudNuevo : MonoBehaviour
         // Brújula
         if (Preferencias.HudBrujula) brujula.Actualizar(p, enemigos);
         hora.style.display = Preferencias.HudBrujula && Preferencias.CicloDia ? DisplayStyle.Flex : DisplayStyle.None;
-        if (Preferencias.CicloDia) hora.text = (CicloDia.EsDeNoche ? "Noche · " : "Día · ") + CicloDia.Texto;
+        if (Preferencias.CicloDia) hora.text = (CicloDia.EsDeNoche ? "Noche · " : "Día · ") + CicloDia.Texto + " · " + Clima.Nombre;
 
         tBuscar -= dt;
         if (tBuscar <= 0f) { enemigos = IABarco.Todos.ToArray(); tBuscar = 0.5f; }

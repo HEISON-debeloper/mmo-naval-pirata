@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.39.0 — Clima por zonas  (2026-11-09)
+- Clima por zonas: el mar se divide en zonas de 1,5 km y cada una cambia de tiempo cada 10 minutos: despejado, nublado, lluvia o tormenta. Cerca del inicio casi siempre está despejado; mar adentro hay más tormentas.
+- Nubes: cielo gris, menos sol y niebla más cerca. Lluvia: gotas finas y transparentes alrededor de la cámara y sonido de lluvia (bajo cubierta se oye amortiguado y no caen gotas).
+- Tormenta: olas mucho más altas, relámpagos que iluminan el cielo y truenos con retraso según la distancia.
+- Los cambios de tiempo son suaves (unos 20 segundos) y se avisan: "Se nubla", "Empieza a llover", "Se acerca una tormenta", "Se despeja el cielo". La hora debajo de la brújula también dice el tiempo.
+- Modo creativo: "mar en calma" sigue dejando el agua quieta aunque haya tormenta.
+- Tecla de prueba X: cambiar el tiempo (automático, despejado, nublado, lluvia, tormenta) — solo en el editor.
+
 ## 0.38.0 — Día y noche  (2026-11-09)
 - Día y noche: un día del juego dura una hora real. El sol sale y se pone, el cielo y la niebla cambian de color (naranja al amanecer y al atardecer, azul oscuro de noche) y de noche alumbra una luna azulada; nunca queda negro del todo.
 - Avisos de "Amanece" y "Cae la noche", y la hora debajo de la brújula (Día · 09:00 / Noche · 21:00).

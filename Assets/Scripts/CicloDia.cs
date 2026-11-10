@@ -17,6 +17,7 @@ public class CicloDia : MonoBehaviour
     Color cieloDia;
     float intensidadDia = 1f;
     bool listo;
+    float nieblaInicio = -1f, nieblaFin;
     int avisoFase = -1;
 
     // Colores del cielo a lo largo del día (hora, color)
@@ -66,9 +67,18 @@ public class CicloDia : MonoBehaviour
         float ang = (h - 6f) / 12f * 180f;            // 0 = horizonte este, 180 = horizonte oeste
         float altura = Mathf.Sin(ang * Mathf.Deg2Rad);  // >0 de día
         Color cielo = ColorCielo(h);
+        // Nubes y lluvia (Clima): cielo gris y más oscuro, niebla más cerca
+        float nubes = Clima.Nubes;
+        float gris = cielo.grayscale;
+        cielo = Color.Lerp(cielo, new Color(gris, gris, gris * 1.05f) * 0.62f, nubes);
+        cielo = Color.Lerp(cielo, new Color(0.85f, 0.88f, 1f), Clima.Destello * 0.6f);
         Camera cam = Camera.main;
         if (cam != null) cam.backgroundColor = cielo;
         RenderSettings.fogColor = cielo;
+        if (nieblaInicio < 0f) { nieblaInicio = RenderSettings.fogStartDistance; nieblaFin = RenderSettings.fogEndDistance; }
+        float lluvia = Clima.LluviaFuerza;
+        RenderSettings.fogStartDistance = nieblaInicio * Mathf.Lerp(1f, 0.25f, Mathf.Max(nubes * 0.5f, lluvia));
+        RenderSettings.fogEndDistance = nieblaFin * Mathf.Lerp(1f, 0.45f, Mathf.Max(nubes * 0.4f, lluvia));
 
         if (sol != null)
         {
@@ -77,7 +87,7 @@ public class CicloDia : MonoBehaviour
                 // De día: el sol cruza el cielo; más cálido cerca del horizonte
                 sol.transform.rotation = Quaternion.Euler(Mathf.Clamp(ang, 3f, 177f) * 0.8f + 4f, -30f + ang * 0.5f, 0f);
                 float fuerza = Mathf.Clamp01(altura * 3f);
-                sol.intensity = Mathf.Lerp(0.25f, intensidadDia, fuerza);
+                sol.intensity = Mathf.Lerp(0.25f, intensidadDia, fuerza) * (1f - 0.55f * Clima.Nubes) + Clima.Destello * 1.5f;
                 sol.color = Color.Lerp(new Color(1f, 0.6f, 0.35f), new Color(1f, 0.96f, 0.9f), fuerza);
             }
             else
@@ -85,13 +95,15 @@ public class CicloDia : MonoBehaviour
                 // De noche: la luna, alta y azulada, con poca luz
                 float angLuna = Mathf.Repeat(ang - 180f, 360f);
                 sol.transform.rotation = Quaternion.Euler(25f + Mathf.Sin(angLuna * Mathf.Deg2Rad) * 35f, 150f + angLuna * 0.3f, 0f);
-                sol.intensity = 0.28f;
+                sol.intensity = 0.28f * (1f - 0.6f * Clima.Nubes) + Clima.Destello * 1.2f;
                 sol.color = new Color(0.55f, 0.65f, 0.95f);
             }
         }
         // Luz del ambiente: nunca negra del todo, para poder jugar de noche
         float dia = Mathf.Clamp01(altura * 2.5f + 0.15f);
-        RenderSettings.ambientLight = Color.Lerp(new Color(0.16f, 0.19f, 0.30f), new Color(0.58f, 0.62f, 0.66f), dia);
+        Color ambiente = Color.Lerp(new Color(0.16f, 0.19f, 0.30f), new Color(0.58f, 0.62f, 0.66f), dia);
+        ambiente *= 1f - 0.35f * Clima.Nubes;
+        RenderSettings.ambientLight = ambiente + new Color(0.5f, 0.55f, 0.65f) * Clima.Destello;
     }
 
     void Avisos()

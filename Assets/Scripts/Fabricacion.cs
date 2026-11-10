@@ -276,7 +276,7 @@ public class Fabricacion : MonoBehaviour
                 IABarco ia = IABarco.MasCercano(Personaje.Instancia != null ? Personaje.Instancia.transform.position : Vector3.zero); if (ia == null) return "No hay enemigo";
                 ia.GetComponent<VidaBarco>().Reaparecer(); TeclasPrueba.Traer(ia, p, 60f); p.Avisar("Enemigo nuevo a 60 m"); return null; }),
             R("Mar en calma / con olas", "Cambia el oleaje", null, () => {
-                Olas.intensidad = Olas.intensidad > 0.5f ? 0.15f : 1f; p.Avisar(Olas.intensidad > 0.5f ? "Olas normales" : "Mar en calma"); return null; }),
+                Clima.Calmado = !Clima.Calmado; p.Avisar(Clima.Calmado ? "Mar en calma" : "Olas normales (según el clima)"); return null; }),
             R("+100 de todo", "Materiales, comida y 20 cañones", null, () => {
                 foreach (string t in new[] { Inventario.Madera, Inventario.Palo, Inventario.Fibra, Inventario.Cuerda, Inventario.Piedra,
                                              Inventario.Mineral, Inventario.Lingote, Inventario.Coco, Inventario.Fruta }) inv.Agregar(t, 100);

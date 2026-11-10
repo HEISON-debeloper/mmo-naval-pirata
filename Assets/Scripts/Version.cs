@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.38.0";
-    public const string Nombre = "Día y noche";
+    public const string Numero = "0.39.0";
+    public const string Nombre = "Clima por zonas";
     public static string Texto => "v" + Numero;
 }
