@@ -33,6 +33,12 @@ public class MundoInfinito : MonoBehaviour
     public int radioCeldas = 2;
 
     readonly Dictionary<Vector2Int, List<GameObject>> celdas = new Dictionary<Vector2Int, List<GameObject>>();
+
+    // Celdas cuyo pirata ya hundiste, capturaste o se fue persiguiéndote: al volver no aparece otro (se guarda con la partida)
+    public static readonly HashSet<Vector2Int> Limpias = new HashSet<Vector2Int>();
+    readonly Dictionary<GameObject, Vector2Int> celdaDe = new Dictionary<GameObject, Vector2Int>();
+    // Piratas que siguieron fuera de su celda (te persiguen); se quitan si quedan muy lejos
+    readonly List<GameObject> sueltos = new List<GameObject>();
     readonly List<Vector2Int> pendientes = new List<Vector2Int>();
     Vector2Int celdaActual = new Vector2Int(int.MinValue, int.MinValue);
 
@@ -71,9 +77,23 @@ public class MundoInfinito : MonoBehaviour
                 foreach (GameObject g in celdas[k])
                 {
                     if (g == null) continue;
-                    // Un barco en el que vas (o que capturaste) no desaparece
+                    // Un barco en el que vas, uno que capturaste o uno que te persigue en combate no desaparece
                     ControlBarco cb = g.GetComponent<ControlBarco>();
-                    if (cb != null && (p.barco == cb || p.BarcoActual == cb)) { g.transform.SetParent(null, true); continue; }
+                    IABarco ia = g.GetComponent<IABarco>();
+                    bool tuyo = cb != null && (p.barco == cb || p.BarcoActual == cb);
+                    bool capturado = ia != null && ia.Capturado;
+                    bool enCombate = ia != null && !capturado && (ia.EstadoTexto == "Atacando" || ia.EstadoTexto == "Abordando" || ia.EstadoTexto == "¡Abordaje!")
+                                     && (g.transform.position - foco).sqrMagnitude < 700f * 700f;
+                    if (tuyo || capturado || enCombate)
+                    {
+                        g.transform.SetParent(null, true);
+                        if (!g.activeSelf) g.SetActive(true);
+                        if (ia != null) Limpias.Add(k);   // ese pirata ya no está en su celda
+                        if (enCombate) sueltos.Add(g);
+                        celdaDe.Remove(g);
+                        continue;
+                    }
+                    celdaDe.Remove(g);
                     Destroy(g);
                 }
                 celdas.Remove(k);
@@ -92,6 +112,26 @@ public class MundoInfinito : MonoBehaviour
         if (tDormir <= 0f)
         {
             tDormir = 0.5f;
+            // Pirata hundido o capturado: su celda queda limpia
+            List<GameObject> borrar = null;
+            foreach (var kv in celdaDe)
+            {
+                if (kv.Key == null) { (borrar ??= new List<GameObject>()).Add(kv.Key); continue; }
+                VidaBarco v = kv.Key.GetComponent<VidaBarco>();
+                IABarco ia = kv.Key.GetComponent<IABarco>();
+                if ((v != null && v.Hundido) || (ia != null && ia.Capturado)) Limpias.Add(kv.Value);
+            }
+            if (borrar != null) foreach (GameObject g in borrar) celdaDe.Remove(g);
+            // Perseguidores que se quedaron muy atrás
+            for (int i = sueltos.Count - 1; i >= 0; i--)
+            {
+                GameObject g = sueltos[i];
+                if (g == null) { sueltos.RemoveAt(i); continue; }
+                IABarco ia = g.GetComponent<IABarco>();
+                if (ia != null && ia.Capturado) { sueltos.RemoveAt(i); continue; }
+                Vector3 d = g.transform.position - foco;
+                if (d.x * d.x + d.z * d.z > 1500f * 1500f) { Destroy(g); sueltos.RemoveAt(i); }
+            }
             foreach (var kv in celdas)
                 foreach (GameObject g in kv.Value)
                 {
@@ -161,13 +201,13 @@ public class MundoInfinito : MonoBehaviour
         // Barco enemigo: más probable y más grande mientras más lejos del inicio
         Vector2 centroCelda = new Vector2((c.x + 0.5f) * tamanoCelda, (c.y + 0.5f) * tamanoCelda);
         float dist = centroCelda.magnitude;
-        if (dist > zonaSegura)
+        if (dist > zonaSegura && !Limpias.Contains(c))
         {
             float prob = Mathf.Clamp(0.12f + dist / 8000f, 0.12f, 0.45f);   // menos barcos = menos carga
             if (rnd.NextDouble() < prob)
             {
                 GameObject e = CrearEnemigo(c, rnd, dist, hechas);
-                if (e != null) lista.Add(e);
+                if (e != null) { lista.Add(e); celdaDe[e] = c; }
             }
         }
     }
@@ -223,6 +263,8 @@ public class MundoInfinito : MonoBehaviour
             ia.distanciaAlerta = 260f + L * 2f;
             ia.distanciaAtaque = Mathf.Max(170f, L * 3f);
 
+            VidaBarco vb = g.GetComponent<VidaBarco>();
+            if (vb != null) vb.reaparece = false;   // hundido, se va al fondo (su celda queda limpia)
             g.transform.SetParent(transform, true);
             EnemigosCreados++;
             return g;

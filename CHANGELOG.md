@@ -6,6 +6,13 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.36.0 — Mundo que recuerda  (2026-11-09)
+- El mundo recuerda: si hundes o capturas al pirata de una zona, al volver no aparece otro (se acabó el farmeo infinito). Se guarda con la partida.
+- Los piratas hundidos del mundo se van al fondo en vez de reaparecer en el mismo sitio.
+- Un pirata que te persigue en combate ya no desaparece al cruzar de zona: te sigue (y se va solo si lo dejas a más de 1,5 km).
+- Un barco capturado que dejas atrás ya no desaparece.
+- Cada mercado recuerda cuánto le vendiste o compraste aunque te alejes, y se recupera con el tiempo como antes; también se guarda con la partida (antes alejarse y volver reiniciaba los precios).
+
 ## 0.35.0 — Barcos livianos y secos  (2026-11-09)
 - El mar ya no entra en los barcos: el agua tiene su propio shader que no se dibuja dentro del casco de los barcos cercanos (hasta 8). Antes se veía el agua por las portas, bajo cubierta y en la bodega, como si el barco se estuviera inundando. Un barco que se hunde sí se llena.
 - La fila de portas más baja sube 20 cm: queda unos 60 cm sobre el agua en calma.

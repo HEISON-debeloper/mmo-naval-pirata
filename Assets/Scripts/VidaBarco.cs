@@ -8,6 +8,7 @@ public class VidaBarco : MonoBehaviour
     public float vida = 100f;
     [Tooltip("Segundos hundiéndose antes de reaparecer.")]
     public float tiempoReaparecer = 7f;
+    [HideInInspector] public bool reaparece = true;   // los piratas del mundo infinito no reaparecen: se van al fondo
     [Tooltip("Daño por choque contra islas u otros barcos, por cada m/s de impacto.")]
     public float danoPorChoque = 6f;
 
@@ -50,7 +51,7 @@ public class VidaBarco : MonoBehaviour
     {
         if (!Hundido) return;
         tiempoHundido += Time.deltaTime;
-        if (tiempoHundido >= tiempoReaparecer) Reaparecer();
+        if (tiempoHundido >= tiempoReaparecer) { if (reaparece) Reaparecer(); else Destroy(gameObject); }
     }
 
     // La fuerza que lo hunde va con la física (en Update dependía de los cuadros por segundo)

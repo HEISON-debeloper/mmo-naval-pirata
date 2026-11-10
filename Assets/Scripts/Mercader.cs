@@ -27,17 +27,39 @@ public class Mercader : MonoBehaviour
     public int semilla;
 
     readonly Dictionary<string, float> region = new Dictionary<string, float>();  // carácter de la isla (0.7 a 1.4)
-    readonly Dictionary<string, float> mercado = new Dictionary<string, float>(); // lo que movió la oferta (1 = normal)
+    Dictionary<string, float> mercado = new Dictionary<string, float>(); // lo que movió la oferta (1 = normal)
+
+    // El mercado de cada isla se recuerda (por su semilla) aunque la isla se descargue al alejarte:
+    // así no se puede bajar y subir los precios yéndose y volviendo. También se guarda con la partida.
+    public static readonly Dictionary<int, (Dictionary<string, float> mercado, float hora)> Recordados = new Dictionary<int, (Dictionary<string, float>, float)>();
     float tRecuperar;
     bool avisado;
 
     void OnEnable() => Todos.Add(this);
-    void OnDisable() => Todos.Remove(this);
+    void OnDisable() { Todos.Remove(this); if (semilla != 0) Recordados[semilla] = (mercado, Time.time); }
 
     void Awake()
     {
         var rnd = new System.Random(semilla);
         foreach (string k in PrecioBase.Keys) { region[k] = 0.7f + (float)rnd.NextDouble() * 0.7f; mercado[k] = 1f; }
+        if (semilla == 0) return;   // aún sin semilla (Iniciar la pone y vuelve a llamar a Awake)
+        if (Recordados.TryGetValue(semilla, out var r))
+        {
+            mercado = r.mercado;
+            foreach (string k in PrecioBase.Keys) if (!mercado.ContainsKey(k)) mercado[k] = 1f;
+            // Lo que se recuperó mientras no estabas (1 % cada 20 s)
+            float pasos = Mathf.Max(0f, Time.time - r.hora) / 20f;
+            var claves = new List<string>(mercado.Keys);
+            foreach (string k in claves) mercado[k] = Mathf.MoveTowards(mercado[k], 1f, Recuperacion * pasos);
+        }
+        Recordados[semilla] = (mercado, Time.time);
+    }
+
+    // Desde el guardado: el mercado de esa isla como quedó
+    public static void Restaurar(int s, Dictionary<string, float> dic)
+    {
+        Recordados[s] = (dic, Time.time);
+        foreach (Mercader m in Todos) if (m != null && m.semilla == s) m.mercado = dic;
     }
 
     // Se llama después de poner la semilla (al crearlo desde código)

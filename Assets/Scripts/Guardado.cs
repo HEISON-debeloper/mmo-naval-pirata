@@ -25,6 +25,7 @@ public class Guardado : MonoBehaviour
     [System.Serializable] class Cosa { public string tipo; public int n; }
     [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; public bool mercado; }
     [System.Serializable] class HornoGuardado { public Vector3 pos; public float rumbo; }
+    [System.Serializable] class MercadoGuardado { public int semilla; public List<string> k = new List<string>(); public List<float> v = new List<float>(); }
 
     [System.Serializable]
     class Datos
@@ -48,6 +49,8 @@ public class Guardado : MonoBehaviour
         public List<HornoGuardado> hornos = new List<HornoGuardado>();
         public List<IslaConocida> islas = new List<IslaConocida>();
         public List<Navegacion.Marca> marcas = new List<Navegacion.Marca>();   // marcas puestas en la carta
+        public List<Vector2Int> celdasLimpias = new List<Vector2Int>();         // zonas sin pirata (ya lo hundiste o capturaste)
+        public List<MercadoGuardado> mercados = new List<MercadoGuardado>();    // cómo quedó la oferta en cada mercado
     }
 
     float t;
@@ -58,9 +61,10 @@ public class Guardado : MonoBehaviour
 
     IEnumerator Start()
     {
+        Datos d = Leer();
+        if (d != null) RecordarMundo(d);   // antes de que el mundo genere las primeras zonas
         yield return null;
         yield return null;   // que el personaje y el mundo arranquen primero
-        Datos d = Leer();
         if (d != null) yield return Aplicar(d);
         listo = true;
         if (avisoAlCargar != null) { Notificaciones.Mostrar(avisoAlCargar, Notificaciones.Tipo.Alerta, 10f); avisoAlCargar = null; }
@@ -176,6 +180,13 @@ public class Guardado : MonoBehaviour
             foreach (var kv in nav.Descubiertas)
                 d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado });
         if (nav != null) d.marcas.AddRange(nav.Marcas);
+        d.celdasLimpias.AddRange(MundoInfinito.Limpias);
+        foreach (var kv in Mercader.Recordados)
+        {
+            var mg = new MercadoGuardado { semilla = kv.Key };
+            foreach (var e in kv.Value.mercado) { mg.k.Add(e.Key); mg.v.Add(e.Value); }
+            d.mercados.Add(mg);
+        }
 
         try
         {
@@ -218,6 +229,18 @@ public class Guardado : MonoBehaviour
         }
         avisoAlCargar = "La partida guardada estaba dañada y no se pudo leer. Se guardó aparte (" + Path.GetFileName(danada) + ") y empiezas de cero.";
         return null;
+    }
+
+    static void RecordarMundo(Datos d)
+    {
+        if (d.celdasLimpias != null) foreach (Vector2Int c in d.celdasLimpias) MundoInfinito.Limpias.Add(c);
+        if (d.mercados != null)
+            foreach (MercadoGuardado mg in d.mercados)
+            {
+                var dic = new Dictionary<string, float>();
+                for (int i = 0; i < mg.k.Count && i < mg.v.Count; i++) dic[mg.k[i]] = mg.v[i];
+                Mercader.Restaurar(mg.semilla, dic);
+            }
     }
 
     static Datos LeerDe(string ruta)

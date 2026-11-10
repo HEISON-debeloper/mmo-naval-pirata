@@ -9,6 +9,7 @@ public static class ArranqueEscena
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Preparar()
     {
+        Olvidar();
         SceneManager.sceneLoaded -= AlCargar;
         SceneManager.sceneLoaded += AlCargar;
     }
@@ -16,7 +17,14 @@ public static class ArranqueEscena
     static void AlCargar(Scene escena, LoadSceneMode modo)
     {
         if (modo != LoadSceneMode.Single) return;
+        Olvidar();   // lo que se recuerda del mundo lo vuelve a poner el guardado (o nada, en una partida nueva)
         new GameObject("Revisar sistemas").AddComponent<Revisar>();
+    }
+
+    static void Olvidar()
+    {
+        MundoInfinito.Limpias.Clear();
+        Mercader.Recordados.Clear();
     }
 
     class Revisar : MonoBehaviour

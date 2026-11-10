@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.35.0";
-    public const string Nombre = "Barcos livianos y secos";
+    public const string Numero = "0.36.0";
+    public const string Nombre = "Mundo que recuerda";
     public static string Texto => "v" + Numero;
 }
