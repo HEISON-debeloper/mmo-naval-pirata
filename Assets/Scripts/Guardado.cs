@@ -12,10 +12,15 @@ using UnityEngine.InputSystem;
 public class Guardado : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Guardado").AddComponent<Guardado>();
+    internal static void Crear() => new GameObject("Guardado").AddComponent<Guardado>();
 
     const float CadaSegundos = 30f;
     public static string Ruta => Path.Combine(Application.persistentDataPath, "partida.json");
+    static string Respaldo => Ruta + ".bak";                                                            // la partida anterior a la última guardada
+    public static string RutaAnterior => Path.Combine(Application.persistentDataPath, "partida.anterior.json");   // la que se apartó con "Nueva partida"
+    public static bool HayAnterior => File.Exists(RutaAnterior);
+    static Guardado instancia;
+    static string avisoAlCargar;   // si la partida estaba dañada
 
     [System.Serializable] class Cosa { public string tipo; public int n; }
     [System.Serializable] class IslaConocida { public string id, nombre; public Vector3 centro; public float orilla; public bool mercado; }
@@ -49,6 +54,8 @@ public class Guardado : MonoBehaviour
     bool listo;      // no se guarda hasta terminar de cargar
     bool borrada;    // con F8 se deja de guardar en esta sesión
 
+    void Awake() => instancia = this;
+
     IEnumerator Start()
     {
         yield return null;
@@ -56,6 +63,7 @@ public class Guardado : MonoBehaviour
         Datos d = Leer();
         if (d != null) yield return Aplicar(d);
         listo = true;
+        if (avisoAlCargar != null) { Notificaciones.Mostrar(avisoAlCargar, Notificaciones.Tipo.Alerta, 10f); avisoAlCargar = null; }
     }
 
     void Update()
@@ -75,6 +83,8 @@ public class Guardado : MonoBehaviour
     }
 
     void OnApplicationQuit() { if (listo && !borrada) Guardar(); }
+    // En el teléfono el sistema puede cerrar la app en segundo plano sin avisar: se guarda al salir de ella
+    void OnApplicationPause(bool pausa) { if (pausa && listo && !borrada) Guardar(); }
 
     // Guardar ya (F5, menú de pausa)
     public void GuardarAhora()
@@ -87,9 +97,39 @@ public class Guardado : MonoBehaviour
     // Borra el archivo; la partida actual sigue en memoria hasta cerrar (si vuelves a guardar, se recupera)
     public void BorrarPartida()
     {
-        if (File.Exists(Ruta)) File.Delete(Ruta);
+        Apartar();
         borrada = true;
-        Notificaciones.Mostrar("Partida borrada. Al volver a entrar empiezas de cero (" + Teclas.Nombre(Accion.Guardar) + " la vuelve a guardar)", Notificaciones.Tipo.Alerta, 6f);
+        Notificaciones.Mostrar("Partida borrada. Al volver a entrar empiezas de cero (" + Teclas.Nombre(Accion.Guardar) + " la vuelve a guardar). Se puede recuperar desde el menú principal.", Notificaciones.Tipo.Alerta, 6f);
+    }
+
+    // La partida actual no se borra: se aparta como "anterior" (se puede recuperar desde el menú principal)
+    public static void Apartar()
+    {
+        try
+        {
+            if (!File.Exists(Ruta)) return;
+            if (File.Exists(RutaAnterior)) File.Delete(RutaAnterior);
+            File.Move(Ruta, RutaAnterior);
+            if (File.Exists(Respaldo)) File.Delete(Respaldo);
+        }
+        catch (System.Exception e) { Debug.LogWarning("No se pudo apartar la partida: " + e.Message); }
+    }
+
+    // Cambia la partida actual por la anterior (y la actual queda como anterior)
+    public static void RecuperarAnterior()
+    {
+        if (!HayAnterior) return;
+        if (instancia != null) instancia.borrada = true;   // que esta sesión no la pise antes de recargar
+        try
+        {
+            string cambio = Ruta + ".cambio";
+            if (File.Exists(cambio)) File.Delete(cambio);
+            if (File.Exists(Ruta)) File.Move(Ruta, cambio);
+            File.Move(RutaAnterior, Ruta);
+            if (File.Exists(cambio)) File.Move(cambio, RutaAnterior);
+            if (File.Exists(Respaldo)) File.Delete(Respaldo);
+        }
+        catch (System.Exception e) { Debug.LogWarning("No se pudo recuperar la partida: " + e.Message); }
     }
 
     public static bool HayPartida => File.Exists(Ruta);
@@ -141,8 +181,18 @@ public class Guardado : MonoBehaviour
         {
             string tmp = Ruta + ".tmp";
             File.WriteAllText(tmp, JsonUtility.ToJson(d, true));
-            if (File.Exists(Ruta)) File.Delete(Ruta);
-            File.Move(tmp, Ruta);   // así un corte a mitad de guardado no daña la partida anterior
+            // Cambio atómico: la partida anterior queda como respaldo (.bak) por si la nueva sale dañada
+            if (File.Exists(Ruta))
+            {
+                try { File.Replace(tmp, Ruta, Respaldo); }
+                catch   // algunos sistemas no permiten Replace: copia de respaldo a mano
+                {
+                    File.Copy(Ruta, Respaldo, true);
+                    File.Delete(Ruta);
+                    File.Move(tmp, Ruta);
+                }
+            }
+            else File.Move(tmp, Ruta);
         }
         catch (System.Exception e) { Debug.LogWarning("No se pudo guardar la partida: " + e.Message); }
     }
@@ -150,9 +200,35 @@ public class Guardado : MonoBehaviour
     // ---------- Cargar ----------
     static Datos Leer()
     {
+        // Un guardado cortado a mitad (solo quedó el .tmp) se recupera
+        if (!File.Exists(Ruta) && File.Exists(Ruta + ".tmp") && LeerDe(Ruta + ".tmp") != null)
+            try { File.Move(Ruta + ".tmp", Ruta); } catch { }
         if (!File.Exists(Ruta)) return null;
-        try { return JsonUtility.FromJson<Datos>(File.ReadAllText(Ruta)); }
-        catch (System.Exception e) { Debug.LogWarning("No se pudo leer la partida: " + e.Message); return null; }
+        Datos d = LeerDe(Ruta);
+        if (d != null) return d;
+        // La partida está dañada: no se pisa, se aparta con otro nombre y se intenta el respaldo
+        string danada = Path.Combine(Application.persistentDataPath, "partida.dañada-" + System.DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json");
+        try { File.Move(Ruta, danada); } catch { }
+        d = File.Exists(Respaldo) ? LeerDe(Respaldo) : null;
+        if (d != null)
+        {
+            try { File.Copy(Respaldo, Ruta, true); } catch { }
+            avisoAlCargar = "La partida guardada estaba dañada: se cargó la copia anterior (unos 30 s antes).";
+            return d;
+        }
+        avisoAlCargar = "La partida guardada estaba dañada y no se pudo leer. Se guardó aparte (" + Path.GetFileName(danada) + ") y empiezas de cero.";
+        return null;
+    }
+
+    static Datos LeerDe(string ruta)
+    {
+        try
+        {
+            string texto = File.ReadAllText(ruta);
+            if (string.IsNullOrWhiteSpace(texto) || !texto.TrimStart().StartsWith("{")) return null;
+            return JsonUtility.FromJson<Datos>(texto);
+        }
+        catch (System.Exception e) { Debug.LogWarning("No se pudo leer " + Path.GetFileName(ruta) + ": " + e.Message); return null; }
     }
 
     IEnumerator Aplicar(Datos d)

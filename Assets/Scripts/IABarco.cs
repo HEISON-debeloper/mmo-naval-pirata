@@ -95,6 +95,7 @@ public class IABarco : MonoBehaviour
     void Update()
     {
         if (vida != null && vida.Hundido) { EstadoTexto = "Hundiéndose"; cb.timonExterno = 0f; return; }
+        if (MenuPrincipal.Visible) { cb.timonExterno = 0f; return; }   // con el menú principal abierto los piratas no atacan
 
         if (!Capturado && TripulantesVivos() == 0)
         {

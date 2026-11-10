@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 public class Navegacion : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Navegación").AddComponent<Navegacion>();
+    internal static void Crear() => new GameObject("Navegación").AddComponent<Navegacion>();
 
     public static Navegacion Instancia { get; private set; }
     // La carta de navegación ahora es una ventana (VentanaMapa, tecla M)

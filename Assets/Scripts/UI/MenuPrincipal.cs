@@ -13,7 +13,7 @@ public static class MenuPrincipal
     public static bool Visible { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void AlCargar()
+    internal static void AlCargar()
     {
         Visible = false; raiz = null;
         // Solo al abrir el juego (no al recargar la escena para una partida nueva)
@@ -100,6 +100,7 @@ public static class MenuPrincipal
         }
         B("Continuar", "play", Ocultar, Componentes.Variante.Primario, "continuar");
         B("Nueva partida", "bandera", NuevaPartida, Componentes.Variante.Normal, "nueva");
+        B("Recuperar la partida anterior", "pergamino", RecuperarAnterior, Componentes.Variante.Normal, "anterior");
         B("Opciones", "engranaje", () => Ventanas.Abrir(VentanaOpciones.I));
         B("Créditos", "pergamino", () => Ventanas.Abrir(VentanaCreditos.I));
         B("Salir", "salir", Salir, Componentes.Variante.Fantasma);
@@ -122,6 +123,8 @@ public static class MenuPrincipal
         if (c != null) Componentes.CambiarTexto(c, hay ? "Continuar" : "Jugar");
         var n = raiz.Q<Button>("nueva");
         if (n != null) n.style.display = hay ? DisplayStyle.Flex : DisplayStyle.None;
+        var an = raiz.Q<Button>("anterior");
+        if (an != null) an.style.display = Guardado.HayAnterior ? DisplayStyle.Flex : DisplayStyle.None;
         if (hay)
         {
             var f = System.IO.File.GetLastWriteTime(Guardado.Ruta);
@@ -132,16 +135,35 @@ public static class MenuPrincipal
 
     static void NuevaPartida()
     {
-        Ventanas.Confirmar("Nueva partida", "Se borra la partida guardada (barco, mochila, islas descubiertas y pintura) y empiezas de cero en una isla.\n\nEsto no se puede deshacer.", "Empezar de cero", () =>
+        Ventanas.Confirmar("Nueva partida", "Empiezas de cero en una isla, sin nada.\n\nLa partida actual (barco, mochila, islas descubiertas y pintura) queda guardada aparte: la puedes recuperar desde este menú.", "Empezar de cero", () =>
         {
             var g = Object.FindFirstObjectByType<Guardado>();
             if (g != null) g.BorrarPartida();
-            else if (System.IO.File.Exists(Guardado.Ruta)) System.IO.File.Delete(Guardado.Ruta);
+            else Guardado.Apartar();
+            Recargar();
+        }, true);
+    }
+
+    // Cambia a la partida anterior (la apartada con "Nueva partida") y la carga
+    static void RecuperarAnterior()
+    {
+        Ventanas.Confirmar("Recuperar la partida anterior", "Vuelves a la partida que tenías antes de empezar de cero. La partida actual queda guardada aparte (puedes volver a cambiar).", "Recuperar", () =>
+        {
+            var g = Object.FindFirstObjectByType<Guardado>();
+            if (g != null && g.Listo && Guardado.HayPartida) g.GuardarAhora();
+            Guardado.RecuperarAnterior();
+            Recargar();
+        });
+    }
+
+    static void Recargar()
+    {
+        {
             Time.timeScale = 1f;
             Visible = false;
             CamaraBarco.Orbitar = false;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }, true);
+        }
     }
 
     public static void Salir()

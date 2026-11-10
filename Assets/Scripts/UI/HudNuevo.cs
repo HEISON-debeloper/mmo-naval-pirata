@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 public class HudNuevo : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("HUD").AddComponent<HudNuevo>();
+    internal static void Crear() => new GameObject("HUD").AddComponent<HudNuevo>();
 
     public static HudNuevo I { get; private set; }
     public static bool Visible = true;

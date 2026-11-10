@@ -6,6 +6,17 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.33.0 — Partidas seguras  (2026-11-09)
+- "Nueva partida" funciona: antes recargaba el mundo y se perdían la interfaz, el HUD, el guardado y los controles táctiles. Ahora se vuelven a crear solos al recargar.
+- "Nueva partida" ya no borra tu partida: la aparta, y en el menú principal aparece "Recuperar la partida anterior" para volver a ella (se puede cambiar de una a otra).
+- Guardado más seguro: cada guardado deja una copia de respaldo; si la partida sale dañada se carga la copia (con aviso) y la dañada se guarda aparte en vez de pisarse. Un guardado cortado a mitad se recupera.
+- En el teléfono se guarda al salir de la app (antes solo al cerrar el juego: se podían perder hasta 30 s).
+- Teclas de prueba y modo creativo solo existen en el editor o en una compilación de desarrollo (Development Build); en el juego publicado no se pueden usar (antes daban oro infinito).
+- La tecla de prueba "barco 800 m más lejos" pasa de K a U: la K es la espada y un espadazo al timón teletransportaba el barco.
+- Pausa de verdad: Opciones, Controles, Bitácora y Salir abiertos desde la pausa mantienen el juego detenido, y al cerrarlos se vuelve a la pausa.
+- Con el menú principal abierto no da hambre ni sed y los piratas no atacan.
+- Tab (fabricar o mercado) no se abre encima de la pausa, del menú principal ni de un diálogo.
+
 ## 0.32.2 — Velas con sonido  (2026-11-09)
 - Sonido de las velas: al soltarlas se oye la lona desplegándose y llenándose de viento; al recogerlas, el roce de la tela con el crujir de la jarcia. Suena en tu barco y en los demás (de lejos más bajo). Grabaciones CC0 de OpenGameArt.
 

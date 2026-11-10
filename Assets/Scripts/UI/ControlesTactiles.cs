@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 public class ControlesTactiles : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Controles táctiles").AddComponent<ControlesTactiles>();
+    internal static void Crear() => new GameObject("Controles táctiles").AddComponent<ControlesTactiles>();
 
     // Para probar en el PC: poner en true muestra los controles aunque no sea un teléfono
     public static bool Forzar;

@@ -60,6 +60,7 @@ public class Tripulante : MonoBehaviour
 
     void Update()
     {
+        if (MenuPrincipal.Visible) return;   // con el menú principal abierto no atacan
         float dt = Time.deltaTime;
         if (tSalto >= 0f && !Muerto)
         {

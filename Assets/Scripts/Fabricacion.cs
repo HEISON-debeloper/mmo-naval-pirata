@@ -604,7 +604,7 @@ public class Fabricacion : MonoBehaviour
     void Update()
     {
         Preparar();
-        if (Taller.Abierto) return;
+        if (Taller.Abierto || Pausa.Visible || Pausa.Retenida || MenuPrincipal.Visible || Ventanas.HayModal) return;
         if (Teclas.Pulsada(Accion.Fabricar, true))
         {
             if (MenuAbierto) { Ventanas.Cerrar(VentanaFabricacion.I); Ventanas.Cerrar(VentanaComercio.I); }

@@ -226,6 +226,8 @@ public static class Ventanas
     public static event System.Action alCambiar;
 
     // Alguna ventana que se queda con el teclado y el ratón (el juego deja de reaccionar a las teclas y suelta el cursor)
+    public static bool HayModal => modalActual != null;
+    public static bool HayAbiertas => abiertas.Count > 0;
     public static bool AlgunaAbierta => abiertas.Count > 0 || modalActual != null || MenuPrincipal.Visible || Pausa.Visible;
     public static int Cuantas => abiertas.Count;
     public static Ventana Superior => abiertas.Count > 0 ? abiertas[abiertas.Count - 1] : null;

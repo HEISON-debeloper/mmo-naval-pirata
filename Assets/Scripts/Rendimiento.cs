@@ -21,7 +21,7 @@ public class Rendimiento : MonoBehaviour
     const float Dormir = 650f, Despertar = 550f;   // margen para que no se prendan y apaguen en el borde
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Rendimiento").AddComponent<Rendimiento>();
+    internal static void Crear() => new GameObject("Rendimiento").AddComponent<Rendimiento>();
 
     // Pone la capa a un objeto y a todos sus hijos
     public static void Capa(GameObject g, int capa)

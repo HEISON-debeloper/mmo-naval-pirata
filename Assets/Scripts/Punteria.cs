@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 public class Punteria : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Puntería").AddComponent<Punteria>();
+    internal static void Crear() => new GameObject("Puntería").AddComponent<Punteria>();
 
     public static bool Apuntando { get; private set; }
     public static LadoCanon LadoActual { get; private set; }

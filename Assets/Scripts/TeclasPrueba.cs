@@ -7,7 +7,8 @@ using UnityEngine.InputSystem;
 public class TeclasPrueba : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Teclas de prueba").AddComponent<TeclasPrueba>();
+    // Solo en el editor o en una compilación de desarrollo ("Development Build"): en el juego publicado no existen
+    internal static void Crear() { if (Application.isEditor || Debug.isDebugBuild) new GameObject("Teclas de prueba").AddComponent<TeclasPrueba>(); }
 
     void Update()
     {
@@ -51,7 +52,7 @@ public class TeclasPrueba : MonoBehaviour
         if (k.digit0Key.wasPressedThisFrame) IrA(p, Recurso.Tipo.RocaGrande);
         if (k.hKey.wasPressedThisFrame) IrA(p, Recurso.Tipo.Hierro);
         if (k.jKey.wasPressedThisFrame) IrAIslaNueva(p);
-        if (k.kKey.wasPressedThisFrame) MasLejos(p);
+        if (k.uKey.wasPressedThisFrame) MasLejos(p);   // U (la K es la espada)
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);
         if (k.tKey.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }

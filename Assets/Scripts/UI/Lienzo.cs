@@ -26,7 +26,7 @@ public class Lienzo : MonoBehaviour
     const float AnchoReferencia = 1600f, AltoReferencia = 900f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear()
+    internal static void Crear()
     {
         if (I != null) return;
         var g = new GameObject("Interfaz");
@@ -159,6 +159,7 @@ public class Lienzo : MonoBehaviour
     void Update()
     {
         Ventanas.Actualizar();
+        Pausa.ControlarTiempo();
         Notificaciones.Actualizar();
         AtajosUI.Actualizar();
         if (Teclas.De(Accion.Pausa) != Key.Escape && Teclas.Pulsada(Accion.Pausa, true) && Personaje.Instancia != null && !MenuPrincipal.Visible) Ventanas.Alternar(Pausa.I);

@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 public class VelasSinEstorbo : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Velas sin estorbo").AddComponent<VelasSinEstorbo>();
+    internal static void Crear() => new GameObject("Velas sin estorbo").AddComponent<VelasSinEstorbo>();
 
     const float Transparencia = 0.18f;
 

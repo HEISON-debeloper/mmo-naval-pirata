@@ -47,8 +47,9 @@ public class VentanaAyuda : Ventana
         Grupo("Pintura", "brocha", "A bordo de tu barco, " + T(Accion.Taller) + ": el Taller. Pinta cada parte con cualquier color, dibujos en velas y bandera (franjas, cruz, calavera, sol…) y elige el mascarón. Se paga al guardar (5 de oro por parte). Se conserva al mejorar el barco y al guardar la partida.");
         Grupo("Cámara", "ojo", "Mover el mouse mirar · Rueda acercar o alejar (al timón: desde el timón hasta ver el barco pequeñito) · " + T(Accion.Pausa) + " soltar el cursor · Clic volver a capturarlo.");
         Grupo("Partida", "pergamino", "Se guarda sola cada 30 s y al salir · " + T(Accion.Guardar) + " guardar ya · " + T(Accion.BorrarPartida) + " borrar la partida (pide confirmación).");
+        if (!Application.isEditor && !Debug.isDebugBuild) return;   // creativo y teclas de prueba solo existen al desarrollar
         Grupo("Creativo", "rayo", T(Accion.Creativo) + " activar o quitar: todo gratis, todas las herramientas, sin daño ni hambre. En Fabricar aparece la categoría Creativo: llenar de cañones, reparar, saltar de molde, traer o reiniciar el enemigo, mar en calma, +100 de todo.");
-        Grupo("Teclas de prueba", "teclado", K("1") + " dañar al pirata más cercano · " + K("2") + "/" + K("3") + " traerlo · " + K("4") + " materiales · " + K("5") + "–" + K("0") + " y " + K("H") + " ir a un recurso · " + K("Y") + " a tu barco · " + K("T") + " puntería fija · " + K("J") + " isla nueva · " + K("K") + " tu barco 800 m más lejos · " + K("L") + " caja de botín · " + K("N") + " mercader · " + K("V") + " un pirata viene a abordarte");
+        Grupo("Teclas de prueba", "teclado", K("1") + " dañar al pirata más cercano · " + K("2") + "/" + K("3") + " traerlo · " + K("4") + " materiales · " + K("5") + "–" + K("0") + " y " + K("H") + " ir a un recurso · " + K("Y") + " a tu barco · " + K("T") + " puntería fija · " + K("J") + " isla nueva · " + K("U") + " tu barco 800 m más lejos · " + K("L") + " caja de botín · " + K("N") + " mercader · " + K("V") + " un pirata viene a abordarte");
     }
 
     void Grupo(string titulo, string icono, string texto)

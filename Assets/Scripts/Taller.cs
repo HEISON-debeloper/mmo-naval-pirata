@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 public class Taller : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear() => new GameObject("Taller").AddComponent<Taller>();
+    internal static void Crear() => new GameObject("Taller").AddComponent<Taller>();
 
     public static bool Abierto { get; private set; }
     static Taller instancia;

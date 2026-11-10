@@ -9,8 +9,10 @@ using UnityEngine.InputSystem;
 public class ModoCreativo : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void Crear()
+    internal static void Crear()
     {
+        // El modo creativo es una herramienta de prueba: en el juego publicado no existe
+        if (!Application.isEditor && !Debug.isDebugBuild) { Activo = false; return; }
         Activo = PlayerPrefs.GetInt("ModoCreativo", 0) == 1;
         new GameObject("Modo creativo").AddComponent<ModoCreativo>();
     }

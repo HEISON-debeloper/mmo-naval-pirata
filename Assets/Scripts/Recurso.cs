@@ -48,7 +48,7 @@ public class Recurso : MonoBehaviour
     static readonly List<Recurso> regenerando = new List<Recurso>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void CrearActualizador() { regenerando.Clear(); new GameObject("Recursos que crecen").AddComponent<Actualizador>(); }
+    internal static void CrearActualizador() { regenerando.Clear(); new GameObject("Recursos que crecen").AddComponent<Actualizador>(); }
 
     class Actualizador : MonoBehaviour
     {
