@@ -12,7 +12,8 @@ public class VentanaComercio : Ventana
 
     readonly Componentes.Pestanas pestanas;
     readonly VisualElement listaVender, listaComprar;
-    readonly Label oro, isla;
+    readonly Label oro, isla, tripEstado, tripNota;
+    readonly Button contratar, despedir;
     readonly List<Articulo> articulos = new List<Articulo>();
     string elegirTipo; bool elegirVender;
 
@@ -46,11 +47,39 @@ public class VentanaComercio : Ventana
         pestanas = new Componentes.Pestanas();
         var pv = pestanas.Agregar("Vender", "balanza");
         var pc = pestanas.Agregar("Comprar", "moneda");
+        var pt = pestanas.Agregar("Tripulación", "tripulacion");
         Contenido.Add(pestanas);
         var sv = Componentes.Lista(); pv.Add(sv);
         listaVender = Estilo.Columna(); sv.Add(listaVender);
         var sc = Componentes.Lista(); pc.Add(sc);
         listaComprar = Estilo.Columna(); sc.Add(listaComprar);
+
+        // Tripulación: contratar y despedir marineros
+        var ct = Estilo.Columna(); ct.style.paddingTop = 8f; pt.Add(ct);
+        tripEstado = Estilo.Etiqueta("", Estilo.TamTexto, Estilo.Texto, Estilo.FuenteNegrita);
+        ct.Add(tripEstado);
+        tripNota = Estilo.Pequena(""); tripNota.style.marginTop = 6f; tripNota.style.whiteSpace = WhiteSpace.Normal;
+        ct.Add(tripNota);
+        var bt = Estilo.Fila(10f); bt.style.marginTop = 12f;
+        contratar = Componentes.Boton("Contratar (" + Tripulacion.PrecioContrato + " oro)", () =>
+        {
+            Tripulacion tr = Tripulacion.Mia;
+            if (tr == null) return;
+            string no = tr.PuedeContratar();
+            if (no != null) { Notificaciones.Alerta(no); Sonidos.Reproducir(Sonidos.Tipo.Error); return; }
+            tr.Contratar();
+            Notificaciones.Mostrar("Contrataste un marinero (" + tr.marineros + "/" + tr.Maximo + ")", Notificaciones.Tipo.Comercio, 4f, "moneda");
+            Actualizar();
+        }, "moneda", Componentes.Variante.Primario, 36f);
+        despedir = Componentes.Boton("Despedir uno", () =>
+        {
+            Tripulacion tr = Tripulacion.Mia;
+            if (tr != null && tr.Despedir()) Notificaciones.Info("Despediste un marinero (" + tr.marineros + ")");
+            Actualizar();
+        }, "cerrar", Componentes.Variante.Fantasma, 36f);
+        Tooltip.Asignar(contratar, () => Tripulacion.Mia?.PuedeContratar() ?? "Contratar un marinero");
+        bt.Add(contratar); bt.Add(despedir);
+        ct.Add(bt);
 
         foreach (string t in Mercader.SeVende) Crear(t, true, listaVender);
         foreach (string t in Mercader.SeCompra) Crear(t, false, listaComprar);
@@ -80,6 +109,22 @@ public class VentanaComercio : Ventana
         int o = inv.Cantidad(Inventario.Oro);
         oro.text = o.ToString("N0");
         foreach (var a in articulos) Pintar(a, m, inv, o);
+        PintarTripulacion();
+    }
+
+    void PintarTripulacion()
+    {
+        Tripulacion tr = Tripulacion.Mia;
+        if (tr == null) return;
+        tripEstado.text = tr.Estado;
+        tripNota.text = "Cada marinero cuesta " + Tripulacion.PrecioContrato + " oro al contratarlo y cobra " + Tripulacion.Sueldo +
+            " de oro al día. Comen 1 coco o fruta por cada 2 cada 6 horas (de la bodega o de tu mochila).\n" +
+            "Con un marinero por cada 2 cañones recargas hasta un 30 % más rápido; con el barco lleno, las velas empujan un 10 % más; y pelean contra los piratas que te abordan.\n" +
+            "Sin paga o sin comida baja la moral, y con la moral muy baja se van en el puerto." +
+            (tr.marineros > 0 ? "\nAhora: recarga ×" + tr.FactorRecarga.ToString("0.00") + " · velas ×" + tr.FactorVelas.ToString("0.00") : "");
+        string no = tr.PuedeContratar();
+        contratar.SetEnabled(no == null);
+        despedir.SetEnabled(tr.marineros > 0);
     }
 
     void Crear(string tipo, bool vender, VisualElement donde)
@@ -122,6 +167,7 @@ public class VentanaComercio : Ventana
         a.etiqueta.text = e == "" ? "precio normal" : e;
         a.etiqueta.style.color = e == "barato aquí" ? Estilo.Bien : e == "caro aquí" ? Estilo.Ambar : Estilo.TextoTenue;
         int max = a.vender ? tengo : (ModoCreativo.Activo ? 999 : m.MaxCompra(a.tipo, oroTengo));
+        if (!a.vender && !Inventario.SinPeso(a.tipo)) max = Mathf.Min(max, inv.Espacio);   // lo que quepa en la mochila
         a.cantidad.Maximo = Mathf.Max(1, max);
         int n = a.cantidad.Valor;
         int total = m.Total(a.tipo, n, a.vender, false);
@@ -149,6 +195,7 @@ public class VentanaComercio : Ventana
         }
         else
         {
+            if (!Inventario.SinPeso(a.tipo) && n > inv.Espacio) { Notificaciones.Alerta("No te cabe en la mochila (" + inv.Carga + " / " + Inventario.Capacidad + ")"); Sonidos.Reproducir(Sonidos.Tipo.Error); return; }
             int cuesta = m.Total(a.tipo, n, false, false);
             if (!ModoCreativo.Activo && inv.Cantidad(Inventario.Oro) < cuesta) { Notificaciones.Alerta("Te falta oro: cuesta " + cuesta); Sonidos.Reproducir(Sonidos.Tipo.Error); return; }
             m.Total(a.tipo, n, false, true);

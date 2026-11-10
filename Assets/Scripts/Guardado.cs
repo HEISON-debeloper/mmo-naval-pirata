@@ -35,6 +35,8 @@ public class Guardado : MonoBehaviour
         public bool aBordo;
         public float vida = 100f, hambre = 100f, sed = 100f;
         public float hora = -1f;   // hora del día (-1 = partidas viejas)
+        public int marineros;              // tu tripulación
+        public float moral = -1f;          // -1 = partidas viejas
         public List<Cosa> inventario = new List<Cosa>();
 
         public bool tieneBarco;
@@ -150,6 +152,8 @@ public class Guardado : MonoBehaviour
         d.posJugador = p.transform.position;
         d.vida = p.Vida;
         d.hora = CicloDia.Hora;
+        Tripulacion tr = Tripulacion.Mia;
+        if (tr != null) { d.marineros = tr.marineros; d.moral = tr.moral; }
         Supervivencia sup = p.GetComponent<Supervivencia>();
         if (sup != null) { d.hambre = sup.Hambre; d.sed = sup.Sed; }
         Inventario inv = p.GetComponent<Inventario>();
@@ -273,6 +277,7 @@ public class Guardado : MonoBehaviour
         p.FijarVida(d.vida);
         Supervivencia sup = p.GetComponent<Supervivencia>();
         if (sup != null) sup.Fijar(d.hambre, d.sed);
+        Tripulacion.Mia?.Fijar(d.marineros, d.moral);
 
         // Primero se lleva al personaje a donde estaba, para que el mundo infinito arme las islas de esa zona
         Vector3 donde = d.tieneBarco && d.aBordo ? d.posBarco : d.posJugador;

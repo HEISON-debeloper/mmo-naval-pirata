@@ -52,8 +52,9 @@ public class Canones : MonoBehaviour
     // Cuánto tarda en recargar un lado con n cañones instalados
     public float TiempoRecarga(LadoCanon l)
     {
-        if (l == LadoCanon.Popa) return RecargaBarriles;
-        return recarga * Mathf.Min(2f, 1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1));
+        float gente = Tripulacion.Recarga(gameObject);   // tu tripulación recarga más rápido
+        if (l == LadoCanon.Popa) return RecargaBarriles * gente;
+        return recarga * Mathf.Min(2f, 1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1)) * gente;
     }
 
     public static string Nombre(LadoCanon l) => l == LadoCanon.Babor ? "babor" : l == LadoCanon.Estribor ? "estribor" : l == LadoCanon.Proa ? "proa" : "popa";

@@ -449,6 +449,9 @@ public class HudNuevo : MonoBehaviour
 
         filaBodega.style.display = bd != null ? DisplayStyle.Flex : DisplayStyle.None;
         if (bd != null) bodegaTexto.text = "Bodega " + Estilo.Col(bd.Total + "/" + bd.capacidad, Estilo.Texto) + "   " + bd.Cantidad(Inventario.Coco) + " cocos, " + bd.Cantidad(Inventario.Fruta) + " frutas";
+        Tripulacion tr = Tripulacion.Mia;
+        if (bd != null && tr != null && tr.marineros > 0 && p != null && b == p.barco)
+            bodegaTexto.text += "\n" + Estilo.Col(tr.marineros + "/" + tr.Maximo, Estilo.Texto) + " marineros · moral " + Estilo.Col(Mathf.RoundToInt(tr.moral) + "%", tr.moral >= 45f ? Estilo.Bien : tr.moral >= 20f ? Estilo.Ambar : Estilo.Mal);
     }
 
     (VisualElement, Label, VisualElement, Label) CrearFilaCanon(LadoCanon l)

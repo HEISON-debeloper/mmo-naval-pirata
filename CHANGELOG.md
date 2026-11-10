@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.42.0 — Tripulación y moral  (2026-11-10)
+- Tripulación: en el Mercado hay una pestaña nueva para contratar marineros (30 de oro cada uno) y despedirlos. Caben 2 más uno por cada 2 ranuras de cañón (la balsa, uno).
+- Con un marinero por cada 2 cañones y buena moral recargas hasta un 30 % más rápido (también los barriles); con el barco lleno de gente las velas empujan hasta un 10 % más.
+- Los marineros pelean contra los piratas que te abordan; a veces cae alguno.
+- Cobran 2 de oro al día cada uno y comen 1 coco o fruta por cada 2 cada 6 horas (primero de la bodega, después de la mochila). Sin paga o sin comida baja la moral; con la moral muy baja desertan al llegar a un puerto.
+- Si tu barco se hunde se ahoga la mitad; si cambias a un barco más chico, los que no caben se quedan en tierra. La tripulación se guarda con la partida y se ve en la tarjeta del barco.
+- El Mercado ya no vende más de lo que cabe en la mochila.
+
 ## 0.41.0 — Agua por GPU y mochila con límite  (2026-11-10)
 - Olas en la tarjeta de video: el agua ya no recalcula 60 000 vértices en el procesador cada cuadro; el shader mueve las olas con la misma fórmula que usan los barcos para flotar. Mismo aspecto facetado, mucho menos trabajo para el procesador (importante en el teléfono).
 - Cámara más liviana: ya no crea basura de memoria cada cuadro al revisar si algo la tapa, y no revisa barcos lejanos.
