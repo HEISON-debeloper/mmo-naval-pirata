@@ -381,7 +381,7 @@ public static class Detalles
         float frente = zc + lc / 2f;
         if (cast == null) return frente;
         float cw = cast.localScale.x, yTop = h / 2f + Cubierta.AltoCamaroteDe(h);
-        float x = cw / 2f - 0.05f, za = zc - lc / 2f + 0.05f, zb = frente - 0.05f;
+        float x = cw / 2f - 0.05f, za = zc - lc / 2f - Cubierta.SalienteCamarote + 0.05f, zb = frente - 0.05f;
 
         // Baranda alrededor de la toldilla (arriba del castillo), con hueco al frente para las escaleras
         void Baranda(Vector3 a, Vector3 b)

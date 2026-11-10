@@ -48,13 +48,14 @@ public static class Astillero
         Malla("Cubierta", t, CascoProcedural.CubiertaMalla(w, h, L), m.cubierta);
         // Castillo de popa: el timón va encima, atrás del todo, como en los barcos de verdad
         float zCam = Cubierta.CentroCamarote(L), largoCam = Cubierta.LargoCamarote(L);
-        Pieza(PrimitiveType.Cube, "Camarote", t, new Vector3(0, h / 2 + Cubierta.AltoCamaroteDe(h) / 2f, zCam), Quaternion.identity, new Vector3(w * 0.8f, Cubierta.AltoCamaroteDe(h), largoCam), m.casco);
+        float sal = Cubierta.SalienteCamarote;   // la pared de atrás no queda en el plano del tablón de popa
+        Pieza(PrimitiveType.Cube, "Camarote", t, new Vector3(0, h / 2 + Cubierta.AltoCamaroteDe(h) / 2f, zCam - sal / 2f), Quaternion.identity, new Vector3(w * 0.8f, Cubierta.AltoCamaroteDe(h), largoCam + sal), m.casco);
         // Ventanas del castillo, mirando hacia atrás
         int ventanas = Mathf.Clamp(Mathf.RoundToInt(w * 0.8f / 1.4f), 1, 7);
         for (int i = 0; i < ventanas; i++)
         {
             float x = ventanas == 1 ? 0f : Mathf.Lerp(-w * 0.3f, w * 0.3f, (float)i / (ventanas - 1));
-            Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamaroteDe(h) * 0.55f, zCam - largoCam / 2f - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
+            Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamaroteDe(h) * 0.55f, zCam - largoCam / 2f - sal - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
         }
         Vector3 timon = Cubierta.Timon(h, L, false);
         if (Modelos.Existe("timon"))

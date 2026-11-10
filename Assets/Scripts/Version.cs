@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.42.0";
-    public const string Nombre = "Tripulación y moral";
+    public const string Numero = "0.42.1";
+    public const string Nombre = "Sin parpadeo en la popa y modelos sólidos";
     public static string Texto => "v" + Numero;
 }

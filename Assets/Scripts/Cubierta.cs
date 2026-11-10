@@ -10,6 +10,9 @@ public static class Cubierta
     public static float AltoCamaroteDe(float h) => Mathf.Clamp(0.5f * h + 0.6f, 1.0f, 2.4f);
     public static float LargoCamarote(float L) => Mathf.Max(1.8f, 0.14f * L);
     public static float CentroCamarote(float L) => -0.5f * L + LargoCamarote(L) / 2f;
+    // La pared de atrás del castillo sale un poco más que el tablón de popa de la borda: si quedaran en el mismo
+    // plano, las dos caras pelean por dibujarse y la pared parpadea
+    public const float SalienteCamarote = 0.06f;
 
     public static float Altura(float h) => h / 2f + 0.1f;
 

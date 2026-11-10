@@ -6,6 +6,10 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.42.1 — Sin parpadeo en la popa y modelos sólidos  (2026-11-10)
+- Arreglado el parpadeo detrás del castillo de popa: la pared de atrás del camarote quedaba en el mismo plano que el tablón de popa de la borda y las dos caras se peleaban por dibujarse. Ahora la pared sale 6 cm.
+- Los modelos (barriles, cañones, timón, ancla, faroles, cabrestante, campana, mascarones) venían con las caras al revés: de afuera se veía el interior, por eso los barriles parecían huecos. Ahora se corrigen solos al cargarlos.
+
 ## 0.42.0 — Tripulación y moral  (2026-11-10)
 - Tripulación: en el Mercado hay una pestaña nueva para contratar marineros (30 de oro cada uno) y despedirlos. Caben 2 más uno por cada 2 ranuras de cañón (la balsa, uno).
 - Con un marinero por cada 2 cañones y buena moral recargas hasta un 30 % más rápido (también los barriles); con el barco lleno de gente las velas empujan hasta un 10 % más.

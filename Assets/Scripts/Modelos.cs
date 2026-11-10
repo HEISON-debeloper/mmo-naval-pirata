@@ -26,13 +26,27 @@ public static class Modelos
             Mesh m = new Mesh { name = modelo + "_" + o.nombre };
             if (verts.Length > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             m.vertices = verts;
-            m.triangles = o.t;
+            m.triangles = HaciaAfuera(verts, o.t);
             m.RecalculateNormals();   // cada triángulo con sus vértices: caras planas (low poly)
             m.RecalculateBounds();
             lista.Add((o.nombre, m));
         }
         cache[modelo] = lista;
         return lista;
+    }
+
+    // Los modelos exportados traían los triángulos al revés (la cara visible miraba hacia adentro): de afuera se veía
+    // el interior y los barriles parecían huecos. Con el volumen con signo se sabe hacia dónde miran y se dan vuelta si hace falta.
+    static int[] HaciaAfuera(Vector3[] v, int[] t)
+    {
+        double vol = 0;
+        for (int i = 0; i + 2 < t.Length; i += 3)
+            vol += Vector3.Dot(v[t[i]], Vector3.Cross(v[t[i + 1]], v[t[i + 2]]));
+        // Unity dibuja el lado hacia donde apunta Cross(b-a, c-a): mirando afuera, el volumen sale positivo
+        if (vol >= 0) return t;
+        int[] r = (int[])t.Clone();
+        for (int i = 0; i + 2 < r.Length; i += 3) { int x = r[i + 1]; r[i + 1] = r[i + 2]; r[i + 2] = x; }
+        return r;
     }
 
     public static bool Existe(string modelo) => Cargar(modelo).Count > 0;
