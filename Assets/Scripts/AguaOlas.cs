@@ -40,33 +40,6 @@ public class AguaOlas : MonoBehaviour
         float mitad = tamano / 2f;
         for (int i = 0; i < lado; i++) { gx[i] = i * celda - mitad; gz[i] = i * celda - mitad; }
 
-        int n = resolucion * resolucion * 6;
-        verts = new Vector3[n];
-        normales = new Vector3[n];
-        int[] tris = new int[n];
-        int k = 0;
-        for (int z = 0; z < resolucion; z++)
-        for (int x = 0; x < resolucion; x++)
-        {
-            // Cada triángulo con sus propios vértices = aspecto facetado (low poly)
-            verts[k] = new Vector3(gx[x], 0, gz[z]);
-            verts[k + 1] = new Vector3(gx[x], 0, gz[z + 1]);
-            verts[k + 2] = new Vector3(gx[x + 1], 0, gz[z + 1]);
-            verts[k + 3] = new Vector3(gx[x], 0, gz[z]);
-            verts[k + 4] = new Vector3(gx[x + 1], 0, gz[z + 1]);
-            verts[k + 5] = new Vector3(gx[x + 1], 0, gz[z]);
-            for (int j = 0; j < 6; j++) { tris[k + j] = k + j; normales[k + j] = Vector3.up; }
-            k += 6;
-        }
-        malla = new Mesh { name = "Agua", indexFormat = IndexFormat.UInt32 };
-        malla.vertices = verts;
-        malla.normals = normales;
-        malla.triangles = tris;
-        malla.MarkDynamic();
-        // Límites fijos (las olas no pasan de ±3 m): así no hay que recalcularlos cada frame
-        malla.bounds = new Bounds(Vector3.zero, new Vector3(tamano, 6f, tamano));
-        GetComponent<MeshFilter>().sharedMesh = malla;
-
         // Material del agua que no se dibuja dentro de los cascos (si el shader no está, se queda el de antes)
         Shader sh = Shader.Find("Pirata/Agua");
         MeshRenderer r = GetComponent<MeshRenderer>();
@@ -80,6 +53,7 @@ public class AguaOlas : MonoBehaviour
         }
         enGPU = r != null && r.sharedMaterial != null && r.sharedMaterial.shader == sh && sh != null
                 && SystemInfo.SupportsTextureFormat(TextureFormat.RFloat);
+        ArmarMalla();
         if (enGPU)
         {
             texCalma = new Texture2D(lado, lado, TextureFormat.RFloat, false, true)
@@ -88,6 +62,61 @@ public class AguaOlas : MonoBehaviour
             Shader.SetGlobalVector(idRejilla, new Vector4(tamano / 2f, 1f / celda, 1f / lado, 0f));
         }
         Shader.SetGlobalFloat(idGPU, enGPU ? 1f : 0f);
+    }
+
+    // En la tarjeta gráfica (GPU) las olas y las normales se calculan en el shader: alcanza una rejilla con vértices
+    // compartidos (6 veces menos vértices). Sin GPU, cada triángulo lleva sus propios vértices (aspecto facetado).
+    void ArmarMalla()
+    {
+        malla = new Mesh { name = "Agua", indexFormat = IndexFormat.UInt32 };
+        if (enGPU)
+        {
+            var vs = new Vector3[lado * lado];
+            for (int z = 0; z < lado; z++)
+                for (int x = 0; x < lado; x++) vs[z * lado + x] = new Vector3(gx[x], 0f, gz[z]);
+            int[] ts = new int[resolucion * resolucion * 6];
+            int q = 0;
+            for (int z = 0; z < resolucion; z++)
+                for (int x = 0; x < resolucion; x++)
+                {
+                    int a = z * lado + x, b = (z + 1) * lado + x, c = b + 1, d = a + 1;
+                    ts[q++] = a; ts[q++] = b; ts[q++] = c;
+                    ts[q++] = a; ts[q++] = c; ts[q++] = d;
+                }
+            var ns = new Vector3[vs.Length];
+            for (int i = 0; i < ns.Length; i++) ns[i] = Vector3.up;
+            malla.vertices = vs;
+            malla.normals = ns;
+            malla.triangles = ts;
+        }
+        else
+        {
+            int n = resolucion * resolucion * 6;
+            verts = new Vector3[n];
+            normales = new Vector3[n];
+            int[] tris = new int[n];
+            int k = 0;
+            for (int z = 0; z < resolucion; z++)
+            for (int x = 0; x < resolucion; x++)
+            {
+                // Cada triángulo con sus propios vértices = aspecto facetado (low poly)
+                verts[k] = new Vector3(gx[x], 0, gz[z]);
+                verts[k + 1] = new Vector3(gx[x], 0, gz[z + 1]);
+                verts[k + 2] = new Vector3(gx[x + 1], 0, gz[z + 1]);
+                verts[k + 3] = new Vector3(gx[x], 0, gz[z]);
+                verts[k + 4] = new Vector3(gx[x + 1], 0, gz[z + 1]);
+                verts[k + 5] = new Vector3(gx[x + 1], 0, gz[z]);
+                for (int j = 0; j < 6; j++) { tris[k + j] = k + j; normales[k + j] = Vector3.up; }
+                k += 6;
+            }
+            malla.vertices = verts;
+            malla.normals = normales;
+            malla.triangles = tris;
+            malla.MarkDynamic();
+        }
+        // Límites fijos (las olas no pasan de ±3 m): así no hay que recalcularlos cada frame
+        malla.bounds = new Bounds(Vector3.zero, new Vector3(tamano, 6f, tamano));
+        GetComponent<MeshFilter>().sharedMesh = malla;
     }
 
     void OnDestroy()
@@ -117,9 +146,11 @@ public class AguaOlas : MonoBehaviour
         }
         cercanos.Sort((a, b) => a.d.CompareTo(b.d));
         int n = 0;
+        // En gama baja, solo los cascos más cercanos (cada uno es trabajo extra en cada píxel de agua)
+        int tope = PerfilGrafico.Actual == PerfilGrafico.Nivel.Bajo ? 3 : MaxCascos;
         foreach (var (_, b) in cercanos)
         {
-            if (n >= MaxCascos) break;
+            if (n >= tope) break;
             if (Cubierta.EsPlana(b)) continue;   // la balsa no tiene casco cerrado
             VidaBarco v = b.GetComponent<VidaBarco>();
             if (v != null && v.Hundido) continue;   // el que se hunde sí se llena de agua

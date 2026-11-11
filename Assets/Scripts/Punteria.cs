@@ -30,8 +30,8 @@ public class Punteria : MonoBehaviour
     public static float Elevacion;   // ángulo actual del tiro (la cámara de puntería se inclina con él)
     const float SensMouse = 0.07f, SensDedo = 0.1f;
     float elevApunte;
-    const float PasoTiempo = 0.05f;
-    const int PasosMax = 160;
+    const float PasoTiempo = 0.08f;   // 8 s de vuelo como máximo; menos pasos = menos rayos por cuadro
+    const int PasosMax = 100;
 
     readonly List<LineRenderer> lineas = new List<LineRenderer>();
     readonly List<Transform> marcas = new List<Transform>();
@@ -78,7 +78,9 @@ public class Punteria : MonoBehaviour
         cn.anguloApunte = elevApunte;
         Elevacion = elevApunte;
 
-        Dibujar(cn, lado);
+        // En el teléfono el arco se recalcula cuadro por medio (cientos de rayos por cuadro); no se nota
+        if (!EsMovil || (Time.frameCount & 1) == 0 || !dibujadoAntes) Dibujar(cn, lado);
+        dibujadoAntes = true;
 
         // (el clic que vuelve a capturar el cursor no dispara)
         if (boton && capturadoAntes && Mouse.current.leftButton.wasPressedThisFrame)
@@ -92,8 +94,11 @@ public class Punteria : MonoBehaviour
         }
     }
 
+    bool dibujadoAntes;
+
     void Apagar(Canones cn)
     {
+        dibujadoAntes = false;
         Apuntando = false;
         HayCanonesEnLado = false;
         if (cn != null) cn.anguloApunte = float.NaN;

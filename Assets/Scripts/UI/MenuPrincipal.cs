@@ -138,6 +138,7 @@ public static class MenuPrincipal
         Ventanas.Confirmar("Nueva partida", "Empiezas de cero en una isla, sin nada.\n\nLa partida actual (barco, mochila, islas descubiertas y pintura) queda guardada aparte: la puedes recuperar desde este menú.", "Empezar de cero", () =>
         {
             var g = Object.FindFirstObjectByType<Guardado>();
+            if (g != null && g.Listo && Guardado.HayPartida) g.GuardarAhora();   // lo último que hiciste también queda guardado aparte
             if (g != null) g.BorrarPartida();
             else Guardado.Apartar();
             Recargar();

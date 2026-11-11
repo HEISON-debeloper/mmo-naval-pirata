@@ -147,7 +147,10 @@ public static class GeneradorIsla
         {
             bool grande = rec.tipo == Recurso.Tipo.Palma || rec.tipo == Recurso.Tipo.RocaGrande || rec.tipo == Recurso.Tipo.Hierro;
             Rendimiento.Capa(rec.gameObject, grande ? Rendimiento.CapaMedio : Rendimiento.CapaDetalle);
+            // Las hojas de una palma, las matas de fibra, las frutas de un arbusto: una malla por material
+            if (Application.isPlaying) MallaCombinada.JuntarHijos(rec.transform);
         }
+        if (Application.isPlaying && t.GetComponent<MallasPropias>() == null) t.gameObject.AddComponent<MallasPropias>();   // borra las mallas juntas con la isla
         Random.state = antes;
         return t;
     }
@@ -172,6 +175,9 @@ public static class GeneradorIsla
         g.transform.localRotation = rot;
         g.transform.localScale = escala;
         if (m != null) g.GetComponent<Renderer>().sharedMaterial = m;
+        // Cubos (rocas, vetas) y cilindros (troncos) se quedan con su colisión simple de caja o cápsula, que es exacta
+        // o casi y mucho más barata; las esferas aplastadas (playa, colina) necesitan la malla
+        if (colision && (tipo == PrimitiveType.Cube || tipo == PrimitiveType.Cylinder)) return g;
         Object.DestroyImmediate(g.GetComponent<Collider>());
         if (colision)
         {

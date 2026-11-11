@@ -36,13 +36,15 @@ public class Flotacion : MonoBehaviour
     // En Start (no en Awake) para respetar valores puestos al crear el barco desde código
     void Start() => rb.centerOfMass = centroDeMasa;
 
+    Transform[] soloYo;
+
     void FixedUpdate()
     {
         if (!activa) return;
 
         Transform[] puntos = (puntosFlotacion != null && puntosFlotacion.Length > 0)
             ? puntosFlotacion
-            : new[] { transform };
+            : (soloYo ??= new[] { transform });
 
         bool tocaAgua = false;
         foreach (Transform p in puntos)

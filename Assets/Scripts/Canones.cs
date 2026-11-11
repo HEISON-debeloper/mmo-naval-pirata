@@ -103,6 +103,9 @@ public class Canones : MonoBehaviour
             int n = EnLado((LadoCanon)l);
             for (int i = 0; r != null && i < r.Length; i++) if (r[i]) r[i].gameObject.SetActive(i < n);
         }
+        // Las piezas del barco van juntas en pocas mallas: con otros cañones hay que volver a juntarlas
+        MallaCombinada mc = GetComponent<MallaCombinada>();
+        if (mc != null) mc.Pedir();
     }
 
     public bool Instalar(LadoCanon l)
@@ -176,22 +179,10 @@ public class Canones : MonoBehaviour
 
     void Bala(Transform c)
     {
-        GameObject b = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        b.name = "Bala";
         SonidosMundo.Uno("canon_disparo", c.position, 1f, Random.Range(0.9f, 1.05f), 280f, 0.07f);   // un cañonazo se oye fuerte hasta ~35 m y de lejos aún retumba
-        b.transform.position = Salida(c);
-        b.transform.localScale = Vector3.one * 0.4f;
         Renderer rc = c.GetComponentInChildren<Renderer>();
-        if (rc != null) b.GetComponent<Renderer>().sharedMaterial = rc.sharedMaterial;
-        Rigidbody brb = b.AddComponent<Rigidbody>();
-        brb.mass = 10f;
-        brb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        brb.linearVelocity = VelocidadInicial(c) + Random.insideUnitSphere * dispersion * velocidadBala;
-        Collider bc = b.GetComponent<Collider>();
-        foreach (Collider p in propios) if (p != null) Physics.IgnoreCollision(bc, p);   // las piezas recién creadas pueden haber perdido su collider
-        BalaCanon bala = b.AddComponent<BalaCanon>();
-        bala.dueno = vida;
-        bala.dano = dano * Pactos.DanoBala(gameObject);   // pactos malditos
+        BalaCanon.Tomar().Lanzar(Salida(c), VelocidadInicial(c) + Random.insideUnitSphere * dispersion * velocidadBala,
+                                 rc != null ? rc.sharedMaterial : null, propios, vida, dano * Pactos.DanoBala(gameObject));   // pactos malditos
     }
 
     public bool Disparar(LadoCanon lado)

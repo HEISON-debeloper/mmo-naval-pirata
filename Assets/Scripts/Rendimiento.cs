@@ -28,11 +28,17 @@ public class Rendimiento : MonoBehaviour
     {
         if (g == null) return;
         g.layer = capa;
+        // Las cosas chicas de las islas (fibra, ramas, piedras, frutas) no hacen sombra: casi no se nota y cuesta mucho
+        if (capa == CapaDetalle && g.TryGetComponent(out Renderer r)) r.shadowCastingMode = ShadowCastingMode.Off;
         foreach (Transform h in g.transform) Capa(h.gameObject, capa);
     }
 
     Camera camConfigurada;
+    static bool reconfigurar;
     float tRevisar;
+
+    // El perfil gráfico cambió: volver a fijar las distancias de dibujo
+    public static void Reconfigurar() => reconfigurar = true;
     readonly HashSet<IABarco> dormidos = new HashSet<IABarco>();
 
     void Start()
@@ -41,17 +47,31 @@ public class Rendimiento : MonoBehaviour
             urp.shadowDistance = DistanciaSombras;
     }
 
+    // Más allá del final de la niebla todo es del color del cielo: no hace falta dibujarlo.
+    // El plano lejano de la cámara sigue a la niebla (que cambia con la lluvia y las nubes).
+    void LateUpdate()
+    {
+        Camera cam = Camera.main;
+        if (cam == null || cam.nearClipPlane < 0.06f) return;   // primera persona bajo cubierta: lo maneja CamaraBarco
+        float lejos = RenderSettings.fog && RenderSettings.fogMode == FogMode.Linear
+            ? Mathf.Clamp(RenderSettings.fogEndDistance * 1.05f + 15f, 150f, LejosMaximo) : LejosMaximo;
+        if (Mathf.Abs(cam.farClipPlane - lejos) > 1f) cam.farClipPlane = lejos;
+    }
+    public const float LejosMaximo = 1500f;
+
     void Update()
     {
         Camera cam = Camera.main;
-        if (cam != null && cam != camConfigurada)
+        if (cam != null && (cam != camConfigurada || reconfigurar))
         {
+            float f = PerfilGrafico.Ahora.distancia;
             float[] d = new float[32];
-            d[CapaBarcoDetalle] = DistBarcoDetalle;
-            d[CapaDetalle] = DistDetalle;
-            d[CapaMedio] = DistMedio;
+            d[CapaBarcoDetalle] = DistBarcoDetalle * f;
+            d[CapaDetalle] = DistDetalle * f;
+            d[CapaMedio] = DistMedio * f;
             cam.layerCullDistances = d;
             camConfigurada = cam;
+            reconfigurar = false;
         }
 
         tRevisar -= Time.deltaTime;
@@ -68,7 +88,8 @@ public class Rendimiento : MonoBehaviour
             VidaBarco v = ia.GetComponent<VidaBarco>();
             if (v != null && v.Hundido) continue;   // uno que se hunde termina su animación
             ControlBarco cb = ia.GetComponent<ControlBarco>();
-            bool tuyo = ia.Capturado || (cb != null && (p.barco == cb || p.BarcoActual == cb));
+            // Un barco capturado que dejaste atrás también duerme (antes seguía con física para siempre)
+            bool tuyo = cb != null && (p.barco == cb || p.BarcoActual == cb);
             Vector3 d = ia.transform.position - yo; d.y = 0f;
             float dist = d.magnitude;
             bool dormido = dormidos.Contains(ia);

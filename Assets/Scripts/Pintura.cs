@@ -137,7 +137,11 @@ public class Pintura : MonoBehaviour
         }
     }
 
-    static int ParteDe(Renderer r)
+    // Para MallaCombinada: el material de antes de pintar, y que la malla junta se pinte igual que su modelo
+    public Material Original(Renderer r) => originales.TryGetValue(r, out Material m) && m != null ? m : r.sharedMaterial;
+    public void Registrar(Renderer junta, Renderer modelo) { if (originales.TryGetValue(modelo, out Material m) && m != null) originales[junta] = m; }
+
+    public static int ParteDe(Renderer r)
     {
         string n = r.name;
         for (int i = 0; i < Piezas.Length; i++) if (System.Array.IndexOf(Piezas[i], n) >= 0) return i;
@@ -183,7 +187,34 @@ public class Pintura : MonoBehaviour
         t.SetPixels(px);
         t.Apply(true);
         texturas[((int)p, a, b)] = t;
+        orden.Add(((int)p, a, b));
+        if (orden.Count > MaxTexturas) Podar();
         return t;
+    }
+
+    // Al arrastrar un color en el Taller se crea una textura por cada tono: sin tope, eran varios MB por arrastre.
+    // Pasado el tope se borran las más viejas que ningún barco esté usando.
+    const int MaxTexturas = 96;
+    static readonly List<(int, Color, Color)> orden = new List<(int, Color, Color)>();
+    static void Podar()
+    {
+        var usadas = new HashSet<Texture>();
+        foreach (Pintura pi in FindObjectsByType<Pintura>(FindObjectsSortMode.None))
+            foreach (Material m in pi.pintados.Values)
+            {
+                if (m == null) continue;
+                if (m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null) usadas.Add(m.GetTexture("_BaseMap"));
+                if (m.HasProperty("_MainTex") && m.GetTexture("_MainTex") != null) usadas.Add(m.GetTexture("_MainTex"));
+            }
+        for (int i = 0; i < orden.Count && orden.Count > MaxTexturas * 2 / 3; )
+        {
+            var k = orden[i];
+            bool fija = k.Item2 == Color.white && k.Item3 == Color.black;   // las banderitas de los piratas
+            if (!texturas.TryGetValue(k, out Texture2D t) || t == null) { orden.RemoveAt(i); texturas.Remove(k); continue; }
+            if (fija || usadas.Contains(t)) { i++; continue; }
+            texturas.Remove(k); orden.RemoveAt(i);
+            Destroy(t);
+        }
     }
 
     // Franjas de las banderas de orgullo (de arriba hacia abajo)

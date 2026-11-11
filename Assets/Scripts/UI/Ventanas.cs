@@ -312,9 +312,12 @@ public static class Ventanas
     }
 
     // Lo llama Lienzo cada cuadro
+    static readonly List<Ventana> copia = new List<Ventana>();
     internal static void Actualizar()
     {
-        foreach (var v in abiertas.ToArray()) v.Tic();
+        // Copia sin crear basura (una ventana puede cerrarse durante su Tic)
+        copia.Clear(); copia.AddRange(abiertas);
+        foreach (var v in copia) v.Tic();
         modalActual?.Tic();
         Tooltip.Actualizar();
 

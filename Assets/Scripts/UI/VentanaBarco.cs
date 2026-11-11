@@ -240,7 +240,7 @@ public class VentanaBarco : Ventana
         if (bd == null && ABordo) bd = P.barco.gameObject.AddComponent<Bodega>();
         if (bd == null || inv == null) { carga.Fijar(0f, 1f, "sin bodega"); carga.Animar(); return; }
         carga.Fijar(bd.Total, bd.capacidad); carga.Animar();
-        string firma = ABordo + "|";
+        string firma = ABordo + "|" + bd.GetInstanceID() + "|";   // otro barco con lo mismo adentro también redibuja
         foreach (var kv in inv.Todo) firma += kv.Key + kv.Value;
         firma += "|";
         foreach (var kv in bd.Todo) firma += kv.Key + kv.Value;
@@ -275,6 +275,7 @@ public class VentanaBarco : Ventana
         void Mover(int k)
         {
             if (!ABordo) { Notificaciones.Alerta("Sube a tu barco para usar la bodega"); return; }
+            if (bd == null || P.barco == null || bd != P.barco.GetComponent<Bodega>()) { firmaBodega = null; Actualizar(); return; }   // la fila era de otro barco
             int m = aBodega ? bd.Guardar(inv, tipo, k) : bd.Sacar(inv, tipo, k);
             if (m > 0) Sonidos.Reproducir(Sonidos.Tipo.Transferir);
             else { Sonidos.Reproducir(Sonidos.Tipo.Error); if (aBodega && bd.Libre == 0) Notificaciones.Alerta("La bodega está llena"); }

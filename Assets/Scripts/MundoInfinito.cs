@@ -45,6 +45,10 @@ public class MundoInfinito : MonoBehaviour
 
     public int IslasCreadas { get; private set; }
 
+    // Para el bot de prueba: cuánto tardó lo más lento de armar (un cuadro entero se va en eso)
+    public static float PeorCeldaMs, PeorBarcoMs;
+    readonly System.Diagnostics.Stopwatch reloj = new System.Diagnostics.Stopwatch();
+
     void Awake() => Instancia = this;
 
     // Las celdas son del mundo "de verdad": se suma lo que corrió el origen flotante
@@ -152,7 +156,14 @@ public class MundoInfinito : MonoBehaviour
         {
             Vector2Int k = pendientes[0];
             pendientes.RemoveAt(0);
-            if (!celdas.ContainsKey(k)) Generar(k);
+            if (!celdas.ContainsKey(k))
+            {
+                reloj.Restart();
+                double t0 = Cronos.Ahora;
+                Generar(k);
+                Cronos.Anotar("celda del mundo (islas)", t0);
+                PeorCeldaMs = Mathf.Max(PeorCeldaMs, (float)reloj.Elapsed.TotalMilliseconds);
+            }
         }
         else if (enemigosPendientes.Count > 0)
         {
@@ -161,7 +172,11 @@ public class MundoInfinito : MonoBehaviour
             if (celdas.TryGetValue(k, out List<GameObject> lista) && !Limpias.Contains(k))   // la celda sigue cargada
             {
                 Vector2 cc = new Vector2((k.x + 0.5f) * tamanoCelda, (k.y + 0.5f) * tamanoCelda);
+                reloj.Restart();
+                double t0 = Cronos.Ahora;
                 GameObject e = CrearEnemigo(k, new System.Random(Hash(k, 977)), cc.magnitude, islasDeCelda);
+                Cronos.Anotar("barco pirata entero", t0);
+                PeorBarcoMs = Mathf.Max(PeorBarcoMs, (float)reloj.Elapsed.TotalMilliseconds);
                 if (e != null) { lista.Add(e); celdaDe[e] = k; }
             }
         }
@@ -292,7 +307,8 @@ public class MundoInfinito : MonoBehaviour
         foreach (Isla s in Isla.Todas)
         {
             if (s == null || s.generada) continue;
-            float dx = s.cx - pos.x, dz = s.cz - pos.z, min = s.orilla + orilla + 120f;
+            // s.cx/s.cz son posiciones locales (corridas por el origen flotante) y pos es del mundo de verdad
+            float dx = s.cx + OrigenFlotante.Desplazamiento.x - pos.x, dz = s.cz + OrigenFlotante.Desplazamiento.z - pos.z, min = s.orilla + orilla + 120f;
             if (dx * dx + dz * dz < min * min) return true;
         }
         foreach (var h in hechas)

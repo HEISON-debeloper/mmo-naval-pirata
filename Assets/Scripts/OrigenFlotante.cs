@@ -17,7 +17,8 @@ public class OrigenFlotante : MonoBehaviour
 
     public static OrigenFlotante I { get; private set; }
     public static Vector3 Desplazamiento { get; private set; }   // solo x y z, en múltiplos de Salto
-    public static event System.Action<Vector3> AlMover;           // cuánto se corrió el mundo (hay que restarlo)
+    public static event System.Action<Vector3> AlMover;
+    public static float PeorCorridaMs;   // para el bot de prueba           // cuánto se corrió el mundo (hay que restarlo)
 
     const float Limite = 1000f, Salto = 1000f;
     static Scene persistente;
@@ -48,6 +49,11 @@ public class OrigenFlotante : MonoBehaviour
     public static void Correr(Vector3 corrida)
     {
         if (corrida == Vector3.zero) return;
+        var reloj = System.Diagnostics.Stopwatch.StartNew();
+        if (!float.IsFinite(corrida.x) || !float.IsFinite(corrida.z)) { Debug.LogError("Origen flotante: posición del jugador no válida (" + corrida + ")"); return; }
+        // Las partículas que viven en coordenadas del mundo también se corren (una búsqueda, no recorrer todos los hijos)
+        foreach (ParticleSystem ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+            if (ps.main.simulationSpace == ParticleSystemSimulationSpace.World) Correr(ps, corrida);
         var raices = new List<GameObject>();
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {
@@ -77,14 +83,13 @@ public class OrigenFlotante : MonoBehaviour
         foreach (Isla i in Isla.Todas) if (i != null) i.Refrescar();
         Olas.IslasCambiaron = true;
         AlMover?.Invoke(corrida);
+        Cronos.Anotar("salto del origen flotante", Cronos.Ahora - reloj.Elapsed.TotalMilliseconds);
+        PeorCorridaMs = Mathf.Max(PeorCorridaMs, (float)reloj.Elapsed.TotalMilliseconds);
     }
 
     static void Mover(Transform t, Vector3 corrida)
     {
         if (t == null) return;
-        // Las partículas que viven en coordenadas del mundo también se corren
-        foreach (ParticleSystem ps in t.GetComponentsInChildren<ParticleSystem>())
-            if (ps.main.simulationSpace == ParticleSystemSimulationSpace.World) Correr(ps, corrida);
         Rigidbody rb = t.GetComponent<Rigidbody>();
         t.position -= corrida;
         if (rb != null) rb.position = t.position;

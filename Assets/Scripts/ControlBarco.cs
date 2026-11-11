@@ -48,6 +48,7 @@ public class ControlBarco : MonoBehaviour
     float entradaTimon;
     float altoVela = -1f;
     float[] altoExtras;
+    bool[] esCuchillo;
 
     void OnEnable() => Todos.Add(this);
     void OnDisable() => Todos.Remove(this);
@@ -90,24 +91,36 @@ public class ControlBarco : MonoBehaviour
             // En reversa la vela queda medio desplegada (en facha)
             float objetivo = (NivelVelaActual == 0 || Anclado) ? 0.08f : NivelVelaActual < 0 ? 0.5f : (float)NivelVelaActual / nivelesVela;
             Vector3 s = vela.localScale;
-            s.y = Mathf.Lerp(s.y, altoVela * objetivo, Time.deltaTime * 3f);
-            vela.localScale = s;
+            // Mover una pieza obliga a Unity a recalcular sus límites y los de sus hijos: solo mientras la vela sube o baja
+            if (Mathf.Abs(s.y - altoVela * objetivo) > 0.002f)
+            {
+                s.y = Mathf.Lerp(s.y, altoVela * objetivo, Time.deltaTime * 3f);
+                vela.localScale = s;
+            }
 
             if (velasExtra != null && velasExtra.Length > 0)
             {
                 if (altoExtras == null || altoExtras.Length != velasExtra.Length)
                 {
                     altoExtras = new float[velasExtra.Length];
-                    for (int i = 0; i < velasExtra.Length; i++) altoExtras[i] = velasExtra[i] != null ? velasExtra[i].localScale.y : 0f;
+                    esCuchillo = new bool[velasExtra.Length];
+                    for (int i = 0; i < velasExtra.Length; i++)
+                    {
+                        altoExtras[i] = velasExtra[i] != null ? velasExtra[i].localScale.y : 0f;
+                        esCuchillo[i] = velasExtra[i] != null && velasExtra[i].name == Astillero.VelaCuchillo;   // leer .name crea texto: una sola vez
+                    }
                 }
                 for (int i = 0; i < velasExtra.Length; i++)
                 {
                     if (velasExtra[i] == null) continue;
                     Vector3 se = velasExtra[i].localScale;
-                    se.y = Mathf.Lerp(se.y, altoExtras[i] * objetivo, Time.deltaTime * 3f);
-                    velasExtra[i].localScale = se;
+                    if (Mathf.Abs(se.y - altoExtras[i] * objetivo) > 0.002f)
+                    {
+                        se.y = Mathf.Lerp(se.y, altoExtras[i] * objetivo, Time.deltaTime * 3f);
+                        velasExtra[i].localScale = se;
+                    }
                     // El foque y la cangreja recogidos no se ven como una tabla: se esconden
-                    if (velasExtra[i].name == Astillero.VelaCuchillo && velasExtra[i].childCount > 0)
+                    if (esCuchillo[i] && velasExtra[i].childCount > 0)
                     {
                         bool ver = se.y > altoExtras[i] * 0.15f;
                         GameObject lona = velasExtra[i].GetChild(0).gameObject;

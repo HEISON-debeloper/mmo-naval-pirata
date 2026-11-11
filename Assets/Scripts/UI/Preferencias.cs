@@ -21,6 +21,8 @@ public static class Preferencias
         public float volumenAmbiente = 0.7f;
         public bool sonidosInterfaz = true;
         public int calidad = -1;               // -1 = la del proyecto
+        public int perfil = -1;                // perfil gráfico: -1 automático, 0 bajo, 1 medio, 2 alto
+        public bool perfilAplicado;            // el perfil automático ya se pasó a las opciones sueltas
         public float escalaRender = 1f;
         public int suavizado = -1;             // MSAA: 1, 2, 4 u 8 muestras; -1 = según el aparato (4 en PC, 2 en teléfono)
         public bool sombras = true;
@@ -41,17 +43,50 @@ public static class Preferencias
 
     static Datos d;
     const string Clave = "Preferencias";
-    static Datos D => d ?? (d = Cargar());
+    static Datos D
+    {
+        get
+        {
+            if (d != null) return d;
+            d = Cargar();
+            // La primera vez en el teléfono, las opciones gráficas salen del perfil del aparato (en PC se respeta lo que había)
+            if (!d.perfilAplicado)
+            {
+                d.perfilAplicado = true;
+                if (Application.isMobilePlatform && d.perfil < 0) PerfilGrafico.Elegir(-1);
+            }
+            return d;
+        }
+    }
 
     static Datos Cargar()
     {
         try
         {
             string json = PlayerPrefs.GetString(Clave, "");
-            if (!string.IsNullOrEmpty(json)) return JsonUtility.FromJson<Datos>(json) ?? new Datos();
+            if (!string.IsNullOrEmpty(json)) return Sanear(JsonUtility.FromJson<Datos>(json) ?? new Datos());
         }
         catch (System.Exception e) { Debug.LogWarning("No se pudieron leer las preferencias: " + e.Message); }
         return new Datos();
+    }
+
+    // Preferencias dañadas o de otra versión: todo dentro de su rango (escala 0 dejaba la interfaz en blanco)
+    static Datos Sanear(Datos x)
+    {
+        float R(float v, float min, float max, float siNo) => float.IsFinite(v) ? Mathf.Clamp(v, min, max) : siNo;
+        x.escalaUI = R(x.escalaUI, 0.7f, 1.6f, 1f);
+        x.tamanoTexto = R(x.tamanoTexto, 0.8f, 1.4f, 1f);
+        x.animaciones = R(x.animaciones, 0f, 1f, 1f);
+        x.transparencia = R(x.transparencia, 0.4f, 1f, 1f);
+        x.volumen = R(x.volumen, 0f, 1f, 1f); x.volumenEfectos = R(x.volumenEfectos, 0f, 1f, 0.9f);
+        x.volumenAmbiente = R(x.volumenAmbiente, 0f, 1f, 0.7f); x.volumenInterfaz = R(x.volumenInterfaz, 0f, 1f, 0.8f);
+        x.escalaRender = R(x.escalaRender, 0.5f, 1.5f, 1f);
+        x.zoomMapa = R(x.zoomMapa, 50f, 20000f, 600f);
+        x.perfil = Mathf.Clamp(x.perfil, -1, 2);
+        if (x.favoritos == null) x.favoritos = new List<string>();
+        if (x.clavesVentanas == null || x.posVentanas == null || x.clavesVentanas.Count != x.posVentanas.Count)
+        { x.clavesVentanas = new List<string>(); x.posVentanas = new List<Vector2>(); }
+        return x;
     }
 
     public static void Guardar()
@@ -86,6 +121,7 @@ public static class Preferencias
 
     // ---------- Gráficos ----------
     public static int Calidad { get => D.calidad; set => D.calidad = value; }
+    public static int Perfil { get => D.perfil; set => D.perfil = Mathf.Clamp(value, -1, 2); }
     public static int Suavizado { get => D.suavizado > 0 ? D.suavizado : (Application.isMobilePlatform ? 2 : 4); set => D.suavizado = value; }
     public static float EscalaRender { get => D.escalaRender; set { D.escalaRender = Mathf.Clamp(value, 0.5f, 1.5f); } }
     public static bool CicloDia { get => D.cicloDia; set => D.cicloDia = value; }
@@ -149,6 +185,7 @@ public static class Preferencias
             urp.shadowNormalBias = Mathf.Max(urp.shadowNormalBias, 1f);
             urp.shadowDistance = D.sombras ? Rendimiento.DistanciaSombras : 0f;   // la misma distancia que fija Rendimiento
         }
+        PerfilGrafico.Aplicar(urp);   // HDR, luces, distancias y (en el teléfono) los FPS según el perfil
         if (!Application.isMobilePlatform && Screen.fullScreen != D.pantallaCompleta) Screen.fullScreen = D.pantallaCompleta;
     }
 }

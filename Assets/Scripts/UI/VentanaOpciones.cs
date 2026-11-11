@@ -88,6 +88,15 @@ public class VentanaOpciones : Ventana
         // ---------- Gráficos ----------
         graficos.Clear();
         graficos.Add(Cabecera("Calidad"));
+        var perfiles = new List<string> { "Automático (" + PerfilGrafico.Nombre(PerfilGrafico.Detectado) + ")", "Bajo · teléfonos sencillos", "Medio", "Alto" };
+        var dp = new Componentes.Desplegable("Perfil gráfico", perfiles, Preferencias.Perfil + 1);
+        dp.alCambiar = k => { PerfilGrafico.Elegir(k - 1); Aplicar(); graficos.schedule.Execute(Construir); };
+        graficos.Add(dp);
+        string din = PerfilGrafico.EstadoDinamica;
+        var notaPerfil = Estilo.Pequena("El perfil pone de una vez la resolución, el suavizado, las sombras y los FPS (abajo los puedes cambiar uno por uno)"
+            + (Application.isMobilePlatform ? ". En Automático, si el teléfono no da abasto, la resolución baja sola" + (din != null ? " (ahora: " + din + ")" : "") : "") + ".");
+        notaPerfil.style.whiteSpace = WhiteSpace.Normal; notaPerfil.style.marginBottom = 6f;
+        graficos.Add(notaPerfil);
         var nombres = new List<string>(QualitySettings.names);
         int actual = Preferencias.Calidad >= 0 ? Preferencias.Calidad : QualitySettings.GetQualityLevel();
         var dc = new Componentes.Desplegable("Nivel de calidad", nombres, actual);

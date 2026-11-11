@@ -159,6 +159,8 @@ public class Explosion : MonoBehaviour
     Light luz;
     Material mat;
 
+    void OnDestroy() { if (mat != null) Destroy(mat); }   // cada explosión hacía un material que nunca se borraba
+
     public static void Crear(Vector3 pos, float radio)
     {
         GameObject g = GameObject.CreatePrimitive(PrimitiveType.Sphere);

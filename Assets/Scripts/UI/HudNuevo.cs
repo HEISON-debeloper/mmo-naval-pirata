@@ -292,7 +292,6 @@ public class HudNuevo : MonoBehaviour
         // Brújula
         if (Preferencias.HudBrujula) brujula.Actualizar(p, enemigos);
         hora.style.display = Preferencias.HudBrujula && Preferencias.CicloDia ? DisplayStyle.Flex : DisplayStyle.None;
-        if (Preferencias.CicloDia) hora.text = (CicloDia.EsDeNoche ? "Noche · " : "Día · ") + CicloDia.Texto + " · " + Clima.Nombre;
 
         tBuscar -= dt;
         if (tBuscar <= 0f) { enemigos = IABarco.Todos.ToArray(); tBuscar = 0.5f; }
@@ -303,7 +302,8 @@ public class HudNuevo : MonoBehaviour
 
         if (textos)
         {
-            modo.text = p.TextoModo();
+            if (Preferencias.CicloDia) Fijar(hora, (CicloDia.EsDeNoche ? "Noche · " : "Día · ") + CicloDia.Texto + " · " + Clima.Nombre);
+            Fijar(modo, p.TextoModo());
             creativo.style.display = ModoCreativo.Activo ? DisplayStyle.Flex : DisplayStyle.None;
             if (ModoCreativo.Activo) creativo.Q<Label>("quitar").text = Teclas.Nombre(Accion.Creativo) + " quitar";
             Mochila(p, inv);
@@ -316,6 +316,9 @@ public class HudNuevo : MonoBehaviour
         atajos.style.display = Preferencias.HudAtajos && !ventana ? DisplayStyle.Flex : DisplayStyle.None;
         indicacion.style.display = ventana ? DisplayStyle.None : DisplayStyle.Flex;
     }
+
+    // Cambiar el texto de una etiqueta rehace su malla: solo si de verdad cambió
+    static void Fijar(Label l, string t) { if (l.text != t) l.text = t; }
 
     // ---------- Mochila ----------
     void Mochila(Personaje p, Inventario inv)
@@ -591,18 +594,19 @@ public class Brujula : VisualElement
             {
                 var l = letras[g / 45];
                 bool ver = Mathf.Abs(dx) <= GradosVisibles / 2f - 4f;
-                l.style.display = ver ? DisplayStyle.Flex : DisplayStyle.None;
-                if (ver) l.style.left = cx + dx * porGrado - 20f;
+                Ver(l, ver);
+                if (ver) Mover(l, cx + dx * porGrado - 20f);
             }
             else
             {
                 var m = marcas[im++];
                 bool ver = Mathf.Abs(dx) <= GradosVisibles / 2f - 4f;
-                m.style.display = ver ? DisplayStyle.Flex : DisplayStyle.None;
-                if (ver) m.style.left = cx + dx * porGrado;
+                Ver(m, ver);
+                if (ver) Mover(m, cx + dx * porGrado);
             }
         }
-        grados.text = Mathf.RoundToInt(rumbo).ToString("000") + "°";
+        int gr = Mathf.RoundToInt(rumbo) % 360;
+        if (gr != gradosAntes) { gradosAntes = gr; grados.text = gr.ToString("000") + "°"; }
 
         // Marcadores
         int n = 0;
@@ -613,24 +617,41 @@ public class Brujula : VisualElement
                 Vector3 v = Plano(kv.Value.centro - p.transform.position);
                 if (v.magnitude > DistanciaIslas) continue;
                 Marcador(n++, rumbo, RumboDe(v), kv.Value.mercado ? "moneda" : "isla", kv.Value.mercado ? Estilo.Oro : Estilo.Bien,
-                    Mathf.RoundToInt(Mathf.Max(0f, v.magnitude - kv.Value.orilla)) + " m" + (kv.Value.mercado ? " · mercado" : ""));
+                    Mathf.RoundToInt(Mathf.Max(0f, v.magnitude - kv.Value.orilla)), kv.Value.mercado ? " m · mercado" : " m");
             }
         if (p.barco != null && p.BarcoActual != p.barco)
         {
             Vector3 v = Plano(p.barco.transform.position - p.transform.position);
-            Marcador(n++, rumbo, RumboDe(v), "barco", Estilo.Oro, Mathf.RoundToInt(v.magnitude) + " m · tu barco");
+            Marcador(n++, rumbo, RumboDe(v), "barco", Estilo.Oro, Mathf.RoundToInt(v.magnitude), " m · tu barco");
         }
         foreach (IABarco e in enemigos)
         {
             if (e == null) continue;
             Vector3 v = Plano(e.transform.position - p.transform.position);
             if (v.magnitude > 600f) continue;
-            Marcador(n++, rumbo, RumboDe(v), "calavera", Estilo.Mal, Mathf.RoundToInt(v.magnitude) + " m");
+            Marcador(n++, rumbo, RumboDe(v), "calavera", Estilo.Mal, Mathf.RoundToInt(v.magnitude), " m");
         }
-        for (int i = n; i < marcadores.Count; i++) { marcadores[i].icono.style.display = DisplayStyle.None; marcadores[i].dist.style.display = DisplayStyle.None; }
+        for (int i = n; i < marcadores.Count; i++) { Ver(marcadores[i].icono, false); Ver(marcadores[i].dist, false); }
     }
 
-    void Marcador(int i, float rumbo, float hacia, string icono, Color color, string distancia)
+    int gradosAntes = -1;
+    // Mostrar/ocultar y mover sin tocar el estilo si no cambió: mover con translate no obliga a rehacer
+    // la distribución de todo el HUD (con left sí, y la brújula se movía cada cuadro)
+    static void Ver(VisualElement e, bool si)
+    {
+        DisplayStyle d = si ? DisplayStyle.Flex : DisplayStyle.None;
+        if (e.style.display.value != d || e.style.display.keyword != StyleKeyword.Undefined) e.style.display = d;
+    }
+    static void Mover(VisualElement e, float x)
+    {
+        x = Mathf.Round(x * 2f) / 2f;
+        Translate t = e.style.translate.value;
+        if (e.style.translate.keyword == StyleKeyword.Undefined && Mathf.Approximately(t.x.value, x)) return;
+        e.style.left = 0f;
+        e.style.translate = new Translate(x, 0f);
+    }
+
+    void Marcador(int i, float rumbo, float hacia, string icono, Color color, int metros, string sufijo)
     {
         while (marcadores.Count <= i)
         {
@@ -650,12 +671,18 @@ public class Brujula : VisualElement
         bool fuera = Mathf.Abs(dx) > lim;
         dx = Mathf.Clamp(dx, -lim, lim);
         float x = Ancho / 2f + dx * (Ancho / GradosVisibles);
-        m.icono.style.display = DisplayStyle.Flex;
+        Ver(m.icono, true);
         m.icono.Nombre = icono;
         m.icono.Color = fuera ? new Color(color.r, color.g, color.b, 0.4f) : color;
-        m.icono.style.left = x - 7f;
+        Mover(m.icono, x - 7f);
         bool cerca = !fuera && Mathf.Abs(dx) < 12f;
-        m.dist.style.display = cerca ? DisplayStyle.Flex : DisplayStyle.None;
-        if (cerca) { m.dist.text = distancia; m.dist.style.color = color; m.dist.style.left = x - 80f; }
+        Ver(m.dist, cerca);
+        if (cerca)
+        {
+            string distancia = metros + sufijo;   // el texto solo se arma si se va a ver
+            if (m.dist.text != distancia) m.dist.text = distancia;
+            m.dist.style.color = color;
+            Mover(m.dist, x - 80f);
+        }
     }
 }

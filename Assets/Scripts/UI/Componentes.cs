@@ -139,14 +139,19 @@ public static class Componentes
             pickingMode = PickingMode.Position;
         }
 
+        int ultimoV = int.MinValue, ultimoM = int.MinValue; string ultimoExtra = "-";
+
         // valor y máximo reales; se anima suavemente hacia ellos
         public void Fijar(float valor, float maximo, string textoExtra = null)
         {
             objetivo = maximo > 0f ? Mathf.Clamp01(valor / maximo) : 0f;
             if (anteriorValor >= 0f && valor < anteriorValor - 0.5f) perdidaDesde = Time.unscaledTime;
             anteriorValor = valor;
-            if (MostrarNumeros) texto.text = textoExtra ?? (Mathf.RoundToInt(valor) + " / " + Mathf.RoundToInt(maximo));
-            else texto.text = textoExtra ?? "";
+            // El texto solo se rehace si cambió el número (antes: texto nuevo cada cuadro en cada barra)
+            int v = Mathf.RoundToInt(valor), m = Mathf.RoundToInt(maximo);
+            if (textoExtra != null) { if (textoExtra != ultimoExtra) { texto.text = textoExtra; ultimoExtra = textoExtra; ultimoV = int.MinValue; } }
+            else if (!MostrarNumeros) { if (ultimoExtra != "") { texto.text = ""; ultimoExtra = ""; ultimoV = int.MinValue; } }
+            else if (v != ultimoV || m != ultimoM || ultimoExtra != null) { texto.text = v + " / " + m; ultimoV = v; ultimoM = m; ultimoExtra = null; }
         }
 
         public void Animar()

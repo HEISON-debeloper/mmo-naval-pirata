@@ -110,6 +110,8 @@ public class IABarco : MonoBehaviour
         return n;
     }
 
+    float tMirar, ladoIsla;
+
     void Update()
     {
         if (vida != null && vida.Hundido) { EstadoTexto = "Hundiéndose"; cb.timonExterno = 0f; return; }
@@ -187,13 +189,17 @@ public class IABarco : MonoBehaviour
             cb.FijarVelas(1);
         }
 
-        // Esquivar islas: mira 70 m al frente
-        if (Physics.SphereCast(pos + Vector3.up, 6f, adelante, out RaycastHit hit, 70f, ~0, QueryTriggerInteraction.Ignore)
-            && hit.rigidbody == null)
+        // Esquivar islas: mira 70 m al frente (5 veces por segundo alcanza; un barco no gira tan rápido)
+        tMirar -= Time.deltaTime;
+        if (tMirar <= 0f)
         {
-            float lado = Vector3.Cross(adelante, hit.point - pos).y;
-            deseado = rumbo + (lado > 0f ? -75f : 75f);
+            tMirar = 0.2f;
+            ladoIsla = 0f;
+            if (Physics.SphereCast(pos + Vector3.up, 6f, adelante, out RaycastHit hit, 70f, ~0, QueryTriggerInteraction.Ignore)
+                && hit.rigidbody == null)
+                ladoIsla = Vector3.Cross(adelante, hit.point - pos).y > 0f ? 1f : -1f;
         }
+        if (ladoIsla != 0f) deseado = rumbo + (ladoIsla > 0f ? -75f : 75f);
 
         cb.timonExterno = Mathf.Clamp(Mathf.DeltaAngle(rumbo, deseado) / 30f, -1f, 1f);
     }
@@ -283,6 +289,12 @@ public class IABarco : MonoBehaviour
     }
 
     void CrearTripulacion()
+    {
+        double crono = Cronos.Ahora;
+        try { CrearTripulacionYa(); } finally { Cronos.Anotar("tripulación de un barco pirata", crono); }
+    }
+
+    void CrearTripulacionYa()
     {
         foreach (Tripulante t in GetComponentsInChildren<Tripulante>()) Destroy(t.gameObject);
         foreach (Tripulante t in tripulantes) if (t != null) Destroy(t.gameObject);   // también los que saltaron a otro barco

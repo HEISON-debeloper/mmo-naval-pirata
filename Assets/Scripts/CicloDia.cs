@@ -77,8 +77,9 @@ public class CicloDia : MonoBehaviour
         RenderSettings.fogColor = cielo;
         if (nieblaInicio < 0f) { nieblaInicio = RenderSettings.fogStartDistance; nieblaFin = RenderSettings.fogEndDistance; }
         float lluvia = Clima.LluviaFuerza;
-        RenderSettings.fogStartDistance = nieblaInicio * Mathf.Lerp(1f, 0.25f, Mathf.Max(nubes * 0.5f, lluvia));
-        RenderSettings.fogEndDistance = nieblaFin * Mathf.Lerp(1f, 0.45f, Mathf.Max(nubes * 0.4f, lluvia));
+        float perfil = PerfilGrafico.Ahora.niebla;   // en gama baja la niebla llega antes (y se dibuja menos)
+        RenderSettings.fogStartDistance = nieblaInicio * perfil * Mathf.Lerp(1f, 0.25f, Mathf.Max(nubes * 0.5f, lluvia));
+        RenderSettings.fogEndDistance = nieblaFin * perfil * Mathf.Lerp(1f, 0.45f, Mathf.Max(nubes * 0.4f, lluvia));
 
         if (sol != null)
         {

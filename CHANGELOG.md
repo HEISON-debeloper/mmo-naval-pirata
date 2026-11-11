@@ -6,6 +6,20 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.48.0 — Optimización para teléfonos  (2026-11-10)
+- Perfil gráfico según el teléfono (Opciones → Gráficos → Perfil gráfico): Automático, Bajo, Medio o Alto. En Automático el juego mira la memoria, los núcleos y si el teléfono tiene Vulkan, y elige. El perfil fija la resolución, el suavizado, las sombras, los FPS, el HDR, las luces, la distancia de dibujo, la niebla y la lluvia.
+- Resolución dinámica en el teléfono: si el juego no llega a los FPS, baja la resolución de a poco (hasta 50 %) y la vuelve a subir cuando sobra.
+- Antes, las opciones guardadas subían la resolución al 100 % y las sombras a 120 m también en el teléfono (pisaban los ajustes para móvil). Ya no.
+- Lo que queda detrás de la niebla ya no se dibuja (el plano lejano de la cámara sigue a la niebla): antes se dibujaba hasta 1,5 km aunque la niebla tapaba todo desde 480 m.
+- Barcos: sus piezas quietas se juntan en pocas mallas por material (un navío pasa de unas 275 piezas a unas 30). En las islas, las hojas, matas y frutas de cada recurso también.
+- Física a 30 pasos por segundo en el teléfono, balas de cañón recicladas (no se crean y destruyen en cada andanada), la cámara ya no busca piezas por nombre cientos de veces por cuadro, el arco de puntería se calcula cuadro por medio en el teléfono, la IA de los piratas mira las islas 5 veces por segundo, el agua usa 6 veces menos vértices, y el HUD, la brújula y los iconos ya no rehacen texto ni dibujos si nada cambió.
+- Rocas, vetas y troncos con colisión simple (caja o cápsula) en vez de malla; las cosas chicas de las islas no hacen sombra; los sonidos en silencio se pausan.
+- El casco con portas de los barcos grandes se arma mucho más rápido (antes casi un segundo).
+- APK: se descartan los cientos de shaders del paquete de IA de Unity que el juego no usa (la compilación tardaba más de 20 minutos solo en eso), ritmo de cuadros parejo en Android, Vulkan con OpenGL ES 3 de respaldo y texturas ASTC.
+- Partida: si te hunden justo al guardar ya no se pierde el barco; una partida dañada o editada a mano no apaga el guardado ni deja NaN en las posiciones; la tripulación ya no se recorta al cargar; la caja que sueltas al morir se guarda; «Nueva partida» guarda antes lo último y ya no borra la partida anterior de antes.
+- Arreglos: islas que podían aparecer encima de la inicial tras alejarte; barcos capturados que nunca dormían; pintura gratis con el Taller abierto; oro infinito comprando un lote y vendiéndolo de a uno; tripulación negativa; texturas del Taller que se acumulaban sin fin; explosiones que dejaban materiales; preferencias dañadas que dejaban la interfaz en blanco.
+- Bot de prueba (solo en el editor): Pirata → Bot de prueba. Navega, pelea, cambia el clima, abre ventanas, guarda y recarga solo durante horas, y escribe en Builds/bot un informe con los errores, las medidas cada minuto y lo que más tarda en un solo cuadro.
+
 ## 0.47.0 — Origen flotante  (2026-11-10)
 - Origen flotante: cuando te alejas más de 1 km del centro de la escena, todo el mundo se corre de golpe (en saltos de 1 km) para que tú quedes cerca del (0, 0, 0). Así a muchos kilómetros del inicio los barcos, la cámara y los personajes ya no tiemblan. No se nota al jugar.
 - Las olas, las celdas del mundo infinito, las zonas de clima y de peligro y los altares usan la posición «de verdad» (sumando lo que se corrió el mundo), así todo queda igual que antes.

@@ -47,10 +47,16 @@ public class Navegacion : MonoBehaviour
         foreach (Marca m in Marcas) m.pos -= c;
     }
 
+    float tRevisar;
+
     void Update()
     {
         Personaje p = Personaje.Instancia;
         if (p == null) return;
+        // 4 veces por segundo alcanza (leer el nombre de cada isla crea texto nuevo cada vez)
+        tRevisar -= Time.deltaTime;
+        if (tRevisar > 0f) return;
+        tRevisar = 0.25f;
         Vector3 pos = p.transform.position;
         foreach (Isla isla in Isla.Todas)
         {

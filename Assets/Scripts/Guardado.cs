@@ -60,6 +60,7 @@ public class Guardado : MonoBehaviour
         public List<string> pactos = new List<string>();        // pactos malditos atados a tu barco
         public List<string> altaresUsados = new List<string>(); // islas cuyo altar ya se apagó         // zonas sin pirata (ya lo hundiste o capturaste)
         public List<MercadoGuardado> mercados = new List<MercadoGuardado>();    // cómo quedó la oferta en cada mercado
+        public List<CajaBotin.Guardada> cajas = new List<CajaBotin.Guardada>(); // cajas de botín que siguen flotando (la tuya al morir)
     }
 
     float t;
@@ -71,7 +72,10 @@ public class Guardado : MonoBehaviour
     IEnumerator Start()
     {
         Datos d = Leer();
-        if (d != null) RecordarMundo(d);
+        if (d != null) Sanear(d);
+        if (d != null)
+            try { RecordarMundo(d); }
+            catch (System.Exception e) { Debug.LogError("Partida: no se pudo recordar el mundo: " + e); }
         CicloDia.Hora = d != null && d.hora >= 0f ? d.hora : 9f;   // partida nueva: de mañana   // antes de que el mundo genere las primeras zonas
         yield return null;
         yield return null;   // que el personaje y el mundo arranquen primero
@@ -91,6 +95,8 @@ public class Guardado : MonoBehaviour
                 Ventanas.Confirmar("Borrar la partida", "Se borra todo lo guardado: tu barco, la mochila, las islas descubiertas y la pintura. Al volver a entrar empiezas de cero.\n\nEsto no se puede deshacer.",
                     "Borrar la partida", BorrarPartida, true);
         }
+        // Si algo falló a mitad de la carga, el guardado no puede quedar apagado para siempre
+        if (!listo && Time.timeSinceLevelLoad > 30f) { listo = true; Debug.LogWarning("Partida: la carga no terminó bien; se vuelve a guardar igual"); }
         if (!listo || borrada) return;
         t += Time.deltaTime;
         if (t >= CadaSegundos) { t = 0f; Guardar(); }
@@ -122,7 +128,9 @@ public class Guardado : MonoBehaviour
         try
         {
             if (!File.Exists(Ruta)) return;
-            if (File.Exists(RutaAnterior)) File.Delete(RutaAnterior);
+            // La anterior de antes no se borra: queda con fecha (antes, empezar de cero dos veces la perdía para siempre)
+            if (File.Exists(RutaAnterior))
+                File.Move(RutaAnterior, Path.Combine(Application.persistentDataPath, "partida.anterior-" + System.DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json"));
             File.Move(Ruta, RutaAnterior);
             if (File.Exists(Respaldo)) File.Delete(Respaldo);
         }
@@ -167,7 +175,10 @@ public class Guardado : MonoBehaviour
 
         ControlBarco b = p.barco;
         VidaBarco vb = b != null ? b.GetComponent<VidaBarco>() : null;
-        if (b != null && b.gameObject.activeInHierarchy && (vb == null || !vb.Hundido))
+        // Un barco que se está hundiendo también se guarda (reaparece a los pocos segundos): si no, guardar justo en ese
+        // momento (o salir del juego) perdía el barco para siempre
+        bool hundiendose = vb != null && vb.Hundido;
+        if (b != null && b.gameObject.activeInHierarchy)
         {
             d.tieneBarco = true;
             d.aBordo = p.estado != Personaje.Estado.Libre && p.BarcoActual == b;
@@ -176,13 +187,15 @@ public class Guardado : MonoBehaviour
             if (pz != null) { d.nivelCasco = pz.nivelCasco; d.nivelVelas = pz.nivelVelas; }
             Canones cn = b.GetComponent<Canones>();
             if (cn != null) { d.cBabor = cn.enBabor; d.cEstribor = cn.enEstribor; d.cProa = cn.enProa; d.cPopa = cn.enPopa; d.nivelBarriles = cn.nivelBarriles; }
-            if (vb != null && vb.vidaMaxima > 0f) d.vidaBarco = vb.vida / vb.vidaMaxima;
+            if (vb != null && vb.vidaMaxima > 0f) d.vidaBarco = hundiendose ? 1f : vb.vida / vb.vidaMaxima;
             d.posBarco = OrigenFlotante.AMundo(b.transform.position);
             d.rumboBarco = b.transform.eulerAngles.y;
             Pintura pt = b.GetComponent<Pintura>();
-            if (pt != null && pt.AlgoPintado()) d.pintura = pt.AJson();
+            // Con el Taller abierto la pintura del barco es solo una vista previa (sin pagar): se guarda la de antes
+            if (pt != null && Taller.Abierto && Taller.PinturaActual == pt && Taller.Antes != null) d.pintura = JsonUtility.ToJson(Taller.Antes);
+            else if (pt != null && pt.AlgoPintado()) d.pintura = pt.AJson();
             Bodega bd = b.GetComponent<Bodega>();
-            if (bd != null) foreach (var c in bd.Todo) if (c.Value > 0) d.bodega.Add(new Cosa { tipo = c.Key, n = c.Value });
+            if (bd != null && !hundiendose) foreach (var c in bd.Todo) if (c.Value > 0) d.bodega.Add(new Cosa { tipo = c.Key, n = c.Value });
         }
 
         foreach (Horno h in Horno.Todos)
@@ -195,6 +208,7 @@ public class Guardado : MonoBehaviour
         if (nav != null) foreach (var m in nav.Marcas) d.marcas.Add(new Navegacion.Marca { nombre = m.nombre, pos = OrigenFlotante.AMundo(m.pos), icono = m.icono });
         d.celdasLimpias.AddRange(MundoInfinito.Limpias);
         foreach (var pe in Pecios.Todos) d.pecios.Add(new Pecios.Pecio { nombre = pe.nombre, pos = OrigenFlotante.AMundo(pe.pos), largo = pe.largo, rumbo = pe.rumbo, dia = pe.dia });
+        d.cajas = CajaBotin.ParaGuardar();
         d.apariencia = Apariencia.Jugador.Copia();
         d.pactos.AddRange(Pactos.Activos); d.altaresUsados.AddRange(Pactos.Usados);
         d.besosCapitanes = Apariencia.BesosCapitanes; d.besosCanoneros = Apariencia.BesosCanoneros; d.luwyn = Apariencia.LuwynDesbloqueado;
@@ -208,7 +222,7 @@ public class Guardado : MonoBehaviour
         try
         {
             string tmp = Ruta + ".tmp";
-            File.WriteAllText(tmp, JsonUtility.ToJson(d, true));
+            File.WriteAllText(tmp, JsonUtility.ToJson(d, false));   // sin sangrías: archivo más chico y más rápido de escribir
             // Cambio atómico: la partida anterior queda como respaldo (.bak) por si la nueva sale dañada
             if (File.Exists(Ruta))
             {
@@ -274,6 +288,55 @@ public class Guardado : MonoBehaviour
         catch (System.Exception e) { Debug.LogWarning("No se pudo leer " + Path.GetFileName(ruta) + ": " + e.Message); return null; }
     }
 
+    // Una partida editada a mano o dañada no puede colgar el juego: nada de nulos, NaN ni números absurdos
+    static void Sanear(Datos d)
+    {
+        d.posJugador = Finito(d.posJugador);
+        d.posBarco = Finito(d.posBarco);
+        d.vida = Num(d.vida, 100f); d.hambre = Num(d.hambre, 100f); d.sed = Num(d.sed, 100f);
+        d.hora = Num(d.hora, -1f); d.moral = Num(d.moral, -1f); d.vidaBarco = Num(d.vidaBarco, 1f); d.rumboBarco = Num(d.rumboBarco, 0f);
+        d.marineros = Mathf.Clamp(d.marineros, 0, 40);
+        d.largo = Mathf.Clamp(d.largo, 0, FormaBarco.MaxPasos);
+        d.ancho = Mathf.Clamp(d.ancho, 0, FormaBarco.MaxPasos);
+        d.alto = Mathf.Clamp(d.alto, 0, FormaBarco.MaxPasos);
+        d.nivelCasco = Mathf.Clamp(d.nivelCasco, 0, 10); d.nivelVelas = Mathf.Clamp(d.nivelVelas, 0, 10); d.nivelBarriles = Mathf.Clamp(d.nivelBarriles, 0, 10);
+        d.cBabor = Mathf.Clamp(d.cBabor, 0, 200); d.cEstribor = Mathf.Clamp(d.cEstribor, 0, 200); d.cProa = Mathf.Clamp(d.cProa, 0, 10); d.cPopa = Mathf.Clamp(d.cPopa, 0, 10);
+        Cosas(ref d.inventario); Cosas(ref d.bodega);
+        if (d.islas == null) d.islas = new List<IslaConocida>();
+        d.islas.RemoveAll(i => i == null || string.IsNullOrEmpty(i.id));
+        foreach (var i in d.islas) { i.centro = Finito(i.centro); i.orilla = Num(i.orilla, 30f); }
+        if (d.marcas != null) { d.marcas.RemoveAll(m => m == null); foreach (var m in d.marcas) m.pos = Finito(m.pos); }
+        if (d.hornos == null) d.hornos = new List<HornoGuardado>();
+        d.hornos.RemoveAll(h => h == null);
+        foreach (var h in d.hornos) h.pos = Finito(h.pos);
+        if (d.pecios != null) { d.pecios.RemoveAll(x => x == null); foreach (var x in d.pecios) x.pos = Finito(x.pos); }
+        if (d.mercados != null)
+        {
+            d.mercados.RemoveAll(m => m == null || m.k == null || m.v == null);
+            foreach (var m in d.mercados)
+                for (int i = m.k.Count - 1; i >= 0; i--)
+                    if (string.IsNullOrEmpty(m.k[i]) || i >= m.v.Count || !float.IsFinite(m.v[i])) { m.k.RemoveAt(i); if (i < m.v.Count) m.v.RemoveAt(i); }
+        }
+        if (d.pactos != null) d.pactos.RemoveAll(string.IsNullOrEmpty);
+        if (d.altaresUsados != null) d.altaresUsados.RemoveAll(string.IsNullOrEmpty);
+        d.besosCapitanes = Mathf.Max(0, d.besosCapitanes); d.besosCanoneros = Mathf.Max(0, d.besosCanoneros);
+    }
+
+    static void Cosas(ref List<Cosa> l)
+    {
+        if (l == null) { l = new List<Cosa>(); return; }
+        l.RemoveAll(c => c == null || string.IsNullOrEmpty(c.tipo));
+        foreach (Cosa c in l) c.n = Mathf.Clamp(c.n, 0, 1000000);
+    }
+
+    static float Num(float v, float siNo) => float.IsFinite(v) ? v : siNo;
+    static Vector3 Finito(Vector3 v)
+    {
+        if (!float.IsFinite(v.x) || !float.IsFinite(v.y) || !float.IsFinite(v.z)) return Vector3.zero;
+        // Nada más lejos que 1000 km (más allá ni las olas ni la física aguantan)
+        return Vector3.ClampMagnitude(v, 1000000f);
+    }
+
     IEnumerator Aplicar(Datos d)
     {
         Personaje p = Personaje.Instancia;
@@ -290,7 +353,6 @@ public class Guardado : MonoBehaviour
         p.FijarVida(d.vida);
         Supervivencia sup = p.GetComponent<Supervivencia>();
         if (sup != null) sup.Fijar(d.hambre, d.sed);
-        Tripulacion.Mia?.Fijar(d.marineros, d.moral);
 
         // Primero se lleva al personaje a donde estaba, para que el mundo infinito arme las islas de esa zona
         Vector3 donde = d.tieneBarco && d.aBordo ? d.posBarco : d.posJugador;
@@ -318,7 +380,9 @@ public class Guardado : MonoBehaviour
                 if (bd == null) bd = b.gameObject.AddComponent<Bodega>();
                 foreach (Cosa c in d.bodega) bd.Fijar(c.tipo, c.n);
             }
-            if (!string.IsNullOrEmpty(d.pintura)) b.gameObject.AddComponent<Pintura>().DeJson(d.pintura);
+            if (!string.IsNullOrEmpty(d.pintura))
+                try { b.gameObject.AddComponent<Pintura>().DeJson(d.pintura); }
+                catch (System.Exception e) { Debug.LogWarning("Partida: la pintura guardada estaba dañada: " + e.Message); }
             else if (d.pinturaCasco >= 0 || d.pinturaVelas >= 0 || d.pinturaBandera >= 0)
             {
                 Pintura pt = b.gameObject.AddComponent<Pintura>();
@@ -328,6 +392,9 @@ public class Guardado : MonoBehaviour
             yield return null;   // que el barco nuevo arranque (física, cubierta)
         }
 
+        CajaBotin.Restaurar(d.cajas, p.materialMadera);
+        // La tripulación va después del barco: con el balandro de la escena todavía puesto, no cabían todos
+        Tripulacion.Mia?.Fijar(d.marineros, d.moral);
         if (d.tieneBarco && d.aBordo) p.IrAlTimonPropio();
         else p.Teletransportar(OrigenFlotante.ALocal(d.posJugador) + Vector3.up * 0.3f);
         p.Avisar("Partida cargada");

@@ -16,6 +16,37 @@ public class CajaBotin : MonoBehaviour
     void OnEnable() => Todas.Add(this);
     void OnDisable() => Todas.Remove(this);
 
+    // ---------- Para el guardado (la caja que sueltas al morir no se puede perder al salir del juego) ----------
+    [System.Serializable] public class Guardada { public Vector3 pos; public List<string> k = new List<string>(); public List<int> n = new List<int>(); public float vida; public bool tierra; }
+
+    public static List<Guardada> ParaGuardar()
+    {
+        var l = new List<Guardada>();
+        foreach (CajaBotin c in Todas)
+        {
+            if (c == null || c.contenido == null || c.contenido.Count == 0) continue;
+            var g = new Guardada { pos = OrigenFlotante.AMundo(c.transform.position), vida = c.vida, tierra = c.enTierra };
+            foreach (var kv in c.contenido) if (kv.Value > 0) { g.k.Add(kv.Key); g.n.Add(kv.Value); }
+            l.Add(g);
+        }
+        return l;
+    }
+
+    public static void Restaurar(List<Guardada> l, Material madera)
+    {
+        if (l == null) return;
+        foreach (Guardada g in l)
+        {
+            if (g == null || g.k == null || g.n == null || !float.IsFinite(g.pos.x) || !float.IsFinite(g.pos.z)) continue;
+            var d = new Dictionary<string, int>();
+            for (int i = 0; i < g.k.Count && i < g.n.Count; i++) if (!string.IsNullOrEmpty(g.k[i]) && g.n[i] > 0) d[g.k[i]] = Mathf.Min(g.n[i], 1000000);
+            if (d.Count == 0) continue;
+            Crear(OrigenFlotante.ALocal(g.pos), d, madera, madera, g.tierra);
+            CajaBotin c = Todas[Todas.Count - 1];
+            if (float.IsFinite(g.vida)) c.vida = g.vida;
+        }
+    }
+
     public static void Crear(Vector3 pos, Dictionary<string, int> contenido, Material madera, Material banda, bool enTierra = false)
     {
         if (!enTierra) pos = FueraDeIslas(pos);

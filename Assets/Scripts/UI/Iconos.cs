@@ -9,8 +9,9 @@ public class Icono : VisualElement
     Color color;
     float tam;
 
-    public string Nombre { get => nombre; set { nombre = value; MarkDirtyRepaint(); } }
-    public Color Color { get => color; set { color = value; MarkDirtyRepaint(); } }
+    // Redibujar un icono vectorial cuesta: solo si de verdad cambió
+    public string Nombre { get => nombre; set { if (nombre == value) return; nombre = value; MarkDirtyRepaint(); } }
+    public Color Color { get => color; set { if (color == value) return; color = value; MarkDirtyRepaint(); } }
 
     public Icono(string nombre, float tam, Color color)
     {

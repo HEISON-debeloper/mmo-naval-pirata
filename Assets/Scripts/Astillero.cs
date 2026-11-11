@@ -23,6 +23,7 @@ public static class Astillero
         if (porFila <= 0) porFila = Mathf.Clamp(Mathf.FloorToInt(L * 0.62f / FormaBarco.SeparacionCanones), 1, 40);
         if (largoMastil <= 0f) largoMastil = L;
         float s = largoMastil / 18f;
+        double crono = Cronos.Ahora;
 
         GameObject raiz = new GameObject(nombre);
         raiz.transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, rumbo, 0f));
@@ -57,6 +58,7 @@ public static class Astillero
             float x = ventanas == 1 ? 0f : Mathf.Lerp(-w * 0.3f, w * 0.3f, (float)i / (ventanas - 1));
             Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamaroteDe(h) * 0.55f, zCam - largoCam / 2f - sal - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
         }
+        Cronos.Anotar("barco: casco y castillo", crono); crono = Cronos.Ahora;
         Vector3 timon = Cubierta.Timon(h, L, false);
         if (Modelos.Existe("timon"))
             Modelos.Crear("timon", t, timon + new Vector3(0, 0.95f, 0.7f), Quaternion.identity, 1f, _ => m.mastil);
@@ -106,6 +108,7 @@ public static class Astillero
                 extras.Add(pc.transform);
             }
         }
+        Cronos.Anotar("barco: mástiles y velas", crono); crono = Cronos.Ahora;
         // Bauprés (palo que sale de la proa) y foque: vela triangular del bauprés al mástil de proa
         float zRoda = CascoProcedural.ZProa(w, L);
         float largoBaupres = Mathf.Clamp(0.16f * L, 1.2f, 22f);
@@ -155,6 +158,7 @@ public static class Astillero
                 estribor[k] = Canon("Cañón estribor " + (k + 1), t, new Vector3(x, y, z), 90f, 1f, m.canon);
             }
         }
+        Cronos.Anotar("barco: crear los cañones", crono); crono = Cronos.Ahora;
         // Portas: en el casco para los pisos de abajo; en la borda para los de cubierta si la borda es alta
         var conPorta = new System.Collections.Generic.List<Vector2>();
         foreach (Vector2 pu in puestos)
@@ -165,8 +169,10 @@ public static class Astillero
         if (conPorta.Count > 0)
         {
             CascoProcedural.Portas(conPorta, w, h, L, out Mesh huecos, out Mesh marcos, out Mesh tapas);
+            Cronos.Anotar("barco: mallas de las portas", crono); crono = Cronos.Ahora;
             // El casco con los huecos de las portas abiertos de verdad
             casco.GetComponent<MeshFilter>().sharedMesh = CascoProcedural.Casco(w, h, L, conPorta);
+            Cronos.Anotar("barco: casco con huecos de portas", crono); crono = Cronos.Ahora;
             // El fondo oscuro de los huecos no se apaga de lejos (si no, se vería a través del barco)
             Malla("Portas", t, huecos, Modelos.DeColor(m.canon, new Color(0.04f, 0.03f, 0.025f)));
             Rendimiento.Capa(Malla("Marcos", t, marcos, m.mastil), Rendimiento.CapaBarcoDetalle);
@@ -193,8 +199,10 @@ public static class Astillero
         // Popa: repisa con barriles en llamas que se sueltan al agua
         Transform popa = Barriles("Barriles popa", t, new Vector3(0, h / 2 - 0.2f, -0.5f * L - 0.5f), Mathf.Clamp(w / 5f, 0.8f, 2f), m);
 
+        Cronos.Anotar("barco: cañones y portas", crono); crono = Cronos.Ahora;
         // Jarcia, cofas, cintas del casco, castillo de popa detallado, mascarón, cabrestante y campana
         Detalles.Armar(t, L, w, h, listaMastiles, puntaBaupres, m);
+        Cronos.Anotar("barco: detalles (jarcia, molduras…)", crono); crono = Cronos.Ahora;
 
         // Puntos de flotación en las esquinas de abajo
         Transform[] puntos = new Transform[4];
@@ -230,6 +238,8 @@ public static class Astillero
         cb.velasExtra = extras.ToArray();
         cb.controlActivo = esJugador;
         cb.mostrarPanel = esJugador;
+        if (Application.isPlaying) raiz.AddComponent<MallaCombinada>();
+        Cronos.Anotar("barco: física y control", crono);   // pocas mallas en vez de cientos de piezas
         return raiz;
     }
 

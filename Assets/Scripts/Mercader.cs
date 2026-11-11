@@ -115,7 +115,8 @@ public class Mercader : MonoBehaviour
         {
             int q = Mathf.Min(lote, n);
             float precio = PrecioBase[tipo] * r * mk * q * (vender ? 1f : Margen);
-            total += Mathf.Max(1, Mathf.RoundToInt(precio));
+            // Vender redondea hacia abajo y comprar hacia arriba: si no, comprar un lote y venderlo de a uno daba oro gratis
+            total += vender ? Mathf.FloorToInt(precio) : Mathf.Max(1, Mathf.CeilToInt(precio));
             mk = vender ? Mathf.Max(0.5f, mk - CambioPorTrato) : Mathf.Min(1.6f, mk + CambioPorTrato);
             n -= q;
         }

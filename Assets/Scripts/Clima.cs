@@ -95,10 +95,11 @@ public class Clima : MonoBehaviour
         {
             if (cam != null) gotas.transform.position = cam.transform.position + Vector3.up * 14f + cam.transform.forward * 8f;
             var em = gotas.emission;
-            em.rateOverTime = abajo ? 0f : LluviaFuerza * 2600f;
+            em.rateOverTime = abajo ? 0f : LluviaFuerza * 2600f * PerfilGrafico.Ahora.particulas;
         }
         float amb = Preferencias.VolumenAmbiente;
         if (sonLluvia != null) sonLluvia.volume = LluviaFuerza * (abajo ? 0.35f : 0.8f) * amb;
+        SonidosMundo.Pausar(sonLluvia);
 
         // Relámpagos y truenos en la tormenta
         Destello = Mathf.MoveTowards(Destello, 0f, dt * 5f);
@@ -120,12 +121,21 @@ public class Clima : MonoBehaviour
     }
 
     // El tiempo de una zona en este periodo (siempre el mismo para la misma zona y momento)
+    static int cacheZx = int.MinValue, cacheZz, cachePeriodo; static Tiempo cacheTiempo;
     static Tiempo Elegir(Vector3 pos)
     {
         int zx = Mathf.FloorToInt(pos.x / TamanoZona), zz = Mathf.FloorToInt(pos.z / TamanoZona);
         int periodo = Mathf.FloorToInt(Time.time / Periodo);
         float lejos = new Vector2(pos.x, pos.z).magnitude;
         if (lejos < 500f) return periodo % 4 == 3 ? Tiempo.Nublado : Tiempo.Despejado;   // la isla de inicio: casi siempre buen tiempo
+        // Misma zona y mismo periodo: el mismo tiempo (sin crear un generador al azar cada cuadro)
+        if (zx == cacheZx && zz == cacheZz && periodo == cachePeriodo) return cacheTiempo;
+        cacheZx = zx; cacheZz = zz; cachePeriodo = periodo;
+        return cacheTiempo = Tirar(zx, zz, periodo, lejos);
+    }
+
+    static Tiempo Tirar(int zx, int zz, int periodo, float lejos)
+    {
         var rnd = new System.Random(unchecked(zx * 73856093 ^ zz * 19349663 ^ periodo * 83492791));
         double tirada = rnd.NextDouble();
         float tormenta = Mathf.Clamp(0.06f + lejos / 30000f, 0.06f, 0.3f);   // más tormentas mar adentro

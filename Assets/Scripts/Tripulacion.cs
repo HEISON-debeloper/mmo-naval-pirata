@@ -160,7 +160,7 @@ public class Tripulacion : MonoBehaviour
         Pelear(b, dt);
 
         // Con la moral por el suelo, en un puerto se van de a uno
-        if (moral < 20f && Mercader.Cercano(p.transform.position) != null)
+        if (marineros > 0 && moral < 20f && Mercader.Cercano(p.transform.position) != null)
         {
             tDesercion -= dt;
             if (tDesercion <= 0f)

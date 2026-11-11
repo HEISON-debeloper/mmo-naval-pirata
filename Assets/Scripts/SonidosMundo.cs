@@ -18,7 +18,7 @@ public class SonidosMundo : MonoBehaviour
     static SonidosMundo I;
     static readonly Dictionary<string, AudioClip[]> grupos = new Dictionary<string, AudioClip[]>();
     static readonly Dictionary<string, float> ultimoDe = new Dictionary<string, float>();
-    const int Fuentes = 48;
+    const int Fuentes = 28;   // el proyecto tiene 32 voces reales: más fuentes solo se pisaban
     AudioSource[] pool;
     int sig;
     AudioSource viento, agua, fuego;
@@ -228,5 +228,15 @@ public class SonidosMundo : MonoBehaviour
     {
         if (f == null || f.clip == null) return;
         f.volume = Mathf.MoveTowards(f.volume, objetivo, dt * 0.6f);
+        Pausar(f);
+    }
+
+    // Un bucle en silencio se pausa (sigue ocupando una voz si no); vuelve donde estaba al subir el volumen
+    public static void Pausar(AudioSource f)
+    {
+        if (f == null || f.clip == null) return;
+        bool callado = f.volume < 0.001f;
+        if (callado && f.isPlaying) f.Pause();
+        else if (!callado && !f.isPlaying) { f.UnPause(); if (!f.isPlaying && f.loop) f.Play(); }
     }
 }

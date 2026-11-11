@@ -247,6 +247,7 @@ public static class CascoProcedural
         Ordenar(ys);
 
         var v = new List<Vector3>(); var uv = new List<Vector2>();
+        var enColumna = new List<Rect>();
         Vector3 P(float lado, float z, float y) => new Vector3(lado * Costado(z, y, w, h, L), y, z);
         // Altura de la fila j (0 = franja, n = quilla) en el punto z: más filas cerca del fondo, donde se curva
         const int nL = 8;
@@ -256,12 +257,16 @@ public static class CascoProcedural
             for (int i = 0; i < zs.Count - 1; i++)
             {
                 float z0 = zs[i], z1 = zs[i + 1], zm = (z0 + z1) / 2f;
+                // Solo los huecos de esta columna (antes se revisaban todos en cada cuadro: con 4 pisos de cañones
+                // eran millones de comparaciones y el barco tardaba casi un segundo en armarse)
+                enColumna.Clear();
+                foreach (Rect r in huecos) if (zm > r.xMin && zm < r.xMax) enColumna.Add(r);
                 // Franja de las portas (de arriba hacia abajo, como el resto del casco)
                 for (int k = ys.Count - 1; k > 0; k--)
                 {
                     float yA = ys[k], yC = ys[k - 1], ym = (yA + yC) / 2f;
                     bool enHueco = false;
-                    foreach (Rect r in huecos) if (zm > r.xMin && zm < r.xMax && ym > r.yMin && ym < r.yMax) { enHueco = true; break; }
+                    foreach (Rect r in enColumna) if (ym > r.yMin && ym < r.yMax) { enHueco = true; break; }
                     if (enHueco) continue;
                     Q(lado, P(lado, z0, yA), P(lado, z1, yA), P(lado, z1, yC), P(lado, z0, yC));
                 }

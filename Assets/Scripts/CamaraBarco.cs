@@ -127,13 +127,16 @@ public class CamaraBarco : MonoBehaviour
             Vector3 c = b.transform.position;
             float tc = Mathf.Clamp(Vector3.Dot(c - foco, dir), 0f, libre);
             if (Vector3.Distance(foco + dir * tc, c) > L * 0.6f + h + 3f) continue;
-            float limite = DentroDeBarco(b, foco + dir * 0.05f, w, h, L) ? -1f : libre;   // si el foco ya está adentro (raro), no se corta
+            // Lo que no cambia en todo el recorrido se busca una sola vez (antes: cientos de búsquedas por nombre cada cuadro)
+            bool plana = Cubierta.EsPlana(b);
+            Transform castillo = plana ? null : b.transform.Find("Camarote");
+            float limite = DentroDeBarco(b, foco + dir * 0.05f, w, h, L, plana, castillo) ? -1f : libre;   // si el foco ya está adentro (raro), no se corta
             if (limite < 0f) continue;
             int pasos = Mathf.Clamp(Mathf.CeilToInt(libre / 0.25f), 8, 160);
             for (int i = 1; i <= pasos; i++)
             {
                 float t = libre * i / pasos;
-                if (DentroDeBarco(b, foco + dir * t, w, h, L)) { libre = Mathf.Max(0.3f, libre * (i - 1) / pasos); break; }
+                if (DentroDeBarco(b, foco + dir * t, w, h, L, plana, castillo)) { libre = Mathf.Max(0.3f, libre * (i - 1) / pasos); break; }
             }
         }
         if (libre >= largo - 0.01f) return pos;
@@ -141,10 +144,10 @@ public class CamaraBarco : MonoBehaviour
         return foco + dir * Mathf.Max(0.3f, libre - 0.2f);
     }
 
-    static bool DentroDeBarco(ControlBarco b, Vector3 p, float w, float h, float L)
+    static bool DentroDeBarco(ControlBarco b, Vector3 p, float w, float h, float L, bool plana, Transform castillo)
     {
         Vector3 l = b.transform.InverseTransformPoint(p);
-        if (Cubierta.EsPlana(b)) return l.y < h / 2f + 0.15f && l.y > -h / 2f - 0.3f && Mathf.Abs(l.x) < w / 2f + 0.2f && Mathf.Abs(l.z) < L / 2f + 0.2f;
+        if (plana) return l.y < h / 2f + 0.15f && l.y > -h / 2f - 0.3f && Mathf.Abs(l.x) < w / 2f + 0.2f && Mathf.Abs(l.z) < L / 2f + 0.2f;
         if (l.y < h / 2f + CascoProcedural.AltoBorda(h) + 0.2f && l.y > -h / 2f - 0.3f && l.z > CascoProcedural.ZPopa(L) - 0.25f && l.z < CascoProcedural.ZProa(w, L) + 0.25f)
         {
             float borde = CascoProcedural.Costado(l.z, Mathf.Min(l.y, h / 2f), w, h, L);
@@ -152,7 +155,6 @@ public class CamaraBarco : MonoBehaviour
             if (l.y < h / 2f + 0.15f) { if (Mathf.Abs(l.x) < borde + 0.25f) return true; }
             else if (Mathf.Abs(l.x) < borde + 0.25f && Mathf.Abs(l.x) > borde - CascoProcedural.GrosorBorda(w) - 0.25f) return true;
         }
-        Transform castillo = b.transform.Find("Camarote");
         if (castillo != null)
         {
             float cx = castillo.localScale.x / 2f + 0.25f;
