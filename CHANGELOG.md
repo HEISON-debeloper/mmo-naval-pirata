@@ -6,6 +6,9 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.48.2 — Bot de prueba más cuidadoso  (2026-11-11)
+- Bot de prueba: la copia de tu partida (partida.antes-del-bot.json) se hace una sola vez y ya no se pisa en cada prueba; los pecios ya no salen como posible fuga (quedan a propósito).
+
 ## 0.48.1 — Barcos sin tirones  (2026-11-10)
 - Los barcos piratas se arman en varios cuadros en vez de uno solo: el peor tirón al aparecer un navío bajó de unos 600 ms a unos 35 ms (medido por el bot en el editor). El barco no cae mientras se arma.
 - Las cuentas más largas de un barco (casco con huecos de portas, marcos y tapas de las portas, tablones de cubierta y jarcia) se hacen en otro hilo mientras el juego sigue.

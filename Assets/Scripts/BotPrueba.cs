@@ -85,7 +85,9 @@ public class BotPrueba : MonoBehaviour
         carpeta = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Builds", "bot"))
                                        : Path.Combine(Application.persistentDataPath, "bot");
         Directory.CreateDirectory(carpeta);
-        try { if (File.Exists(Guardado.Ruta)) File.Copy(Guardado.Ruta, Path.Combine(Path.GetDirectoryName(Guardado.Ruta), "partida.antes-del-bot.json"), true); }
+        // La copia se hace una sola vez (si ya existe, es la de antes de la primera prueba y no se pisa)
+        string copia = Path.Combine(Path.GetDirectoryName(Guardado.Ruta), "partida.antes-del-bot.json");
+        try { if (File.Exists(Guardado.Ruta) && !File.Exists(copia)) File.Copy(Guardado.Ruta, copia); }
         catch (System.Exception e) { Debug.LogWarning("Bot: no se pudo respaldar la partida: " + e.Message); }
         errores.Clear(); avisos.Clear(); medidas.Clear();
         csv = new StringBuilder("minuto,fps,peor_ms,mono_mb,total_mb,gc,objetos,renderers,islas,recursos,piratas,tripulantes,pecios,cajas,x_mundo,z_mundo,desplaz_km\n");
@@ -349,7 +351,7 @@ public class BotPrueba : MonoBehaviour
     {
         avisos.Clear();
         if (medidas.Count < 15) return;
-        string[] nombres = { "", "", "", "memoria del juego (MB)", "memoria total (MB)", "", "objetos", "renderers", "islas", "recursos", "piratas", "tripulantes", "pecios", "cajas de botín" };
+        string[] nombres = { "", "", "", "memoria del juego (MB)", "memoria total (MB)", "", "objetos", "renderers", "islas", "recursos", "piratas", "tripulantes", "", "cajas de botín" };   // los pecios quedan para siempre a propósito (tope 300)
         int n = medidas.Count / 3;
         for (int c = 3; c < nombres.Length; c++)
         {
