@@ -383,6 +383,7 @@ public class HudNuevo : MonoBehaviour
     }
 
     // ---------- Tu barco ----------
+    static readonly LadoCanon[] Lados = { LadoCanon.Babor, LadoCanon.Estribor, LadoCanon.Proa, LadoCanon.Popa };
     void TuBarco(Personaje p, bool textos)
     {
         bool aBordo = p.estado != Personaje.Estado.Libre && p.BarcoActual != null && Preferencias.HudBarco;
@@ -396,7 +397,7 @@ public class HudNuevo : MonoBehaviour
         // Recarga de cada lado: cada cuadro para que la barra corra suave
         if (cn != null)
         {
-            foreach (LadoCanon l in new[] { LadoCanon.Babor, LadoCanon.Estribor, LadoCanon.Proa, LadoCanon.Popa })
+            foreach (LadoCanon l in Lados)
             {
                 bool hay = cn.RanurasLado(l) > 0;
                 if (!canonFila.TryGetValue(l, out var f))
@@ -485,11 +486,8 @@ public class HudNuevo : MonoBehaviour
         return (fila, cuenta, relleno, estado);
     }
 
-    static string Rosa(float grados)
-    {
-        string[] p = { "N", "NE", "E", "SE", "S", "SO", "O", "NO" };
-        return p[Mathf.RoundToInt(grados / 45f) % 8];
-    }
+    static readonly string[] PuntosRosa = { "N", "NE", "E", "SE", "S", "SO", "O", "NO" };
+    static string Rosa(float grados) => PuntosRosa[Mathf.RoundToInt(grados / 45f) % 8];
 
     // ---------- Enemigo cercano ----------
     void Enemigo(Personaje p, bool textos)

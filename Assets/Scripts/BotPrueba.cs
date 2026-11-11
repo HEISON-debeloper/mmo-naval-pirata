@@ -189,6 +189,9 @@ public class BotPrueba : MonoBehaviour
         if (p.barco != null && (p.estado != Personaje.Estado.Timon || p.BarcoActual != p.barco) && !Ventanas.AlgunaAbierta)
             p.IrAlTimonPropio();
 
+        // Cada 30 vueltas (10 min): guardar y recargar la escena (primero, con todo cerrado)
+        if (vuelta % 30 == 0) { Ventanas.CerrarTodas(); Recargar(p); return; }
+
         switch (vuelta % 12)
         {
             case 2: Combate(p, false); break;
@@ -202,8 +205,6 @@ public class BotPrueba : MonoBehaviour
             case 10: if (Random.value < 0.4f) MasLejos(p, Random.Range(600f, 1500f)); break;
             case 11: break;
         }
-        // Cada 30 vueltas (10 min): guardar y recargar la escena
-        if (vuelta % 30 == 0) Recargar(p);
         // Cada 90 vueltas (30 min): dejar que hundan tu barco una vez (reaparecer, tripulación, pactos)
         if (vuelta % 90 == 45) { dejarHundir = true; VidaBarco vb = p.barco != null ? p.barco.GetComponent<VidaBarco>() : null; if (vb != null) vb.Dano(vb.vida + 1f); }
         else if (vuelta % 90 == 47) dejarHundir = false;
@@ -281,7 +282,7 @@ public class BotPrueba : MonoBehaviour
     void Recargar(Personaje p)
     {
         Guardado g = Object.FindFirstObjectByType<Guardado>();
-        if (g == null || !g.Listo || Ventanas.AlgunaAbierta) return;
+        if (g == null || !g.Listo || MenuPrincipal.Visible) return;
         g.GuardarAhora();
         posAntesDeRecargar = OrigenFlotante.AMundo(p.transform.position);
         esperandoRecarga = true; tRecarga = 0f;

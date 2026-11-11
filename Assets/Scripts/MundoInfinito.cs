@@ -165,19 +165,14 @@ public class MundoInfinito : MonoBehaviour
                 PeorCeldaMs = Mathf.Max(PeorCeldaMs, (float)reloj.Elapsed.TotalMilliseconds);
             }
         }
-        else if (enemigosPendientes.Count > 0)
+        else if (enemigosPendientes.Count > 0 && !armando)
         {
             var (k, islasDeCelda) = enemigosPendientes[0];
             enemigosPendientes.RemoveAt(0);
-            if (celdas.TryGetValue(k, out List<GameObject> lista) && !Limpias.Contains(k))   // la celda sigue cargada
+            if (celdas.ContainsKey(k) && !Limpias.Contains(k))   // la celda sigue cargada
             {
                 Vector2 cc = new Vector2((k.x + 0.5f) * tamanoCelda, (k.y + 0.5f) * tamanoCelda);
-                reloj.Restart();
-                double t0 = Cronos.Ahora;
-                GameObject e = CrearEnemigo(k, new System.Random(Hash(k, 977)), cc.magnitude, islasDeCelda);
-                Cronos.Anotar("barco pirata entero", t0);
-                PeorBarcoMs = Mathf.Max(PeorBarcoMs, (float)reloj.Elapsed.TotalMilliseconds);
-                if (e != null) { lista.Add(e); celdaDe[e] = k; }
+                StartCoroutine(ArmarEnemigo(k, new System.Random(Hash(k, 977)), cc.magnitude, islasDeCelda));
             }
         }
     }
@@ -239,7 +234,35 @@ public class MundoInfinito : MonoBehaviour
     }
 
     // Un barco enemigo con la misma lógica que el del jugador: molde, alargado, ancho, pisos y cañones instalados
-    GameObject CrearEnemigo(Vector2Int c, System.Random rnd, float dist, List<(Vector3 pos, float orilla)> hechas)
+    // Un barco pirata se arma en varios cuadros (uno grande trababa el juego casi un segundo): de a uno
+    bool armando;
+    System.Collections.IEnumerator ArmarEnemigo(Vector2Int c, System.Random rnd, float dist, List<(Vector3 pos, float orilla)> hechas)
+    {
+        armando = true;
+        var res = new Astillero.Resultado();
+        var it = CrearEnemigo(res, c, rnd, dist, hechas);
+        while (true)
+        {
+            double t0 = Cronos.Ahora;
+            bool sigue;
+            try { sigue = it.MoveNext(); }
+            catch (System.Exception ex) { Debug.LogException(ex); sigue = false; }
+            Cronos.Anotar("barco pirata (un cuadro de armado)", t0);
+            PeorBarcoMs = Mathf.Max(PeorBarcoMs, (float)(Cronos.Ahora - t0));
+            if (!sigue) break;
+            yield return null;
+        }
+        armando = false;
+        GameObject e = res.barco;
+        if (e == null) yield break;
+        // Si mientras se armaba te alejaste y la celda se quitó, el barco sobra
+        if (!celdas.TryGetValue(c, out List<GameObject> lista) || Limpias.Contains(c)) { Destroy(e); yield break; }
+        lista.Add(e); celdaDe[e] = c;
+    }
+
+    void OnDisable() => armando = false;   // una corrutina cortada no deja el mundo sin piratas
+
+    System.Collections.IEnumerator CrearEnemigo(Astillero.Resultado salida, Vector2Int c, System.Random rnd, float dist, List<(Vector3 pos, float orilla)> hechas)
     {
         int moldeMax = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0f, dist - zonaSegura) / metrosPorMolde), 0, FormaBarco.UltimoMolde);
         int molde = Mathf.Clamp(moldeMax - rnd.Next(0, 3), 0, FormaBarco.UltimoMolde);   // justo afuera de la zona segura salen balsas; luego botes y chalupas
@@ -252,7 +275,7 @@ public class MundoInfinito : MonoBehaviour
         for (int intento = 0; intento < 8; intento++)
         {
             float margen = L + 20f;
-            if (margen * 2f >= tamanoCelda) return null;
+            if (margen * 2f >= tamanoCelda) yield break;
             Vector3 pos = new Vector3(c.x * tamanoCelda + margen + (float)rnd.NextDouble() * (tamanoCelda - 2f * margen), 0f,
                                       c.y * tamanoCelda + margen + (float)rnd.NextDouble() * (tamanoCelda - 2f * margen));
             if (p != null && Vector3.Distance(pos, OrigenFlotante.AMundo(p.transform.position)) < 180f) continue;
@@ -269,7 +292,11 @@ public class MundoInfinito : MonoBehaviour
             pos = OrigenFlotante.ALocal(pos);   // de aquí en adelante, en las coordenadas de la escena
             pos.y = Olas.Altura(pos) + h / 2f - (FormaBarco.De(molde).balsa ? 0.3f : 1.2f);
             float rumbo = (float)rnd.NextDouble() * 360f;
-            GameObject g = FormaBarco.Construir(molde, a, b, cp, pos, rumbo, materialesEnemigo, maderaBalsa, lonaBalsa);
+            var res = new Astillero.Resultado();
+            var it = FormaBarco.ConstruirPorPartes(res, molde, a, b, cp, pos, rumbo, materialesEnemigo, maderaBalsa, lonaBalsa);
+            while (it.MoveNext()) yield return null;
+            GameObject g = res.barco;
+            if (g == null) yield break;
             g.name = FormaBarco.Nombre(molde, a, b, cp) + " pirata";
 
             // Cañones: entre la mitad y todas las ranuras, y a veces los de proa y popa
@@ -286,7 +313,7 @@ public class MundoInfinito : MonoBehaviour
             ia.materialTripulante = tripulante;
             ia.materialEspada = espada;
             ia.patrullaPropia = true;
-            ia.casa = pos;
+            ia.casa = g.transform.position;   // (si el origen flotante se corrió mientras se armaba, pos ya no vale)
             ia.radioPatrulla = 220f;
             ia.distanciaAlerta = 260f + L * 2f;
             ia.distanciaAtaque = Mathf.Max(170f, L * 3f);
@@ -295,9 +322,9 @@ public class MundoInfinito : MonoBehaviour
             if (vb != null) vb.reaparece = false;   // hundido, se va al fondo (su celda queda limpia)
             g.transform.SetParent(transform, true);
             EnemigosCreados++;
-            return g;
+            salida.barco = g;
+            yield break;
         }
-        return null;
     }
 
     // No encima de las islas de la escena ni de otra de la misma celda

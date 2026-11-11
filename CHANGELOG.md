@@ -6,6 +6,14 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.48.1 — Barcos sin tirones  (2026-11-10)
+- Los barcos piratas se arman en varios cuadros en vez de uno solo: el peor tirón al aparecer un navío bajó de unos 600 ms a unos 35 ms (medido por el bot en el editor). El barco no cae mientras se arma.
+- Las cuentas más largas de un barco (casco con huecos de portas, marcos y tapas de las portas, tablones de cubierta y jarcia) se hacen en otro hilo mientras el juego sigue.
+- Juntar las mallas de un barco se reparte en varios cuadros (unos 4 ms por cuadro).
+- Sonidos: los ambientes largos (lluvia, viento, olas…) van comprimidos en memoria; los efectos, en mono y descomprimidos al cargar.
+- Arreglo: la banderita de los piratas tenía una colisión que daba error en los barcos con física.
+- Bot de prueba: la recarga de la escena cada 10 minutos ya no se salta cuando hay una ventana abierta.
+
 ## 0.48.0 — Optimización para teléfonos  (2026-11-10)
 - Perfil gráfico según el teléfono (Opciones → Gráficos → Perfil gráfico): Automático, Bajo, Medio o Alto. En Automático el juego mira la memoria, los núcleos y si el teléfono tiene Vulkan, y elige. El perfil fija la resolución, el suavizado, las sombras, los FPS, el HDR, las luces, la distancia de dibujo, la niebla y la lluvia.
 - Resolución dinámica en el teléfono: si el juego no llega a los FPS, baja la resolución de a poco (hasta 50 %) y la vuelve a subir cuando sobra.

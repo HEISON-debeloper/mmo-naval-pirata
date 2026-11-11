@@ -142,6 +142,16 @@ public static class FormaBarco
     // ---------- Construcción ----------
     public static GameObject Construir(int molde, int a, int b, int c, Vector3 pos, float rumbo, Astillero.Materiales mats, Material madera, Material lona)
     {
+        var res = new Astillero.Resultado();
+        var it = ConstruirPorPartes(res, molde, a, b, c, pos, rumbo, mats, madera, lona);
+        while (it.MoveNext()) { }
+        return res.barco;
+    }
+
+    // Igual que Construir, pero repartido en varios cuadros (ver Astillero.Armar)
+    public static System.Collections.IEnumerator ConstruirPorPartes(Astillero.Resultado res, int molde, int a, int b, int c, Vector3 pos, float rumbo,
+                                                                     Astillero.Materiales mats, Material madera, Material lona)
+    {
         Molde m = De(molde);
         Medidas(molde, a, b, c, out float L, out float w, out float h);
         string nombre = Nombre(molde, a, b, c);
@@ -155,7 +165,10 @@ public static class FormaBarco
         else
         {
             // Los mástiles se miden con el largo del molde (no se vuelven gigantes al estirar el barco)
-            g = Astillero.CrearBarco(nombre, L, pos, rumbo, mats, false, 0, w, h, PorFila(molde, a), filas, m.mastiles, m.largo);
+            var r = new Astillero.Resultado();
+            var it = Astillero.Armar(r, nombre, L, pos, rumbo, mats, false, 0, w, h, PorFila(molde, a), filas, m.mastiles, m.largo);
+            while (it.MoveNext()) yield return null;
+            g = r.barco;
         }
         g.name = nombre;
 
@@ -170,7 +183,7 @@ public static class FormaBarco
 
         FormaActual f = g.AddComponent<FormaActual>();
         f.molde = molde; f.largo = a; f.ancho = b; f.alto = c;
-        return g;
+        res.barco = g;
     }
 
     // Forma guardada en un barco (si no la tiene, se busca el molde más parecido por su largo)

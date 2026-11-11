@@ -18,6 +18,20 @@ public static class Astillero
     public static GameObject CrearBarco(string nombre, float L, Vector3 pos, float rumbo, Materiales m, bool esJugador, int canonesInstalados,
                                         float w = -1f, float h = -1f, int porFila = -1, int filas = 1, int mastiles = 1, float largoMastil = -1f)
     {
+        var res = new Resultado();
+        var it = Armar(res, nombre, L, pos, rumbo, m, esJugador, canonesInstalados, w, h, porFila, filas, mastiles, largoMastil);
+        while (it.MoveNext()) { }   // todo de una vez
+        return res.barco;
+    }
+
+    public class Resultado { public GameObject barco; }
+
+    // El mismo barco, pero armado por partes: cada "yield" es un cuadro. Lo usa el mundo infinito para que un barco
+    // grande (casco con portas, cientos de cañones, jarcia) no trabe el juego un cuadro entero al aparecer.
+    // Mientras se arma, el barco no cae (cuerpo quieto) y queda lejos de la vista.
+    public static System.Collections.IEnumerator Armar(Resultado res, string nombre, float L, Vector3 pos, float rumbo, Materiales m, bool esJugador, int canonesInstalados,
+                                        float w = -1f, float h = -1f, int porFila = -1, int filas = 1, int mastiles = 1, float largoMastil = -1f)
+    {
         if (w <= 0f) w = L * 0.25f;
         if (h <= 0f) h = L * 0.17f;
         if (porFila <= 0) porFila = Mathf.Clamp(Mathf.FloorToInt(L * 0.62f / FormaBarco.SeparacionCanones), 1, 40);
@@ -41,6 +55,7 @@ public static class Astillero
         Rigidbody rb = raiz.AddComponent<Rigidbody>();
         rb.mass = 20000f * (L * w * h) / (18f * 4.5f * 3.06f);
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.useGravity = false;   // que no caiga mientras se arma en varios cuadros (se suelta al final)
 
         Transform t = raiz.transform;
         // Casco con forma de barco (proa en punta, fondo curvo), cubierta y borda: hechos por código para cualquier tamaño
@@ -58,7 +73,7 @@ public static class Astillero
             float x = ventanas == 1 ? 0f : Mathf.Lerp(-w * 0.3f, w * 0.3f, (float)i / (ventanas - 1));
             Pieza(PrimitiveType.Cube, "Ventana", t, new Vector3(x, h / 2 + Cubierta.AltoCamaroteDe(h) * 0.55f, zCam - largoCam / 2f - sal - 0.02f), Quaternion.identity, new Vector3(0.55f, 0.7f, 0.06f), m.canon);
         }
-        Cronos.Anotar("barco: casco y castillo", crono); crono = Cronos.Ahora;
+        Cronos.Anotar("barco: casco y castillo", crono); yield return null; crono = Cronos.Ahora;
         Vector3 timon = Cubierta.Timon(h, L, false);
         if (Modelos.Existe("timon"))
             Modelos.Crear("timon", t, timon + new Vector3(0, 0.95f, 0.7f), Quaternion.identity, 1f, _ => m.mastil);
@@ -108,7 +123,7 @@ public static class Astillero
                 extras.Add(pc.transform);
             }
         }
-        Cronos.Anotar("barco: mástiles y velas", crono); crono = Cronos.Ahora;
+        Cronos.Anotar("barco: mástiles y velas", crono); yield return null; crono = Cronos.Ahora;
         // Bauprés (palo que sale de la proa) y foque: vela triangular del bauprés al mástil de proa
         float zRoda = CascoProcedural.ZProa(w, L);
         float largoBaupres = Mathf.Clamp(0.16f * L, 1.2f, 22f);
@@ -143,6 +158,8 @@ public static class Astillero
         Transform[] babor = new Transform[puestos.Count], estribor = new Transform[puestos.Count];
         for (int k = 0; k < puestos.Count; k++)
         {
+            // Un navío de cuatro puentes lleva más de cien cañones: de a 16 por cuadro
+            if (k > 0 && k % 16 == 0) { Cronos.Anotar("barco: crear los cañones", crono); yield return null; crono = Cronos.Ahora; }
             float y = puestos[k].x, z = puestos[k].y;
             if (y >= h / 2f - 0.01f)
             {
@@ -158,7 +175,7 @@ public static class Astillero
                 estribor[k] = Canon("Cañón estribor " + (k + 1), t, new Vector3(x, y, z), 90f, 1f, m.canon);
             }
         }
-        Cronos.Anotar("barco: crear los cañones", crono); crono = Cronos.Ahora;
+        Cronos.Anotar("barco: crear los cañones", crono); yield return null; crono = Cronos.Ahora;
         // Portas: en el casco para los pisos de abajo; en la borda para los de cubierta si la borda es alta
         var conPorta = new System.Collections.Generic.List<Vector2>();
         foreach (Vector2 pu in puestos)
@@ -168,11 +185,43 @@ public static class Astillero
         }
         if (conPorta.Count > 0)
         {
-            CascoProcedural.Portas(conPorta, w, h, L, out Mesh huecos, out Mesh marcos, out Mesh tapas);
-            Cronos.Anotar("barco: mallas de las portas", crono); crono = Cronos.Ahora;
+            Mesh huecos, marcos, tapas;
+            if (Application.isPlaying)
+            {
+                // Los marcos y tapas de cien portas: las cuentas en otro hilo
+                var copiaP = new System.Collections.Generic.List<Vector2>(conPorta);
+                float pw = w, ph = h, pL = L;
+                Quaternion gE = Quaternion.Euler(0f, 0f, 120f), gB = Quaternion.Euler(0f, 0f, -120f);
+                var tareaP = System.Threading.Tasks.Task.Run(() => CascoProcedural.DatosPortas(copiaP, pw, ph, pL, gE, gB));
+                while (!tareaP.IsCompleted) yield return null;
+                crono = Cronos.Ahora;
+                if (tareaP.IsFaulted) { Debug.LogException(tareaP.Exception); CascoProcedural.Portas(conPorta, w, h, L, out huecos, out marcos, out tapas); }
+                else CascoProcedural.MallasPortas(tareaP.Result, out huecos, out marcos, out tapas);
+            }
+            else CascoProcedural.Portas(conPorta, w, h, L, out huecos, out marcos, out tapas);
+            Cronos.Anotar("barco: mallas de las portas", crono); yield return null; crono = Cronos.Ahora;
             // El casco con los huecos de las portas abiertos de verdad
-            casco.GetComponent<MeshFilter>().sharedMesh = CascoProcedural.Casco(w, h, L, conPorta);
-            Cronos.Anotar("barco: casco con huecos de portas", crono); crono = Cronos.Ahora;
+            // (la cuenta del casco con huecos es larga: se hace en otro hilo mientras el juego sigue)
+            bool hayEnCasco = false;
+            foreach (Vector2 pu in conPorta) if (pu.x < h / 2f - 0.01f) { hayEnCasco = true; break; }
+            Mesh mallaCasco = null;
+            if (hayEnCasco && Application.isPlaying)
+            {
+                string clave = CascoProcedural.ClaveCascoConPortas(w, h, L, conPorta);
+                mallaCasco = CascoProcedural.CascoEnCache(clave);
+                if (mallaCasco == null)
+                {
+                    var copia = new System.Collections.Generic.List<Vector2>(conPorta);
+                    float cw = w, ch = h, cL = L;
+                    var tarea = System.Threading.Tasks.Task.Run(() => CascoProcedural.DatosCascoConPortas(cw, ch, cL, copia));
+                    while (!tarea.IsCompleted) yield return null;
+                    crono = Cronos.Ahora;
+                    if (tarea.IsFaulted) Debug.LogException(tarea.Exception);
+                    else mallaCasco = CascoProcedural.GuardarCasco(clave, tarea.Result.Item1, tarea.Result.Item2);
+                }
+            }
+            casco.GetComponent<MeshFilter>().sharedMesh = mallaCasco != null ? mallaCasco : CascoProcedural.Casco(w, h, L, conPorta);
+            Cronos.Anotar("barco: casco con huecos de portas", crono); yield return null; crono = Cronos.Ahora;
             // El fondo oscuro de los huecos no se apaga de lejos (si no, se vería a través del barco)
             Malla("Portas", t, huecos, Modelos.DeColor(m.canon, new Color(0.04f, 0.03f, 0.025f)));
             Rendimiento.Capa(Malla("Marcos", t, marcos, m.mastil), Rendimiento.CapaBarcoDetalle);
@@ -201,8 +250,8 @@ public static class Astillero
 
         Cronos.Anotar("barco: cañones y portas", crono); crono = Cronos.Ahora;
         // Jarcia, cofas, cintas del casco, castillo de popa detallado, mascarón, cabrestante y campana
-        Detalles.Armar(t, L, w, h, listaMastiles, puntaBaupres, m);
-        Cronos.Anotar("barco: detalles (jarcia, molduras…)", crono); crono = Cronos.Ahora;
+        { var itd = Detalles.ArmarPorPartes(t, L, w, h, listaMastiles, puntaBaupres, m); while (itd.MoveNext()) yield return null; }
+        yield return null; crono = Cronos.Ahora;   // (los detalles anotan sus propios tiempos)
 
         // Puntos de flotación en las esquinas de abajo
         Transform[] puntos = new Transform[4];
@@ -238,9 +287,10 @@ public static class Astillero
         cb.velasExtra = extras.ToArray();
         cb.controlActivo = esJugador;
         cb.mostrarPanel = esJugador;
-        if (Application.isPlaying) raiz.AddComponent<MallaCombinada>();
-        Cronos.Anotar("barco: física y control", crono);   // pocas mallas en vez de cientos de piezas
-        return raiz;
+        if (Application.isPlaying) raiz.AddComponent<MallaCombinada>();   // pocas mallas en vez de cientos de piezas
+        Cronos.Anotar("barco: física y control", crono);
+        rb.useGravity = true; rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero;
+        res.barco = raiz;
     }
 
     public const string VelaCuchillo = "Vela de cuchillo";   // foque y cangreja: al recogerlas se esconden

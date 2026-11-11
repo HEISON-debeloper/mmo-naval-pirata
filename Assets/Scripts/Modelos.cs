@@ -88,6 +88,16 @@ public static class Modelos
             m.SetColor("_EmissionColor", c * 1.5f);
         }
         colores[(base_, c)] = m;
+        if (colores.Count % 64 == 0) Podar();
         return m;
+    }
+
+    // Los materiales pintados de un barco se borran con él: sus copias de color ya no las usa nadie
+    static readonly List<(Material, Color)> sueltas = new List<(Material, Color)>();
+    static void Podar()
+    {
+        sueltas.Clear();
+        foreach (var kv in colores) if (kv.Key.Item1 == null) sueltas.Add(kv.Key);
+        foreach (var k in sueltas) { if (colores[k] != null) Object.Destroy(colores[k]); colores.Remove(k); }
     }
 }

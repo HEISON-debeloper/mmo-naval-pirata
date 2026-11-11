@@ -18,15 +18,54 @@ public static class Detalles
 
     public static void Armar(Transform t, float L, float w, float h, List<Mastil> mastiles, Vector3 puntaBaupres, Astillero.Materiales m)
     {
+        var it = ArmarPorPartes(t, L, w, h, mastiles, puntaBaupres, m);
+        while (it.MoveNext()) { }
+    }
+
+    // Lo mismo en varios cuadros (cada yield es un cuadro): ver Astillero.Armar
+    public static System.Collections.IEnumerator ArmarPorPartes(Transform t, float L, float w, float h, List<Mastil> mastiles, Vector3 puntaBaupres, Astillero.Materiales m)
+    {
+        double crono = Cronos.Ahora;
         var vj = new List<Vector3>(); var uj = new List<Vector2>();   // jarcia (cuerda)
         var vm = new List<Vector3>(); var um = new List<Vector2>();   // madera (cofas, barandas, galería, cintas)
         var vo = new List<Vector3>(); var uo = new List<Vector2>();   // dorado (molduras)
 
         mastiles.Sort((a, b) => a.z.CompareTo(b.z));
-        foreach (Mastil ma in mastiles) Obenques(vj, uj, vm, um, ma, w, h, L);
-        Estays(vj, uj, mastiles, puntaBaupres, h);
+        // La jarcia (obenques y estays: miles de cabitos) son solo cuentas: en otro hilo, mientras aquí se hacen las
+        // cintas y el castillo (que sí necesitan las piezas del barco)
+        var vm2 = new List<Vector3>(); var um2 = new List<Vector2>();
+        System.Threading.Tasks.Task jarcia = null;
+        if (Application.isPlaying)
+        {
+            var mas = new List<Mastil>(mastiles);
+            float jw = w, jh = h, jL = L; Vector3 jp = puntaBaupres;
+            jarcia = System.Threading.Tasks.Task.Run(() =>
+            {
+                foreach (Mastil ma in mas) Obenques(vj, uj, vm2, um2, ma, jw, jh, jL);
+                Estays(vj, uj, mas, jp, jh);
+            });
+        }
+        else
+        {
+            foreach (Mastil ma in mastiles) Obenques(vj, uj, vm2, um2, ma, w, h, L);
+            Estays(vj, uj, mastiles, puntaBaupres, h);
+        }
         Cintas(vm, um, t, L, w, h);
         float frenteCastillo = Castillo(vm, um, vo, uo, t, L, w, h, m);
+        Cronos.Anotar("detalles: jarcia y castillo (cuentas)", crono);
+        if (jarcia != null)
+        {
+            while (!jarcia.IsCompleted) yield return null;
+            if (jarcia.IsFaulted)
+            {
+                Debug.LogException(jarcia.Exception);
+                vj.Clear(); uj.Clear(); vm2.Clear(); um2.Clear();
+                foreach (Mastil ma in mastiles) Obenques(vj, uj, vm2, um2, ma, w, h, L);
+                Estays(vj, uj, mastiles, puntaBaupres, h);
+            }
+        }
+        vm.AddRange(vm2); um.AddRange(um2);
+        yield return null; crono = Cronos.Ahora;
 
         Material cuerda = Modelos.DeColor(m.vela, Cuerda);
         Material oro = Modelos.DeColor(m.vela, Oro);
@@ -38,11 +77,25 @@ public static class Detalles
             Transform x = t.Find(n);
             if (x != null) x.GetComponent<MeshRenderer>().shadowCastingMode = n == "Jarcia" ? UnityEngine.Rendering.ShadowCastingMode.Off : UnityEngine.Rendering.ShadowCastingMode.On;
         }
+        Cronos.Anotar("detalles: mallas de jarcia y molduras", crono); yield return null; crono = Cronos.Ahora;
 
         Mascaron(t, L, w, h, m, oro);
-        Tablones(t, L, w, h, m);
+        Cronos.Anotar("detalles: mascarón", crono); yield return null; crono = Cronos.Ahora;
+        if (Application.isPlaying)
+        {
+            // Miles de tablitas: se cuentan en otro hilo mientras el juego sigue
+            float cL = L, cw = w, ch = h;
+            var tarea = System.Threading.Tasks.Task.Run(() => DatosTablones(cL, cw, ch));
+            while (!tarea.IsCompleted) yield return null;
+            crono = Cronos.Ahora;
+            if (tarea.IsFaulted) { Debug.LogException(tarea.Exception); Tablones(t, L, w, h, m); }
+            else PonerTablones(t, tarea.Result, m);
+        }
+        else Tablones(t, L, w, h, m);
+        Cronos.Anotar("detalles: tablones", crono); yield return null; crono = Cronos.Ahora;
         BoteSalvavidas(t, L, w, h, mastiles, frenteCastillo, m);
         Bitacora(t, L, w, h, m, oro);
+        Cronos.Anotar("detalles: bote y bitácora", crono); yield return null; crono = Cronos.Ahora;
         // Cabrestante en cubierta, detrás del mástil mayor; campana en el frente del castillo de popa
         if (mastiles.Count > 0 && Modelos.Existe("cabrestante") && w >= 3.5f)
         {
@@ -64,11 +117,15 @@ public static class Detalles
                 n => n == "Campana" ? oro : m.mastil);
             Rendimiento.Capa(c, Rendimiento.CapaBarcoDetalle);
         }
+        Cronos.Anotar("detalles: cabrestante y campana", crono);
     }
 
     // ---------- Tablones de cubierta ----------
     // Juntas oscuras a lo largo de la cubierta, cada ~0,32 m, siguiendo la forma real del casco (se cierran en la proa)
-    static void Tablones(Transform t, float L, float w, float h, Astillero.Materiales m)
+    static void Tablones(Transform t, float L, float w, float h, Astillero.Materiales m) => PonerTablones(t, DatosTablones(L, w, h), m);
+
+    // Solo cuentas (se puede hacer en otro hilo)
+    static (List<Vector3>, List<Vector2>) DatosTablones(float L, float w, float h)
     {
         var v = new List<Vector3>(); var uv = new List<Vector2>();
         float y = h / 2f + 0.1f + 0.012f;   // bien despegadas de la cubierta: más cerca titilan con ella a lo lejos
@@ -98,6 +155,12 @@ public static class Detalles
                 if (Mathf.Abs(x) + paso / 2f < CascoProcedural.Costado(z, h / 2f, w, h, L) - borda)
                     Caja(v, uv, new Vector3(x, y, z), new Vector3(paso - 0.03f, 0.008f, 0.025f));
         }
+        return (v, uv);
+    }
+
+    static void PonerTablones(Transform t, (List<Vector3> v, List<Vector2> uv) datos, Astillero.Materiales m)
+    {
+        var (v, uv) = datos;
         if (v.Count == 0) return;
         GameObject g = Astillero.Malla("Tablones", t, CascoProcedural.MallaDe("Tablones", v, uv), Modelos.DeColor(m.vela, new Color(0.16f, 0.11f, 0.07f)));
         g.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

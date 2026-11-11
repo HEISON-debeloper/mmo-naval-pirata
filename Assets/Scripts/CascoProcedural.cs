@@ -76,6 +76,21 @@ public static class CascoProcedural
     public const float AnchoPorta = 1.0f, AltoPorta = 0.85f;
     public static void Portas(List<Vector2> puestos, float w, float h, float L, out Mesh huecos, out Mesh marcos, out Mesh tapas)
     {
+        MallasPortas(DatosPortas(puestos, w, h, L, Quaternion.Euler(0f, 0f, 120f), Quaternion.Euler(0f, 0f, -120f)), out huecos, out marcos, out tapas);
+    }
+
+    public class DatosDePortas { public List<Vector3> vh, vm, vt; public List<Vector2> uh, um, ut; }
+
+    public static void MallasPortas(DatosDePortas d, out Mesh huecos, out Mesh marcos, out Mesh tapas)
+    {
+        huecos = Armar("Portas", d.vh, d.uh); Propias.Add(huecos);
+        marcos = Armar("Marcos", d.vm, d.um); Propias.Add(marcos);
+        tapas = Armar("Tapas", d.vt, d.ut); Propias.Add(tapas);
+    }
+
+    // Solo cuentas (se puede hacer en otro hilo): los giros de las tapas vienen hechos
+    public static DatosDePortas DatosPortas(List<Vector2> puestos, float w, float h, float L, Quaternion giroEstribor, Quaternion giroBabor)
+    {
         var vh = new List<Vector3>(); var uh = new List<Vector2>();
         var vm = new List<Vector3>(); var um = new List<Vector2>();
         var vt = new List<Vector3>(); var ut = new List<Vector2>();
@@ -119,13 +134,11 @@ public static class CascoProcedural
                 Caja(vm, um, c + new Vector3(lado * 0.04f, 0f, a + g / 2f), new Vector3(0.12f, AltoPorta, g), Quaternion.identity);
                 Caja(vm, um, c + new Vector3(lado * 0.04f, 0f, -a - g / 2f), new Vector3(0.12f, AltoPorta, g), Quaternion.identity);
                 // Tapa: colgada del borde de arriba y abierta hacia afuera y arriba
-                Quaternion giro = Quaternion.Euler(0f, 0f, lado * 120f);
+                Quaternion giro = lado > 0f ? giroEstribor : giroBabor;
                 Vector3 bisagra = c + new Vector3(lado * 0.1f, b + g, 0f);
                 Caja(vt, ut, bisagra + giro * new Vector3(0f, -(AltoPorta + g) / 2f, 0f), new Vector3(0.07f, AltoPorta + g, AnchoPorta + g), giro);
             }
-        huecos = Armar("Portas", vh, uh); Propias.Add(huecos);
-        marcos = Armar("Marcos", vm, um); Propias.Add(marcos);
-        tapas = Armar("Tapas", vt, ut); Propias.Add(tapas);
+        return new DatosDePortas { vh = vh, uh = uh, vm = vm, um = um, vt = vt, ut = ut };
     }
 
     public static void Cara(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal) => CaraH(v, uv, a, b, c, d, normal);
@@ -226,10 +239,30 @@ public static class CascoProcedural
     // de cada porta y se salta las celdas de adentro. Abajo de la franja de las portas sigue la curva hasta la quilla.
     static Mesh CascoConPortas(float w, float h, float L, List<Vector2> portas)
     {
-        var sb = new System.Text.StringBuilder("cascoP" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00"));
-        foreach (Vector2 p in portas) sb.Append('_').Append(p.x.ToString("0.00")).Append(',').Append(p.y.ToString("0.00"));
-        string clave = sb.ToString();
+        string clave = ClaveCascoConPortas(w, h, L, portas);
         if (cache.TryGetValue(clave, out Mesh m) && m != null) return m;
+        var (v, uv) = DatosCascoConPortas(w, h, L, portas);
+        return GuardarCasco(clave, v, uv);
+    }
+
+    // Para armarlo en otro hilo (Astillero.Armar): la clave, los datos (solo cuentas, sin tocar Unity) y la malla
+    public static string ClaveCascoConPortas(float w, float h, float L, List<Vector2> portas)
+    {
+        var sb = new System.Text.StringBuilder("cascoP" + w.ToString("0.00") + "_" + h.ToString("0.00") + "_" + L.ToString("0.00"));
+        foreach (Vector2 p in portas) if (p.x < h / 2f - 0.01f) sb.Append('_').Append(p.x.ToString("0.00")).Append(',').Append(p.y.ToString("0.00"));
+        return sb.ToString();
+    }
+    public static Mesh CascoEnCache(string clave) => cache.TryGetValue(clave, out Mesh m) && m != null ? m : null;
+    public static Mesh GuardarCasco(string clave, List<Vector3> v, List<Vector2> uv)
+    {
+        Mesh m = Armar("Casco", v, uv);
+        cache[clave] = m;
+        return m;
+    }
+
+    public static (List<Vector3>, List<Vector2>) DatosCascoConPortas(float w, float h, float L, List<Vector2> portas)
+    {
+        { var delCasco = new List<Vector2>(); foreach (Vector2 p in portas) if (p.x < h / 2f - 0.01f) delCasco.Add(p); portas = delCasco; }
 
         float a = AnchoPorta / 2f, b = AltoPorta / 2f, arriba = h / 2f;
         var huecos = new List<Rect>();
@@ -281,9 +314,7 @@ public static class CascoProcedural
         for (int j = 1; j <= nL; j++) bordes.Add(Ybajo(zp, j));
         for (int k = 0; k < bordes.Count - 1; k++)
             Quad(v, uv, P(-1f, zp, bordes[k]), P(1f, zp, bordes[k]), P(1f, zp, bordes[k + 1]), P(-1f, zp, bordes[k + 1]), w, h, L);
-        m = Armar("Casco", v, uv);
-        cache[clave] = m;
-        return m;
+        return (v, uv);
     }
 
     static void Ordenar(List<float> l)
@@ -470,7 +501,10 @@ public static class CascoProcedural
     {
         if ((Vector3.Cross(b - a, c - a)).sqrMagnitude < 1e-10f) return;   // triángulos aplastados en la punta de la proa
         v.Add(a); v.Add(b); v.Add(c);
-        foreach (Vector3 p in new[] { a, b, c }) uv.Add(new Vector2(p.z / L + 0.5f, p.y / Mathf.Max(h, 0.1f) + 0.5f));
+        float ih = 1f / Mathf.Max(h, 0.1f), iL = 1f / L;   // (antes creaba un arreglo nuevo por cada triángulo)
+        uv.Add(new Vector2(a.z * iL + 0.5f, a.y * ih + 0.5f));
+        uv.Add(new Vector2(b.z * iL + 0.5f, b.y * ih + 0.5f));
+        uv.Add(new Vector2(c.z * iL + 0.5f, c.y * ih + 0.5f));
     }
 
     static void QuadUV(List<Vector3> v, List<Vector2> uv, Vector3 a, Vector3 b, Vector3 c, Vector3 d, int i, int j, int nx, int ny)

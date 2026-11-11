@@ -24,6 +24,7 @@ public class MallaCombinada : MonoBehaviour
     // Rehacer en el próximo cuadro (si se pide varias veces, se hace una sola)
     public void Pedir()
     {
+        if (juntando) { otraVez = true; return; }
         if (pedido || !isActiveAndEnabled) { pedido = true; return; }
         pedido = true;
         StartCoroutine(Luego());
@@ -31,13 +32,27 @@ public class MallaCombinada : MonoBehaviour
 
     void OnEnable() { if (pedido) { pedido = false; Pedir(); } }
 
+    bool juntando, otraVez;
     IEnumerator Luego()
     {
         yield return null;
         yield return null;   // que terminen de armarse cañones, pintura, tripulación y detalles
         pedido = false;
-        Juntar();
+        juntando = true;
+        IEnumerator it = Juntar();
+        while (true)
+        {
+            bool sigue;
+            try { sigue = it.MoveNext(); }
+            catch (System.Exception e) { Debug.LogException(e); sigue = false; }
+            if (!sigue) break;
+            yield return null;
+        }
+        juntando = false;
+        if (otraVez) { otraVez = false; Pedir(); }
     }
+
+    void OnDisable() { juntando = false; if (otraVez) { otraVez = false; pedido = true; } }
 
     static readonly string[] NoJuntar = { "Portas", "Bandera", "Rueda", "Lona" };
 
@@ -55,7 +70,7 @@ public class MallaCombinada : MonoBehaviour
         juntas.Clear();
     }
 
-    void Juntar()
+    IEnumerator Juntar()
     {
         Deshacer();
         Transform raiz = transform;
@@ -66,17 +81,26 @@ public class MallaCombinada : MonoBehaviour
             if (cb.vela != null) excluir.Add(cb.vela);
             if (cb.velasExtra != null) foreach (Transform v in cb.velasExtra) if (v != null) excluir.Add(v);
         }
+        // Unos pocos milisegundos por cuadro (un navío tiene decenas de grupos)
+        IEnumerator it = Combinar(raiz, excluir, GetComponent<Pintura>(), ocultos, juntas, 4f);
         double t = Cronos.Ahora;
-        Combinar(raiz, excluir, GetComponent<Pintura>(), ocultos, juntas);
-        Cronos.Anotar("juntar mallas de un barco", t);
+        while (it.MoveNext())
+        {
+            Cronos.Anotar("juntar mallas de un barco (un cuadro)", t);
+            yield return null;
+            t = Cronos.Ahora;
+        }
+        Cronos.Anotar("juntar mallas de un barco (un cuadro)", t);
     }
 
     // Junta los hijos quietos de una pieza que se mueve entera (un recurso de isla: palma, arbusto, veta…).
     // La malla junta se borra con la isla (MallasPropias en la raíz de la isla).
-    public static void JuntarHijos(Transform raiz) => Combinar(raiz, null, null, null, null);
+    public static void JuntarHijos(Transform raiz) { IEnumerator it = Combinar(raiz, null, null, null, null, 0f); while (it.MoveNext()) { } }
 
-    static void Combinar(Transform raiz, HashSet<Transform> excluir, Pintura pintura, List<Renderer> ocultos, List<GameObject> juntas)
+    // presupuestoMs > 0: devuelve el control (yield) cada vez que se pasa de esos milisegundos
+    static IEnumerator Combinar(Transform raiz, HashSet<Transform> excluir, Pintura pintura, List<Renderer> ocultos, List<GameObject> juntas, float presupuestoMs)
     {
+        double inicio = Cronos.Ahora;
         GameObject yo = raiz.gameObject;
         // Grupos: mismo material, capa, sombras y parte de la pintura
         var grupos = new Dictionary<(Material, int, ShadowCastingMode, bool, int), List<(Renderer r, Mesh m)>>();
@@ -106,14 +130,18 @@ public class MallaCombinada : MonoBehaviour
             {
                 var ci = new List<CombineInstance>();
                 int verts = 0, i = desde;
+                aLocal = raiz.worldToLocalMatrix;   // ahora mismo (el barco se mueve entre un cuadro y otro)
+                Renderer modelo = null;
                 for (; i < l.Count; i++)
                 {
+                    if (l[i].r == null || l[i].m == null) continue;   // se borró mientras tanto
                     int n = l[i].m.vertexCount;
                     if (ci.Count > 0 && verts + n > 60000) break;
                     ci.Add(new CombineInstance { mesh = l[i].m, subMeshIndex = 0, transform = aLocal * l[i].r.localToWorldMatrix });
+                    if (modelo == null) modelo = l[i].r;
                     verts += n;
                 }
-                Renderer modelo = l[desde].r;
+                if (modelo == null || ci.Count < 2) { desde = i; continue; }
                 var malla = new Mesh { name = "Junta " + modelo.name, indexFormat = verts > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
                 malla.CombineMeshes(ci.ToArray(), true, true, false);
                 malla.RecalculateBounds();
@@ -129,8 +157,14 @@ public class MallaCombinada : MonoBehaviour
                 mr.receiveShadows = kv.Key.Item4;
                 if (pintura != null) pintura.Registrar(mr, modelo);
                 juntas?.Add(g);
-                for (int j = desde; j < i; j++) { l[j].r.enabled = false; ocultos?.Add(l[j].r); }
+                for (int j = desde; j < i; j++) { if (l[j].r != null) l[j].r.enabled = false; ocultos?.Add(l[j].r); }
                 desde = i;
+                if (presupuestoMs > 0f && Cronos.Ahora - inicio > presupuestoMs)
+                {
+                    yield return null;
+                    inicio = Cronos.Ahora;
+                    if (raiz == null) yield break;
+                }
             }
         }
     }

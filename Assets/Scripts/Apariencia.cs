@@ -215,7 +215,7 @@ public static class Apariencia
             {
                 GameObject q = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 q.name = "Banderita";
-                Object.Destroy(q.GetComponent<Collider>());
+                Object.DestroyImmediate(q.GetComponent<Collider>());   // ya: un collider cóncavo en un barco con física da error aunque sea un cuadro
                 q.transform.SetParent(ap, false);
                 q.transform.localPosition = new Vector3(0.18f, 2.22f, -0.36f - 0.24f);
                 q.transform.localRotation = Quaternion.Euler(0f, giro, 0f);
@@ -252,7 +252,7 @@ public static class Apariencia
     {
         GameObject g = GameObject.CreatePrimitive(tipo);
         g.name = nombre;
-        Object.Destroy(g.GetComponent<Collider>());
+        Object.DestroyImmediate(g.GetComponent<Collider>());
         g.transform.SetParent(padre, false);
         g.transform.localPosition = pos;
         g.transform.localScale = escala;
