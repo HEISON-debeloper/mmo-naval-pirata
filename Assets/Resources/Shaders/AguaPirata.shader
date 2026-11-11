@@ -30,6 +30,7 @@ Shader "Pirata/Agua"
 
         // Olas (las pone AguaOlas): tiempo, fuerza y la calma junto a las islas guardada en una textura
         float _OlasT, _OlasInten, _OlasGPU;
+        float4 _OlasDesp;      // lo que corrió el origen flotante
         float4 _OlasRejilla;   // x = medio tamaño, y = 1 / celda, z = 1 / lado
         TEXTURE2D(_OlasCalma); SAMPLER(sampler_OlasCalma);
 
@@ -47,7 +48,7 @@ Shader "Pirata/Agua"
                 float2 celda = floor((local.xz + _OlasRejilla.x) * _OlasRejilla.y + 0.5);
                 float2 uv = (celda + 0.5) * _OlasRejilla.z;
                 float calma = SAMPLE_TEXTURE2D_LOD(_OlasCalma, sampler_OlasCalma, uv, 0).r;
-                w.y += OlaBase(w.x, w.z, _OlasT) * _OlasInten * calma;
+                w.y += OlaBase(w.x + _OlasDesp.x, w.z + _OlasDesp.z, _OlasT) * _OlasInten * calma;   // olas del mundo "de verdad" (origen flotante)
             }
             return w;
         }

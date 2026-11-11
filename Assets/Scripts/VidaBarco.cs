@@ -28,7 +28,11 @@ public class VidaBarco : MonoBehaviour
         posInicio = transform.position;
         rotInicio = transform.rotation;
         vida = vidaMaxima;
+        OrigenFlotante.AlMover += Correr;
     }
+
+    void Correr(Vector3 c) => posInicio -= c;   // el origen flotante corrió el mundo
+    void OnDestroy() => OrigenFlotante.AlMover -= Correr;
 
     public void Dano(float cantidad)
     {

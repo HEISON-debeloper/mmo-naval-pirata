@@ -37,7 +37,15 @@ public class Navegacion : MonoBehaviour
     Rect marUltimo;                    // zona de agua del último dibujo (para saber dónde está el mouse)
     bool arrastrando;
 
-    void Awake() => Instancia = this;
+    void Awake() { Instancia = this; OrigenFlotante.AlMover += Correr; }
+    void OnDestroy() => OrigenFlotante.AlMover -= Correr;
+
+    // El origen flotante corrió el mundo: las islas recordadas y las marcas se corren igual
+    void Correr(Vector3 c)
+    {
+        foreach (string id in new List<string>(descubiertas.Keys)) { Conocida k = descubiertas[id]; k.centro -= c; descubiertas[id] = k; }
+        foreach (Marca m in Marcas) m.pos -= c;
+    }
 
     void Update()
     {

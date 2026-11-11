@@ -72,7 +72,7 @@ public class Clima : MonoBehaviour
         float dt = Time.deltaTime;
         if (p != null && !MenuPrincipal.Visible)
         {
-            Tiempo t = Forzado >= 0 ? (Tiempo)Forzado : Elegir(p.transform.position);
+            Tiempo t = Forzado >= 0 ? (Tiempo)Forzado : Elegir(OrigenFlotante.AMundo(p.transform.position));
             if (t != anterior && !primero) Avisar(t);
             anterior = t; Actual = t; primero = false;
             switch (t)

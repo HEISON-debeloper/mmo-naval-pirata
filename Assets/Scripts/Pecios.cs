@@ -22,11 +22,13 @@ public class Pecios : MonoBehaviour
     static Material madera, vela;
     float tRevisar;
 
-    void Awake() { I = this; }
+    void Awake() { I = this; OrigenFlotante.AlMover += Correr; }
+    void Correr(Vector3 c) { foreach (Pecio p in Todos) p.pos -= c; }   // los restos visibles se mueven solos (son objetos del mundo)
 
     void OnDestroy()
     {
         if (I == this) I = null;
+        OrigenFlotante.AlMover -= Correr;
         foreach (var kv in visibles) if (kv.Value != null) Destroy(kv.Value);
         visibles.Clear();
     }
@@ -49,7 +51,7 @@ public class Pecios : MonoBehaviour
     {
         I?.QuitarTodos();
         Todos.Clear();
-        if (lista != null) Todos.AddRange(lista);
+        if (lista != null) foreach (Pecio p in lista) { p.pos = OrigenFlotante.ALocal(p.pos); Todos.Add(p); }
     }
 
     void QuitarTodos() { foreach (var kv in visibles) if (kv.Value != null) Destroy(kv.Value); visibles.Clear(); }

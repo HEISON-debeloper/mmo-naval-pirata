@@ -80,7 +80,7 @@ public class Pactos : MonoBehaviour
     static int Hash(string s) { unchecked { int h = 23; foreach (char c in s) h = h * 31 + c; return h & 0x7fffffff; } }
 
     // Uno de cada 4 islas, lejos del inicio (a más de 1,2 km), tiene altar
-    static bool TieneAltar(Isla i) => i.transform.position.magnitude > 1200f && Hash(i.Id) % 4 == 1;
+    static bool TieneAltar(Isla i) => OrigenFlotante.AMundo(i.transform.position).magnitude > 1200f && Hash(i.Id) % 4 == 1;
 
     void Update()
     {

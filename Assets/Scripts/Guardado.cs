@@ -155,7 +155,7 @@ public class Guardado : MonoBehaviour
         Personaje p = Personaje.Instancia;
         if (p == null) return;
         Datos d = new Datos();
-        d.posJugador = p.transform.position;
+        d.posJugador = OrigenFlotante.AMundo(p.transform.position);   // posiciones "de verdad" (sin el origen flotante)
         d.vida = p.Vida;
         d.hora = CicloDia.Hora;
         Tripulacion tr = Tripulacion.Mia;
@@ -177,7 +177,7 @@ public class Guardado : MonoBehaviour
             Canones cn = b.GetComponent<Canones>();
             if (cn != null) { d.cBabor = cn.enBabor; d.cEstribor = cn.enEstribor; d.cProa = cn.enProa; d.cPopa = cn.enPopa; d.nivelBarriles = cn.nivelBarriles; }
             if (vb != null && vb.vidaMaxima > 0f) d.vidaBarco = vb.vida / vb.vidaMaxima;
-            d.posBarco = b.transform.position;
+            d.posBarco = OrigenFlotante.AMundo(b.transform.position);
             d.rumboBarco = b.transform.eulerAngles.y;
             Pintura pt = b.GetComponent<Pintura>();
             if (pt != null && pt.AlgoPintado()) d.pintura = pt.AJson();
@@ -186,15 +186,15 @@ public class Guardado : MonoBehaviour
         }
 
         foreach (Horno h in Horno.Todos)
-            if (h != null) d.hornos.Add(new HornoGuardado { pos = h.transform.position, rumbo = h.transform.eulerAngles.y });
+            if (h != null) d.hornos.Add(new HornoGuardado { pos = OrigenFlotante.AMundo(h.transform.position), rumbo = h.transform.eulerAngles.y });
 
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (var kv in nav.Descubiertas)
-                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = kv.Value.centro, orilla = kv.Value.orilla, mercado = kv.Value.mercado, propio = kv.Value.propio });
-        if (nav != null) d.marcas.AddRange(nav.Marcas);
+                d.islas.Add(new IslaConocida { id = kv.Key, nombre = kv.Value.nombre, centro = OrigenFlotante.AMundo(kv.Value.centro), orilla = kv.Value.orilla, mercado = kv.Value.mercado, propio = kv.Value.propio });
+        if (nav != null) foreach (var m in nav.Marcas) d.marcas.Add(new Navegacion.Marca { nombre = m.nombre, pos = OrigenFlotante.AMundo(m.pos), icono = m.icono });
         d.celdasLimpias.AddRange(MundoInfinito.Limpias);
-        d.pecios.AddRange(Pecios.Todos);
+        foreach (var pe in Pecios.Todos) d.pecios.Add(new Pecios.Pecio { nombre = pe.nombre, pos = OrigenFlotante.AMundo(pe.pos), largo = pe.largo, rumbo = pe.rumbo, dia = pe.dia });
         d.apariencia = Apariencia.Jugador.Copia();
         d.pactos.AddRange(Pactos.Activos); d.altaresUsados.AddRange(Pactos.Usados);
         d.besosCapitanes = Apariencia.BesosCapitanes; d.besosCanoneros = Apariencia.BesosCanoneros; d.luwyn = Apariencia.LuwynDesbloqueado;
@@ -283,8 +283,8 @@ public class Guardado : MonoBehaviour
         Navegacion nav = Navegacion.Instancia;
         if (nav != null)
             foreach (IslaConocida i in d.islas)
-                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = i.centro, orilla = i.orilla, mercado = i.mercado, propio = i.propio });
-        if (nav != null && d.marcas != null) { nav.Marcas.Clear(); nav.Marcas.AddRange(d.marcas); }
+                nav.Recordar(i.id, new Navegacion.Conocida { nombre = i.nombre, centro = OrigenFlotante.ALocal(i.centro), orilla = i.orilla, mercado = i.mercado, propio = i.propio });
+        if (nav != null && d.marcas != null) { nav.Marcas.Clear(); foreach (var m in d.marcas) { m.pos = OrigenFlotante.ALocal(m.pos); nav.Marcas.Add(m); } }
         Inventario inv = p.GetComponent<Inventario>();
         if (inv != null) foreach (Cosa c in d.inventario) inv.Fijar(c.tipo, c.n);
         p.FijarVida(d.vida);
@@ -294,19 +294,19 @@ public class Guardado : MonoBehaviour
 
         // Primero se lleva al personaje a donde estaba, para que el mundo infinito arme las islas de esa zona
         Vector3 donde = d.tieneBarco && d.aBordo ? d.posBarco : d.posJugador;
-        p.Teletransportar(donde + Vector3.up * 2f);
+        p.Teletransportar(OrigenFlotante.ALocal(donde) + Vector3.up * 2f);   // si está lejos, el origen flotante corre el mundo
         float espera = 0f;
         while (espera < 1.5f) { espera += Time.deltaTime; yield return null; }
 
         Fabricacion fab = p.GetComponent<Fabricacion>();
         foreach (HornoGuardado h in d.hornos)
-            if (fab != null) fab.CrearHorno(h.pos, h.rumbo);
+            if (fab != null) fab.CrearHorno(OrigenFlotante.ALocal(h.pos), h.rumbo);
 
         if (d.tieneBarco && fab != null)
         {
             // Si había un barco propio de la escena (el balandro de prueba), se cambia por el guardado
             if (p.barco != null) Destroy(p.barco.gameObject);
-            ControlBarco b = fab.CrearBarcoPropio(d.molde, d.largo, d.ancho, d.alto, d.posBarco, d.rumboBarco);
+            ControlBarco b = fab.CrearBarcoPropio(d.molde, d.largo, d.ancho, d.alto, OrigenFlotante.ALocal(d.posBarco), d.rumboBarco);
             if (d.nivelCasco + d.nivelVelas > 0) b.gameObject.AddComponent<PiezasBarco>().Copiar(d.nivelCasco, d.nivelVelas);
             Canones cn = b.GetComponent<Canones>();
             if (cn != null) { cn.Fijar(d.cBabor, d.cEstribor, d.cProa, d.cPopa); cn.nivelBarriles = d.nivelBarriles; }
@@ -329,7 +329,7 @@ public class Guardado : MonoBehaviour
         }
 
         if (d.tieneBarco && d.aBordo) p.IrAlTimonPropio();
-        else p.Teletransportar(d.posJugador + Vector3.up * 0.3f);
+        else p.Teletransportar(OrigenFlotante.ALocal(d.posJugador) + Vector3.up * 0.3f);
         p.Avisar("Partida cargada");
     }
 }

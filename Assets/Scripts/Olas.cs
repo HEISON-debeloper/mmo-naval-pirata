@@ -17,6 +17,7 @@ public static class Olas
     // La ola sin la calma de las islas (el agua la combina con una calma guardada)
     public static float OlaBase(float x, float z, float t)
     {
+        x += OrigenFlotante.Desplazamiento.x; z += OrigenFlotante.Desplazamiento.z;   // las olas son del mundo "de verdad"
         return 0.6f * Mathf.Sin(0.08f * x + t * 0.8f)
              + 0.4f * Mathf.Sin(0.11f * z + t * 1.1f)
              + 0.25f * Mathf.Sin(0.06f * (x + z) + t * 0.6f);

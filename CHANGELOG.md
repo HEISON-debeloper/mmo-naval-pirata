@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.47.0 — Origen flotante  (2026-11-10)
+- Origen flotante: cuando te alejas más de 1 km del centro de la escena, todo el mundo se corre de golpe (en saltos de 1 km) para que tú quedes cerca del (0, 0, 0). Así a muchos kilómetros del inicio los barcos, la cámara y los personajes ya no tiemblan. No se nota al jugar.
+- Las olas, las celdas del mundo infinito, las zonas de clima y de peligro y los altares usan la posición «de verdad» (sumando lo que se corrió el mundo), así todo queda igual que antes.
+- Las islas descubiertas, las marcas de la carta, los pecios, las rutas de los piratas y el punto donde reaparece tu barco se corren junto con el mundo.
+- La partida se guarda con las posiciones «de verdad», así que las partidas viejas siguen sirviendo.
+
 ## 0.46.0 — Pactos malditos  (2026-11-10)
 - Pactos malditos: en algunas islas lejanas (una de cada cuatro, a más de 1,2 km del inicio) hay un altar de piedra con un orbe verde. F junto al altar: te ofrece un pacto con el mar, con su ventaja y su precio.
 - Seis pactos: Viento del Ahogado (velas +20 %, el casco se pudre), Pólvora de Hueso (balas +35 %, recarga más lenta), Casco de Coral (−35 % de daño, velas más lentas), Sed del Kraken (recarga +30 %, sed al doble), Oro Maldito (botín doble, más hambre y la tripulación pierde moral) y Bendición de la Marea (el casco se repara solo, balas −25 %).

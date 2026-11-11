@@ -47,7 +47,8 @@ public class MundoInfinito : MonoBehaviour
 
     void Awake() => Instancia = this;
 
-    public Vector2Int Celda(Vector3 p) => new Vector2Int(Mathf.FloorToInt(p.x / tamanoCelda), Mathf.FloorToInt(p.z / tamanoCelda));
+    // Las celdas son del mundo "de verdad": se suma lo que corrió el origen flotante
+    public Vector2Int Celda(Vector3 p) { p = OrigenFlotante.AMundo(p); return new Vector2Int(Mathf.FloorToInt(p.x / tamanoCelda), Mathf.FloorToInt(p.z / tamanoCelda)); }
 
     void Update()
     {
@@ -102,7 +103,8 @@ public class MundoInfinito : MonoBehaviour
         }
 
         // Aviso al cambiar de zona de peligro (cada 800 m desde el inicio)
-        int zona = Mathf.FloorToInt(new Vector2(foco.x, foco.z).magnitude / 800f);
+        Vector3 focoMundo = OrigenFlotante.AMundo(foco);
+        int zona = Mathf.FloorToInt(new Vector2(focoMundo.x, focoMundo.z).magnitude / 800f);
         if (zonaAnterior >= 0 && zona != zonaAnterior)
             p.Avisar(zona > zonaAnterior ? "Aguas más peligrosas (zona " + zona + "): barcos más grandes y mejor armados"
                                          : "Aguas más tranquilas (zona " + zona + ")");
@@ -202,7 +204,7 @@ public class MundoInfinito : MonoBehaviour
             if (Choca(pos, r, hechas)) continue;
             hechas.Add((pos, r * 1.2f));
 
-            Transform isla = GeneradorIsla.Crear(nombre, pos, r, semillaIsla, false, materiales);
+            Transform isla = GeneradorIsla.Crear(nombre, OrigenFlotante.ALocal(pos), r, semillaIsla, false, materiales);   // pos es del mundo "de verdad"
             Isla comp = isla.GetComponent<Isla>();
             comp.id = c.x + "," + c.y + "," + i;
             comp.generada = true;
@@ -238,16 +240,18 @@ public class MundoInfinito : MonoBehaviour
             if (margen * 2f >= tamanoCelda) return null;
             Vector3 pos = new Vector3(c.x * tamanoCelda + margen + (float)rnd.NextDouble() * (tamanoCelda - 2f * margen), 0f,
                                       c.y * tamanoCelda + margen + (float)rnd.NextDouble() * (tamanoCelda - 2f * margen));
-            if (p != null && Vector3.Distance(pos, p.transform.position) < 180f) continue;
+            if (p != null && Vector3.Distance(pos, OrigenFlotante.AMundo(p.transform.position)) < 180f) continue;
             bool libre = true;
+            Vector3 desp = OrigenFlotante.Desplazamiento;
             foreach (Isla s in Isla.Todas)
             {
-                float d = Vector2.Distance(new Vector2(s.cx, s.cz), new Vector2(pos.x, pos.z));
+                float d = Vector2.Distance(new Vector2(s.cx + desp.x, s.cz + desp.z), new Vector2(pos.x, pos.z));
                 if (d < s.orilla + L + 40f) { libre = false; break; }
             }
             foreach (var hc in hechas) if (Vector3.Distance(hc.pos, pos) < hc.orilla + L + 40f) libre = false;
             if (!libre) continue;
 
+            pos = OrigenFlotante.ALocal(pos);   // de aquí en adelante, en las coordenadas de la escena
             pos.y = Olas.Altura(pos) + h / 2f - (FormaBarco.De(molde).balsa ? 0.3f : 1.2f);
             float rumbo = (float)rnd.NextDouble() * 360f;
             GameObject g = FormaBarco.Construir(molde, a, b, cp, pos, rumbo, materialesEnemigo, maderaBalsa, lonaBalsa);

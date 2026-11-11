@@ -34,7 +34,8 @@ public class IABarco : MonoBehaviour
     void OnEnable() => Todos.Add(this);
     // Todos los enemigos, también los dormidos por estar lejos (ver Rendimiento)
     public static readonly System.Collections.Generic.List<IABarco> Registrados = new System.Collections.Generic.List<IABarco>();
-    void Awake() => Registrados.Add(this);
+    void Awake() { Registrados.Add(this); OrigenFlotante.AlMover += Correr; }
+    void Correr(Vector3 c) { casa -= c; puntoRuta -= c; }   // el origen flotante corrió el mundo
     void OnDisable() => Todos.Remove(this);
 
     Tripulante[] tripulantes = new Tripulante[0];
@@ -74,6 +75,7 @@ public class IABarco : MonoBehaviour
 
     void OnDestroy()
     {
+        OrigenFlotante.AlMover -= Correr;
         Registrados.Remove(this);
         if (vida != null) vida.alReaparecer -= Reiniciar;
         // Los piratas que saltaron a otro barco no se quedan huérfanos para siempre

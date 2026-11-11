@@ -26,6 +26,7 @@ public static class ArranqueEscena
         MundoInfinito.Limpias.Clear();
         Mercader.Recordados.Clear();
         Pecios.Todos.Clear();
+        OrigenFlotante.Reiniciar();
         Pactos.Activos.Clear(); Pactos.Usados.Clear();
         Apariencia.Jugador = new Apariencia.Datos();
         Apariencia.BesosCapitanes = Apariencia.BesosCanoneros = 0;
@@ -57,6 +58,7 @@ public static class ArranqueEscena
             Clima.Crear();
             Pecios.Crear();
             Pactos.Crear();
+            OrigenFlotante.Crear();
         }
         static bool Falta<T>() where T : Object => Object.FindFirstObjectByType<T>() == null;
     }

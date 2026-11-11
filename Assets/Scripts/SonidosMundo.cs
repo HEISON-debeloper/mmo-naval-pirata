@@ -29,6 +29,7 @@ public class SonidosMundo : MonoBehaviour
     void Awake()
     {
         I = this;
+        OrigenFlotante.AlMover += _ => hayPosAntes = false;   // el salto del origen flotante no son pasos
         DontDestroyOnLoad(gameObject);
         pool = new AudioSource[Fuentes];
         for (int i = 0; i < Fuentes; i++)
