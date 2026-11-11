@@ -52,7 +52,7 @@ public class Canones : MonoBehaviour
     // Cuánto tarda en recargar un lado con n cañones instalados
     public float TiempoRecarga(LadoCanon l)
     {
-        float gente = Tripulacion.Recarga(gameObject);   // tu tripulación recarga más rápido
+        float gente = Tripulacion.Recarga(gameObject) * Pactos.Recarga(gameObject);   // tu tripulación recarga más rápido
         if (l == LadoCanon.Popa) return RecargaBarriles * gente;
         return recarga * Mathf.Min(2f, 1f + ExtraPorCanon * Mathf.Max(0, EnLado(l) - 1)) * gente;
     }
@@ -191,7 +191,7 @@ public class Canones : MonoBehaviour
         foreach (Collider p in propios) if (p != null) Physics.IgnoreCollision(bc, p);   // las piezas recién creadas pueden haber perdido su collider
         BalaCanon bala = b.AddComponent<BalaCanon>();
         bala.dueno = vida;
-        bala.dano = dano;
+        bala.dano = dano * Pactos.DanoBala(gameObject);   // pactos malditos
     }
 
     public bool Disparar(LadoCanon lado)

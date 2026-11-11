@@ -5,7 +5,7 @@
 // Al llegar a la primera versión jugable completa (para publicar) pasará a 1.0.0.
 public static class Version
 {
-    public const string Numero = "0.45.0";
-    public const string Nombre = "Tu pirata y Luwyn Antena Caída";
+    public const string Numero = "0.46.0";
+    public const string Nombre = "Pactos malditos";
     public static string Texto => "v" + Numero;
 }

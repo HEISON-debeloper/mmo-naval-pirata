@@ -93,7 +93,7 @@ public class Botin : MonoBehaviour
         int k = 0;
         foreach (var kv in carga)
         {
-            int total = Mathf.Max(1, Mathf.RoundToInt(kv.Value * FraccionHundido));
+            int total = Mathf.Max(1, Mathf.RoundToInt(kv.Value * FraccionHundido * Pactos.Botin));   // Oro Maldito: el doble
             int porCaja = Mathf.CeilToInt(total / (float)cajas);
             for (int i = 0; i < cajas && total > 0; i++)
             {

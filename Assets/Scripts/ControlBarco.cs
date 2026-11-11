@@ -129,7 +129,7 @@ public class ControlBarco : MonoBehaviour
 
         if (!Anclado)
         {
-            float empuje = NivelVelaActual >= 0 ? NivelVelaActual * Tripulacion.Velas(gameObject) : -fuerzaReversa;   // con tripulación, un poco más
+            float empuje = NivelVelaActual >= 0 ? NivelVelaActual * Tripulacion.Velas(gameObject) * Pactos.Velas(gameObject) : -fuerzaReversa;   // con tripulación, un poco más
             rb.AddForce(adelante * empuje * fuerzaPorNivel, ForceMode.Acceleration);
         }
         else

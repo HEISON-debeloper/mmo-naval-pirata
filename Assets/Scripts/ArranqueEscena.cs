@@ -26,6 +26,7 @@ public static class ArranqueEscena
         MundoInfinito.Limpias.Clear();
         Mercader.Recordados.Clear();
         Pecios.Todos.Clear();
+        Pactos.Activos.Clear(); Pactos.Usados.Clear();
         Apariencia.Jugador = new Apariencia.Datos();
         Apariencia.BesosCapitanes = Apariencia.BesosCanoneros = 0;
         Apariencia.LuwynDesbloqueado = false;
@@ -55,6 +56,7 @@ public static class ArranqueEscena
             CicloDia.Crear();
             Clima.Crear();
             Pecios.Crear();
+            Pactos.Crear();
         }
         static bool Falta<T>() where T : Object => Object.FindFirstObjectByType<T>() == null;
     }

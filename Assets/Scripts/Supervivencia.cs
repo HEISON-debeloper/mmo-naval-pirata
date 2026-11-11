@@ -25,8 +25,8 @@ public class Supervivencia : MonoBehaviour
         if (ModoCreativo.Activo) { Hambre = 100f; Sed = 100f; return; }
         if (MenuPrincipal.Visible) return;   // con el menú principal abierto no da hambre ni sed
         float dt = Time.deltaTime;
-        Hambre = Mathf.Max(0f, Hambre - 100f / (minutosHambre * 60f) * dt);
-        Sed = Mathf.Max(0f, Sed - 100f / (minutosSed * 60f) * dt);
+        Hambre = Mathf.Max(0f, Hambre - 100f / (minutosHambre * 60f) * dt * Pactos.Hambre);   // pactos: Oro Maldito
+        Sed = Mathf.Max(0f, Sed - 100f / (minutosSed * 60f) * dt * Pactos.Sed);              // pactos: Sed del Kraken
 
         if (Hambre <= 0f || Sed <= 0f)
         {

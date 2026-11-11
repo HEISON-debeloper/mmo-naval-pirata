@@ -59,6 +59,11 @@ public class TeclasPrueba : MonoBehaviour
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);
         if (k.f9Key.wasPressedThisFrame) { Apariencia.BesosCapitanes = Mathf.Max(Apariencia.BesosCapitanes, Apariencia.CapitanesParaLuwyn - 1); Apariencia.BesosCanoneros = Mathf.Max(Apariencia.BesosCanoneros, Apariencia.CanonerosParaLuwyn); Apariencia.ContarBeso(Tripulante.Rol.Capitan); }   // F9: desbloquear a Luwyn
+        if (k.f10Key.wasPressedThisFrame)   // F10: ir al altar maldito más cercano
+        {
+            if (Pactos.AltarCercano(p.transform.position, out Vector3 altar)) p.Teletransportar(altar + new Vector3(2.5f, 1.5f, 0f));
+            else p.Avisar("Prueba: no hay altares cargados cerca (están en islas a más de 1,2 km del inicio)");
+        }
         if (k.f7Key.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }
         if (k.yKey.wasPressedThisFrame && !p.IrAlTimonPropio()) p.Avisar("Prueba: aún no tienes barco propio");
     }

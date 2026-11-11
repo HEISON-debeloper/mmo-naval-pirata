@@ -35,6 +35,7 @@ public class VidaBarco : MonoBehaviour
         if (Hundido) return;
         // En modo creativo tu barco no recibe daño
         if (ModoCreativo.Activo && Personaje.Instancia != null && Personaje.Instancia.barco != null && Personaje.Instancia.barco.gameObject == gameObject) return;
+        cantidad *= Pactos.DanoRecibido(gameObject);   // Casco de Coral
         vida -= cantidad;
         if (vida <= 0f)
         {

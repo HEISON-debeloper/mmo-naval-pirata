@@ -181,6 +181,7 @@ public class Tripulacion : MonoBehaviour
             if (bd != null && (bd.Consumir(Inventario.Coco) || bd.Consumir(Inventario.Fruta))) { comieron++; continue; }
             if (inv.Quitar(Inventario.Coco, 1) || inv.Quitar(Inventario.Fruta, 1)) { comieron++; continue; }
         }
+        if (Pactos.Tiene("oro")) moral = Mathf.Max(0f, moral - 6f);   // el Oro Maldito los pone nerviosos
         if (comieron >= hace) moral = Mathf.Min(100f, moral + 4f);
         else
         {

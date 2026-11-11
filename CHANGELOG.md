@@ -6,6 +6,12 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.46.0 — Pactos malditos  (2026-11-10)
+- Pactos malditos: en algunas islas lejanas (una de cada cuatro, a más de 1,2 km del inicio) hay un altar de piedra con un orbe verde. F junto al altar: te ofrece un pacto con el mar, con su ventaja y su precio.
+- Seis pactos: Viento del Ahogado (velas +20 %, el casco se pudre), Pólvora de Hueso (balas +35 %, recarga más lenta), Casco de Coral (−35 % de daño, velas más lentas), Sed del Kraken (recarga +30 %, sed al doble), Oro Maldito (botín doble, más hambre y la tripulación pierde moral) y Bendición de la Marea (el casco se repara solo, balas −25 %).
+- Los pactos se atan a tu barco (hasta 3) y se ven en la tarjeta del barco. Si tu barco se hunde, el mar cobra la deuda y se pierden todos. Cada altar ofrece un solo pacto y se apaga al aceptarlo. Todo se guarda con la partida.
+- Tecla de prueba F10: ir al altar maldito más cercano.
+
 ## 0.45.0 — Tu pirata y Luwyn Antena Caída  (2026-11-10)
 - Tu pirata (tecla T): camisa, piel, maquillaje (rubor, labios, completo), falda, barba y una banderita en la espalda: orgullo, trans, bisexual, lesbiana o no binaria. Gratis y al momento.
 - Los piratas de los barcos enemigos salen distintos: con falda, maquillaje, barba o banderita (trans, de orgullo…). Cada barco tiene un capitán (sombrero con pluma) y cañoneros (pañuelo rojo), con nombre.

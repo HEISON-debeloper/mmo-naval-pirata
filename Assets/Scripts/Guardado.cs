@@ -56,7 +56,9 @@ public class Guardado : MonoBehaviour
         public List<Pecios.Pecio> pecios = new List<Pecios.Pecio>();         // barcos hundidos que quedan en el mar
         public Apariencia.Datos apariencia;   // tu pirata (camisa, maquillaje, falda…)
         public int besosCapitanes, besosCanoneros;
-        public bool luwyn;                    // Luwyn Antena Caída desbloqueado         // zonas sin pirata (ya lo hundiste o capturaste)
+        public bool luwyn;                    // Luwyn Antena Caída desbloqueado
+        public List<string> pactos = new List<string>();        // pactos malditos atados a tu barco
+        public List<string> altaresUsados = new List<string>(); // islas cuyo altar ya se apagó         // zonas sin pirata (ya lo hundiste o capturaste)
         public List<MercadoGuardado> mercados = new List<MercadoGuardado>();    // cómo quedó la oferta en cada mercado
     }
 
@@ -194,6 +196,7 @@ public class Guardado : MonoBehaviour
         d.celdasLimpias.AddRange(MundoInfinito.Limpias);
         d.pecios.AddRange(Pecios.Todos);
         d.apariencia = Apariencia.Jugador.Copia();
+        d.pactos.AddRange(Pactos.Activos); d.altaresUsados.AddRange(Pactos.Usados);
         d.besosCapitanes = Apariencia.BesosCapitanes; d.besosCanoneros = Apariencia.BesosCanoneros; d.luwyn = Apariencia.LuwynDesbloqueado;
         foreach (var kv in Mercader.Recordados)
         {
@@ -250,6 +253,7 @@ public class Guardado : MonoBehaviour
         if (d.celdasLimpias != null) foreach (Vector2Int c in d.celdasLimpias) MundoInfinito.Limpias.Add(c);
         Pecios.Fijar(d.pecios);
         Apariencia.Fijar(d.apariencia, d.besosCapitanes, d.besosCanoneros, d.luwyn);
+        Pactos.Fijar(d.pactos, d.altaresUsados);
         if (d.mercados != null)
             foreach (MercadoGuardado mg in d.mercados)
             {
