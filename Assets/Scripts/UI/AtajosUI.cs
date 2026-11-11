@@ -12,5 +12,6 @@ public static class AtajosUI
         if (Teclas.Pulsada(Accion.Barco, true)) Ventanas.Alternar(VentanaBarco.I);
         if (Teclas.Pulsada(Accion.Mapa, true) && !Taller.Abierto) Ventanas.Alternar(VentanaMapa.I);
         if (Teclas.Pulsada(Accion.Bitacora, true)) Ventanas.Alternar(VentanaBitacora.I);
+        if (Teclas.Pulsada(Accion.Pirata, true)) Ventanas.Alternar(VentanaApariencia.I);
     }
 }

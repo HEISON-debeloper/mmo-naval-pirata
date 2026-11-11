@@ -79,7 +79,7 @@ public class ControlesTactiles : MonoBehaviour
         // Ventanas (arriba a la derecha, debajo de la tarjeta del enemigo)
         var fila = Estilo.Fila(6f);
         fila.style.position = Position.Absolute; fila.style.right = 16f; fila.style.top = 130f;
-        foreach (var (accion, icono) in new[] { (Accion.Inventario, "caja"), (Accion.Fabricar, "martillo"), (Accion.Barco, "barco"), (Accion.Mapa, "mapa"), (Accion.Pausa, "pausa") })
+        foreach (var (accion, icono) in new[] { (Accion.Inventario, "caja"), (Accion.Fabricar, "martillo"), (Accion.Barco, "barco"), (Accion.Mapa, "mapa"), (Accion.Pirata, "persona"), (Accion.Pausa, "pausa") })
         {
             var a = accion;
             var b = Componentes.BotonIcono(icono, () =>
@@ -88,6 +88,7 @@ public class ControlesTactiles : MonoBehaviour
                 else if (a == Accion.Inventario) Ventanas.Alternar(VentanaInventario.I);
                 else if (a == Accion.Barco) Ventanas.Alternar(VentanaBarco.I);
                 else if (a == Accion.Mapa) Ventanas.Alternar(VentanaMapa.I);
+                else if (a == Accion.Pirata) Ventanas.Alternar(VentanaApariencia.I);
                 else Teclas.Toque(a);
             }, null, 26f, Estilo.Oro);
             b.style.backgroundColor = new Color(0f, 0f, 0f, 0.35f);

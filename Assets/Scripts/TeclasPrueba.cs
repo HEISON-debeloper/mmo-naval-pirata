@@ -58,7 +58,8 @@ public class TeclasPrueba : MonoBehaviour
         if (k.zKey.wasPressedThisFrame && !p.BajarPrueba()) p.Avisar("Prueba: sube a un barco con interior para bajar");   // Z: bajar un nivel   // U (la K es la espada)
         if (k.lKey.wasPressedThisFrame) IrACaja(p);
         if (k.nKey.wasPressedThisFrame) IrAMercader(p);
-        if (k.tKey.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }
+        if (k.f9Key.wasPressedThisFrame) { Apariencia.BesosCapitanes = Mathf.Max(Apariencia.BesosCapitanes, Apariencia.CapitanesParaLuwyn - 1); Apariencia.BesosCanoneros = Mathf.Max(Apariencia.BesosCanoneros, Apariencia.CanonerosParaLuwyn); Apariencia.ContarBeso(Tripulante.Rol.Capitan); }   // F9: desbloquear a Luwyn
+        if (k.f7Key.wasPressedThisFrame) { Punteria.forzar = !Punteria.forzar; p.Avisar("Prueba: puntería fija " + (Punteria.forzar ? "activada" : "desactivada")); }
         if (k.yKey.wasPressedThisFrame && !p.IrAlTimonPropio()) p.Avisar("Prueba: aún no tienes barco propio");
     }
 

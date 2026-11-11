@@ -25,6 +25,10 @@ public static class ArranqueEscena
     {
         MundoInfinito.Limpias.Clear();
         Mercader.Recordados.Clear();
+        Pecios.Todos.Clear();
+        Apariencia.Jugador = new Apariencia.Datos();
+        Apariencia.BesosCapitanes = Apariencia.BesosCanoneros = 0;
+        Apariencia.LuwynDesbloqueado = false;
     }
 
     class Revisar : MonoBehaviour

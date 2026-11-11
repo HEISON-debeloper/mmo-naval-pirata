@@ -14,6 +14,13 @@ public class Tripulante : MonoBehaviour
     public float recarga = 1.5f;
     [HideInInspector] public Transform espada;
 
+    // Cada barco pirata tiene un capitán (sombrero con pluma) y algunos cañoneros (pañuelo rojo)
+    public enum Rol { Marinero, Capitan, Canonero }
+    [HideInInspector] public Rol rol;
+    [HideInInspector] public string nombre = "Marinero";
+    [HideInInspector] public bool besado;      // ya le diste un beso (cuenta una sola vez)
+    [HideInInspector] public float encantado;   // tras un beso, un rato sin atacar
+
     public bool Muerto { get; private set; }
 
     ControlBarco barco;
@@ -81,7 +88,8 @@ public class Tripulante : MonoBehaviour
 
         Personaje p = Personaje.Instancia;
         Vector3 lp = transform.localPosition;
-        bool persigue = p != null && p.Vida > 0f && p.SobreBarco(barco) && !p.Bajo;   // bajo cubierta no te alcanzan (ni tú a ellos)
+        if (encantado > 0f) encantado -= dt;
+        bool persigue = encantado <= 0f && p != null && p.Vida > 0f && p.SobreBarco(barco) && !p.Bajo;   // bajo cubierta no te alcanzan (ni tú a ellos); besado, no ataca un rato
         Vector3 objetivo;
         if (persigue) objetivo = p.LocalEnBarco;
         else

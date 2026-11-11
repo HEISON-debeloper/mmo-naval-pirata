@@ -6,6 +6,15 @@ Cada versión del juego queda guardada aquí y en GitHub, en la rama `versiones/
 > El código de esas versiones no se guardó por separado: todo lo que traían está dentro de la versión 0.17.0.
 > La 0.1.0 (prototipo web) sí tiene su código original. Desde la 0.17.0, cada versión tiene su propio código en GitHub.
 
+## 0.45.0 — Tu pirata y Luwyn Antena Caída  (2026-11-10)
+- Tu pirata (tecla T): camisa, piel, maquillaje (rubor, labios, completo), falda, barba y una banderita en la espalda: orgullo, trans, bisexual, lesbiana o no binaria. Gratis y al momento.
+- Los piratas de los barcos enemigos salen distintos: con falda, maquillaje, barba o banderita (trans, de orgullo…). Cada barco tiene un capitán (sombrero con pluma) y cañoneros (pañuelo rojo), con nombre.
+- Besos: F junto a un pirata en su cubierta le da un beso (corazones). Se queda embobado 10 s y no ataca.
+- Luwyn Antena Caída: besa a 5 capitanes y 3 cañoneros para desbloquearlo. Barba loca con trenzas, la falda más linda (rosada, de volantes, con moño verde), maquillaje completo y una antena caída sobre el sombrero. Su barco se pone una crisopa de insignia: mascarón de crisopa y bandera con una crisopa dibujada.
+- Barcos con orgullo: en el Taller, las velas y la bandera tienen dibujos de banderas de orgullo, trans, bisexual, lesbiana y no binaria. La crisopa queda para quien tenga a Luwyn.
+- Si la cámara queda pegada a tu cabeza, tu propio cuerpo no se dibuja (no tapa la vista).
+- Teclas de prueba: la puntería fija pasa a F7 (la T abre Tu pirata) y F9 desbloquea a Luwyn.
+
 ## 0.44.0 — Pecios permanentes  (2026-11-10)
 - Pecios permanentes: todo barco que se hunde cerca de ti (hasta 700 m) queda en el mar para siempre. Se ve el palo mayor roto asomando del agua, con una verga caída y jirones de vela, y queda marcado en la carta con una cruz. Se guardan con la partida (hasta 300). Las balsas no dejan pecio.
 - El nombre de una isla es para siempre: solo se le puede poner una vez. La carta avisa si la isla ya tiene tu nombre.

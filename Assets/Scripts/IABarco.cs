@@ -299,9 +299,24 @@ public class IABarco : MonoBehaviour
             Visual(PrimitiveType.Cube, piv.transform, new Vector3(0, 0, 0.45f), Vector3.zero, new Vector3(0.06f, 0.06f, 0.9f), materialEspada);
             Tripulante t = g.AddComponent<Tripulante>();
             t.espada = piv.transform;
+            // El primero es el capitán; los siguientes (hasta 3), cañoneros. Cada uno con su aspecto y su nombre
+            var azar = new System.Random(GetInstanceID() * 31 + i);
+            t.rol = i == 0 ? Tripulante.Rol.Capitan : i <= 3 ? Tripulante.Rol.Canonero : Tripulante.Rol.Marinero;
+            t.nombre = NombreDe(t.rol, azar);
+            Apariencia.Construir(g.transform, Apariencia.Aleatoria(azar, t.rol), false, t.rol);
             tripulantes[i] = t;
             Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);   // de lejos no se dibujan
         }
+    }
+
+    static readonly string[] Nombres = { "Rosa", "Bartolo", "Mar", "Tiburcio", "Sol", "Anacleto", "Perla", "Ramiro", "Brisa", "Celeste",
+        "Fausto", "Coral", "Lucio", "Marina", "Andrés", "Alexis", "Dani", "Cris", "Sasha", "Noa" };
+    static readonly string[] Apodos = { "el Tuerto", "Pata de Palo", "la Brava", "Barbarroja", "Diente de Oro", "la Tormenta", "el Manco", "Ojo de Halcón", "la Sirena", "Mil Nudos" };
+
+    static string NombreDe(Tripulante.Rol rol, System.Random r)
+    {
+        string n = Nombres[r.Next(Nombres.Length)] + " " + Apodos[r.Next(Apodos.Length)];
+        return (rol == Tripulante.Rol.Capitan ? "capitán " : rol == Tripulante.Rol.Canonero ? "cañonero " : "") + n;
     }
 
     static void Visual(PrimitiveType tipo, Transform padre, Vector3 pos, Vector3 rot, Vector3 escala, Material m)

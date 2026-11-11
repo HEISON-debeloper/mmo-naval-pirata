@@ -9,7 +9,7 @@ public enum Accion
 {
     Adelante, Atras, Izquierda, Derecha, Correr, Saltar, Usar, Comer, Ancla, Espada,
     DispararBabor, DispararEstribor,
-    Fabricar, Inventario, Barco, Mapa, Taller, Bitacora, Ayuda, Pausa,
+    Fabricar, Inventario, Barco, Mapa, Taller, Bitacora, Ayuda, Pausa, Pirata,
     Creativo, Guardar, BorrarPartida,
 }
 
@@ -24,7 +24,7 @@ public static class Teclas
         { Accion.Ancla, Key.R }, { Accion.Espada, Key.K },
         { Accion.DispararBabor, Key.Q }, { Accion.DispararEstribor, Key.E },
         { Accion.Fabricar, Key.Tab }, { Accion.Inventario, Key.I }, { Accion.Barco, Key.B }, { Accion.Mapa, Key.M },
-        { Accion.Taller, Key.P }, { Accion.Bitacora, Key.G }, { Accion.Ayuda, Key.F1 }, { Accion.Pausa, Key.Escape },
+        { Accion.Taller, Key.P }, { Accion.Bitacora, Key.G }, { Accion.Ayuda, Key.F1 }, { Accion.Pausa, Key.Escape }, { Accion.Pirata, Key.T },
         { Accion.Creativo, Key.F2 }, { Accion.Guardar, Key.F5 }, { Accion.BorrarPartida, Key.F8 },
     };
 
@@ -39,7 +39,7 @@ public static class Teclas
         (Accion.Fabricar, "Fabricar / comerciar", "Ventanas"), (Accion.Inventario, "Inventario", "Ventanas"),
         (Accion.Barco, "Tu barco", "Ventanas"), (Accion.Mapa, "Carta de navegación", "Ventanas"),
         (Accion.Taller, "Taller de pintura", "Ventanas"), (Accion.Bitacora, "Bitácora (avisos)", "Ventanas"),
-        (Accion.Ayuda, "Controles", "Ventanas"), (Accion.Pausa, "Pausa / cerrar", "Ventanas"),
+        (Accion.Ayuda, "Controles", "Ventanas"), (Accion.Pausa, "Pausa / cerrar", "Ventanas"), (Accion.Pirata, "Tu pirata (aspecto)", "Ventanas"),
         (Accion.Creativo, "Modo creativo", "Partida"), (Accion.Guardar, "Guardar ya", "Partida"), (Accion.BorrarPartida, "Borrar la partida", "Partida"),
     };
 

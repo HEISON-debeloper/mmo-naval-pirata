@@ -91,6 +91,7 @@ public class Personaje : MonoBehaviour
 
     void Start()
     {
+        Apariencia.AplicarJugador();   // camisa, piel, maquillaje, falda, barba, banderita…
         if (barco == null) { estado = Estado.Libre; AparecerEnPlaya(); }
         else CambiarEstado(estado);
     }
@@ -168,6 +169,30 @@ public class Personaje : MonoBehaviour
     }
 
     // Aviso en pantalla: va al sistema de notificaciones (globo a la derecha + bitácora)
+    bool Besar()
+    {
+        Tripulante elegido = null; float mejor = 1.7f;
+        Vector3 yo = transform.position;
+        foreach (Tripulante t in Tripulante.Vivos)
+        {
+            if (t == null || t.Muerto || t.Saltando) continue;
+            float d = Vector3.Distance(t.transform.position, yo);
+            if (d < mejor) { mejor = d; elegido = t; }
+        }
+        if (elegido == null) return false;
+        Vector3 cara = elegido.transform.position + Vector3.up * 1.6f;
+        Corazones.Lanzar(cara);
+        Sonidos.Reproducir(Sonidos.Tipo.Descubrir, 0.6f);
+        elegido.encantado = 10f;   // se queda embobado y no ataca un rato
+        if (elegido.besado) { Avisar("Ya besaste a " + elegido.nombre); return true; }
+        elegido.besado = true;
+        if (elegido.rol == Tripulante.Rol.Marinero) { Avisar("Besaste a " + elegido.nombre + " (no cuenta: busca capitanes y cañoneros)"); return true; }
+        bool antes = Apariencia.LuwynDesbloqueado;
+        Apariencia.ContarBeso(elegido.rol);
+        if (!Apariencia.LuwynDesbloqueado || antes) Avisar("Besaste al " + elegido.nombre + " · " + Apariencia.Progreso);
+        return true;
+    }
+
     public void Avisar(string texto) { aviso = texto; tAviso = 3.5f; Notificaciones.Mostrar(texto, Notificaciones.Adivinar(texto)); }
 
     // Para pruebas: pone al personaje a pie en un punto
@@ -221,6 +246,8 @@ public class Personaje : MonoBehaviour
             if (r != null) { Recoger(r); recogio = true; }
         }
         if (Teclas.Pulsada(Accion.Comer)) Comer();
+        // F junto a un pirata (en su cubierta): un beso. Los de capitanes y cañoneros cuentan para Luwyn Antena Caída
+        if (usar && !recogio && estado != Estado.Timon && !Nadando && Besar()) usar = false;
 
         bool hundido = vidaBarco != null && vidaBarco.Hundido;
 

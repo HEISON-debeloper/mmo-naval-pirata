@@ -40,11 +40,15 @@ public class Pintura : MonoBehaviour
     };
     public static bool TieneDibujo(Parte p) => p == Parte.Velas || p == Parte.Bandera;
 
-    public enum Patron { Liso, Franjas, Rayas, Cruz, Diagonal, Borde, Calavera, Sol }
-    public static readonly string[] NombresPatron = { "Liso", "Franjas", "Rayas", "Cruz", "Diagonal", "Borde", "Calavera", "Sol" };
+    // Los últimos son banderas de orgullo (con sus colores propios, no usan los dos colores elegidos) y la crisopa
+    // (insignia de Luwyn Antena Caída: se desbloquea con ese personaje; el fondo es el primer color).
+    public enum Patron { Liso, Franjas, Rayas, Cruz, Diagonal, Borde, Calavera, Sol, Arcoiris, Trans, Bisexual, Lesbiana, NoBinaria, Crisopa }
+    public static readonly string[] NombresPatron = { "Liso", "Franjas", "Rayas", "Cruz", "Diagonal", "Borde", "Calavera", "Sol", "Orgullo", "Trans", "Bisexual", "Lesbiana", "No binaria", "Crisopa" };
+    public static bool PatronBloqueado(int p) => p == (int)Patron.Crisopa && !Apariencia.LuwynDesbloqueado;
 
-    public static readonly string[] Mascarones = { "mascaron_leon", "mascaron_sirena", "mascaron_dragon", "mascaron_calavera", "ninguno" };
-    public static readonly string[] NombresMascaron = { "León", "Sirena", "Dragón", "Calavera", "Sin mascarón" };
+    public static readonly string[] Mascarones = { "mascaron_leon", "mascaron_sirena", "mascaron_dragon", "mascaron_calavera", "mascaron_crisopa", "ninguno" };
+    public static readonly string[] NombresMascaron = { "León", "Sirena", "Dragón", "Calavera", "Crisopa", "Sin mascarón" };
+    public static bool MascaronBloqueado(string m) => m == "mascaron_crisopa" && !Apariencia.LuwynDesbloqueado;
 
     [System.Serializable]
     public class Estilo
@@ -174,12 +178,68 @@ public class Pintura : MonoBehaviour
             for (int i = 0; i < N; i++)
             {
                 float u = (i + 0.5f) / N, v = (j + 0.5f) / N;
-                px[j * N + i] = Dibujo(p, u, v) ? b : a;
+                px[j * N + i] = ColorDe(p, u, v, a, b);
             }
         t.SetPixels(px);
         t.Apply(true);
         texturas[((int)p, a, b)] = t;
         return t;
+    }
+
+    // Franjas de las banderas de orgullo (de arriba hacia abajo)
+    static readonly Color[] FranjasArcoiris = { C(0xE40303), C(0xFF8C00), C(0xFFED00), C(0x008026), C(0x24408E), C(0x732982) };
+    static readonly Color[] FranjasTrans = { C(0x5BCEFA), C(0xF5A9B8), C(0xFFFFFF), C(0xF5A9B8), C(0x5BCEFA) };
+    static readonly Color[] FranjasLesbiana = { C(0xD52D00), C(0xFF9A56), C(0xFFFFFF), C(0xD362A4), C(0xA30262) };
+    static readonly Color[] FranjasNoBinaria = { C(0xFCF434), C(0xFFFFFF), C(0x9C59D1), C(0x2C2C2C) };
+    static Color C(int rgb) => new Color(((rgb >> 16) & 255) / 255f, ((rgb >> 8) & 255) / 255f, (rgb & 255) / 255f);
+    static Color Franja(Color[] f, float v) => f[Mathf.Clamp(Mathf.FloorToInt((1f - v) * f.Length), 0, f.Length - 1)];
+
+    static Color ColorDe(Patron p, float u, float v, Color a, Color b)
+    {
+        switch (p)
+        {
+            case Patron.Arcoiris: return Franja(FranjasArcoiris, v);
+            case Patron.Trans: return Franja(FranjasTrans, v);
+            case Patron.Lesbiana: return Franja(FranjasLesbiana, v);
+            case Patron.NoBinaria: return Franja(FranjasNoBinaria, v);
+            case Patron.Bisexual: return v > 0.6f ? C(0xD60270) : v > 0.4f ? C(0x9B4F96) : C(0x0038A8);   // 2 / 1 / 2
+            case Patron.Crisopa: return Crisopa(u, v, a);
+            default: return Dibujo(p, u, v) ? b : a;
+        }
+    }
+
+    // Crisopa (Chrysoperla): cuerpo verde y largo, ojos dorados, cuatro alas de encaje con nervaduras y dos antenas
+    static Color Crisopa(float u, float v, Color fondo)
+    {
+        Color verde = C(0x4CAF50), verdeClaro = C(0xC8F2C2), nervio = C(0x2E7D32), oro = C(0xFFC928);
+        float x = u - 0.5f, y = v - 0.5f;
+        // Ojos y cabeza (arriba)
+        if (Sq(x - 0.045f) + Sq(y - 0.25f) < 0.0012f || Sq(x + 0.045f) + Sq(y - 0.25f) < 0.0012f) return oro;
+        if (Sq(x) / 0.004f + Sq(y - 0.235f) / 0.003f < 1f) return verde;
+        // Antenas largas que salen de la cabeza hacia arriba y se abren
+        for (int s = -1; s <= 1; s += 2)
+        {
+            float t = (y - 0.27f) / 0.2f;
+            if (t > 0f && t < 1f && Mathf.Abs(x - s * (0.02f + 0.18f * t * t)) < 0.006f) return verde;
+        }
+        // Cuerpo: tórax y abdomen largo
+        if (Sq(x) / 0.0018f + Sq(y + 0.08f) / 0.07f < 1f) return verde;
+        // Alas: dos pares de elipses inclinadas, de encaje (nervaduras en rejilla)
+        for (int s = -1; s <= 1; s += 2)
+            for (int par = 0; par < 2; par++)
+            {
+                float cx = s * 0.17f, cy = par == 0 ? 0.08f : -0.1f, ang = s * (par == 0 ? 0.35f : -0.25f);
+                float dx = x - cx, dy = y - cy;
+                float rx = dx * Mathf.Cos(ang) + dy * Mathf.Sin(ang), ry = -dx * Mathf.Sin(ang) + dy * Mathf.Cos(ang);
+                float e = Sq(rx) / 0.028f + Sq(ry) / 0.0045f;
+                if (e < 1f)
+                {
+                    bool borde = e > 0.86f;
+                    bool red = Mathf.Abs(Mathf.Repeat(rx * 38f, 1f) - 0.5f) < 0.09f || Mathf.Abs(Mathf.Repeat(ry * 26f + rx * 6f, 1f) - 0.5f) < 0.09f;
+                    return borde || red ? nervio : Color.Lerp(fondo, verdeClaro, 0.75f);
+                }
+            }
+        return fondo;
     }
 
     // ¿Este punto (u, v de 0 a 1) va con el segundo color?

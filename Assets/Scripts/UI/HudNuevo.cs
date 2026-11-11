@@ -234,7 +234,7 @@ public class HudNuevo : MonoBehaviour
     {
         atajos.Clear();
         void A(Accion a, string texto) { var i = Componentes.Indicacion(Teclas.Nombre(a), texto, 0.85f); i.style.marginRight = 14f; atajos.Add(i); }
-        A(Accion.Fabricar, "fabricar"); A(Accion.Inventario, "mochila"); A(Accion.Barco, "barco"); A(Accion.Mapa, "mapa"); A(Accion.Ayuda, "controles");
+        A(Accion.Fabricar, "fabricar"); A(Accion.Inventario, "mochila"); A(Accion.Barco, "barco"); A(Accion.Mapa, "mapa"); A(Accion.Pirata, "pirata"); A(Accion.Ayuda, "controles");
     }
 
     void AlCambiarPreferencias()

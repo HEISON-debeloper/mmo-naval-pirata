@@ -179,7 +179,13 @@ public class VentanaTaller : Ventana
             for (int k = 0; k < Pintura.NombresPatron.Length; k++)
             {
                 int idx = k;
-                var b = new Button(() => { Sonidos.Reproducir(Sonidos.Tipo.Clic); e.patron = idx; e.pintado = true; P.Aplicar(); Dibujar(); }) { text = "" };
+                bool cerrado = Pintura.PatronBloqueado(k);
+                var b = new Button(() =>
+                {
+                    if (cerrado) { Notificaciones.Alerta("La crisopa es la insignia de " + Apariencia.NombreLuwyn + ": " + Apariencia.Progreso); Sonidos.Reproducir(Sonidos.Tipo.Error); return; }
+                    Sonidos.Reproducir(Sonidos.Tipo.Clic); e.patron = idx; e.pintado = true; P.Aplicar(); Dibujar();
+                }) { text = "" };
+                if (cerrado) b.style.opacity = 0.45f;
                 b.AddToClassList("casilla");
                 if (e.patron == k && e.pintado) b.AddToClassList("casilla--elegida");
                 b.style.width = 92f; b.style.height = 84f; Estilo.Margen(b, 3f); Estilo.Relleno(b, 4f);
@@ -234,7 +240,12 @@ public class VentanaTaller : Ventana
         {
             int idx = k;
             bool elegido = P.datos.mascaron == Pintura.Mascarones[k];
-            var b = Componentes.Boton(Pintura.NombresMascaron[k], () => { P.datos.mascaron = Pintura.Mascarones[idx]; P.Aplicar(); Dibujar(); },
+            bool cerrado = Pintura.MascaronBloqueado(Pintura.Mascarones[k]);
+            var b = Componentes.Boton(Pintura.NombresMascaron[k] + (cerrado ? " (de Luwyn)" : ""), () =>
+            {
+                if (cerrado) { Notificaciones.Alerta("La crisopa es la insignia de " + Apariencia.NombreLuwyn + ": " + Apariencia.Progreso); return; }
+                P.datos.mascaron = Pintura.Mascarones[idx]; P.Aplicar(); Dibujar();
+            },
                 k == Pintura.Mascarones.Length - 1 ? "cerrar" : "calavera", elegido ? Componentes.Variante.Primario : Componentes.Variante.Normal, 40f);
             b.style.marginBottom = 6f;
             zona.Add(b);

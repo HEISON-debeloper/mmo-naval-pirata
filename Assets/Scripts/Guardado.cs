@@ -53,7 +53,10 @@ public class Guardado : MonoBehaviour
         public List<IslaConocida> islas = new List<IslaConocida>();
         public List<Navegacion.Marca> marcas = new List<Navegacion.Marca>();   // marcas puestas en la carta
         public List<Vector2Int> celdasLimpias = new List<Vector2Int>();
-        public List<Pecios.Pecio> pecios = new List<Pecios.Pecio>();         // barcos hundidos que quedan en el mar         // zonas sin pirata (ya lo hundiste o capturaste)
+        public List<Pecios.Pecio> pecios = new List<Pecios.Pecio>();         // barcos hundidos que quedan en el mar
+        public Apariencia.Datos apariencia;   // tu pirata (camisa, maquillaje, falda…)
+        public int besosCapitanes, besosCanoneros;
+        public bool luwyn;                    // Luwyn Antena Caída desbloqueado         // zonas sin pirata (ya lo hundiste o capturaste)
         public List<MercadoGuardado> mercados = new List<MercadoGuardado>();    // cómo quedó la oferta en cada mercado
     }
 
@@ -190,6 +193,8 @@ public class Guardado : MonoBehaviour
         if (nav != null) d.marcas.AddRange(nav.Marcas);
         d.celdasLimpias.AddRange(MundoInfinito.Limpias);
         d.pecios.AddRange(Pecios.Todos);
+        d.apariencia = Apariencia.Jugador.Copia();
+        d.besosCapitanes = Apariencia.BesosCapitanes; d.besosCanoneros = Apariencia.BesosCanoneros; d.luwyn = Apariencia.LuwynDesbloqueado;
         foreach (var kv in Mercader.Recordados)
         {
             var mg = new MercadoGuardado { semilla = kv.Key };
@@ -244,6 +249,7 @@ public class Guardado : MonoBehaviour
     {
         if (d.celdasLimpias != null) foreach (Vector2Int c in d.celdasLimpias) MundoInfinito.Limpias.Add(c);
         Pecios.Fijar(d.pecios);
+        Apariencia.Fijar(d.apariencia, d.besosCapitanes, d.besosCanoneros, d.luwyn);
         if (d.mercados != null)
             foreach (MercadoGuardado mg in d.mercados)
             {

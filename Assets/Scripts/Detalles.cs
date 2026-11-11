@@ -466,8 +466,11 @@ public static class Detalles
     {
         if (!Modelos.Existe(nombre) || h < 1.5f) return null;
         float e = Mathf.Clamp(h / 4.5f, 0.6f, 2.2f);
+        bool crisopa = nombre == "mascaron_crisopa";   // la insignia de Luwyn: verde, alas claras y ojos dorados
         GameObject g = Modelos.Crear(nombre, t, new Vector3(0f, h * 0.3f, CascoProcedural.ZProa(w, L) - 0.35f * e), Quaternion.identity, e,
-            n => n == "Detalle" ? oscuro : oro);
+            n => crisopa
+                ? (n == "Alas" ? Modelos.DeColor(oro, new Color(0.78f, 0.95f, 0.76f)) : n == "Detalle" ? oro : Modelos.DeColor(oro, new Color(0.3f, 0.69f, 0.31f)))
+                : (n == "Detalle" ? oscuro : oro));
         Rendimiento.Capa(g, Rendimiento.CapaBarcoDetalle);
         return g;
     }
