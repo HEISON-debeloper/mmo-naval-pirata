@@ -1,0 +1,52 @@
+# Arma el APK de Android en los servidores de GitHub (no en la PC).
+# Se lanza a mano: pestaña Actions → "APK de Android" → Run workflow. Al terminar, el APK queda en "Artifacts".
+# Necesita 3 secretos del repositorio (Settings → Secrets and variables → Actions):
+#   UNITY_EMAIL, UNITY_PASSWORD  → la cuenta de Unity
+#   UNITY_LICENSE                → el contenido del archivo de licencia (.ulf) de esa cuenta
+name: APK de Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Hacer lugar en el disco (la imagen de Unity para Android es grande)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Caché de Library (las siguientes veces tarda mucho menos)
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Android-
+
+      - name: Armar el APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.27f2
+          targetPlatform: Android
+          buildMethod: ConstruirAndroid.DesdeConsola
+          androidExportType: androidPackage
+
+      - name: Subir el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MMO-Naval-Pirata-APK
+          path: Builds/*.apk
+          if-no-files-found: error

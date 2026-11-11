@@ -37,6 +37,15 @@ public static class ConstruirAndroid
         Armar();
     }
 
+    // Para GitHub (GameCI): arma el APK sin abrir el editor y termina con error si falla
+    public static void DesdeConsola()
+    {
+        Ajustar();
+        Armar();
+        bool ok = File.Exists("Builds/ultimo-apk.txt") && File.ReadAllText("Builds/ultimo-apk.txt").StartsWith("Succeeded");
+        EditorApplication.Exit(ok ? 0 : 1);
+    }
+
     static void Armar()
     {
         Directory.CreateDirectory("Builds");
